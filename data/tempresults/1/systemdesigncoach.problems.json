@@ -1,0 +1,124 @@
+[{
+  "_id": {
+    "$oid": "67c4d385e1b6d78d446833aa"
+  },
+  "id": "url-shortener",
+  "title": "Design a URL Shortening Service",
+  "difficulty": "intermediate",
+  "description": "Design a URL shortening service like TinyURL or bit.ly. This service will take a long URL and create a shorter, unique URL that redirects to the original one.",
+  "estimatedTime": 60,
+  "requirements": {
+    "functional": [
+      "Generate unique short URLs",
+      "Redirect to original URLs",
+      "Allow custom URLs (optional)",
+      "Track click statistics"
+    ],
+    "nonFunctional": [
+      "High availability (24/7)",
+      "Low latency (<100ms)",
+      "Scalable to millions of URLs",
+      "URLs persistent for years"
+    ]
+  },
+  "constraints": {
+    "traffic": "100M new URLs/month, 10B redirects/month",
+    "storage": "Each URL ~100 bytes, store for 5 years"
+  },
+  "promptSequence": [
+    {
+      "id": "requirements",
+      "name": "Requirements",
+      "question": "What are the functional and non-functional requirements for this URL shortening service?",
+      "expectedTopics": [
+        "short URL generation",
+        "redirection",
+        "custom URLs",
+        "analytics",
+        "availability"
+      ],
+      "_id": {
+        "$oid": "67c4d385e1b6d78d446833ab"
+      }
+    },
+    {
+      "id": "scale",
+      "name": "Scale Estimation",
+      "question": "How many users/requests will it handle? How much storage will be needed?",
+      "expectedTopics": [
+        "read/write ratio",
+        "QPS",
+        "storage requirements",
+        "database size"
+      ],
+      "_id": {
+        "$oid": "67c4d385e1b6d78d446833ac"
+      }
+    },
+    {
+      "id": "api",
+      "name": "API Design",
+      "question": "Design the API endpoints for this URL shortening service.",
+      "expectedTopics": [
+        "API endpoints",
+        "request/response format",
+        "error handling"
+      ],
+      "_id": {
+        "$oid": "67c4d385e1b6d78d446833ad"
+      }
+    },
+    {
+      "id": "dataModel",
+      "name": "Data Model",
+      "question": "Design the database schema for storing URLs. What database would you choose?",
+      "expectedTopics": [
+        "schema design",
+        "database choice",
+        "indexes",
+        "sharding"
+      ],
+      "_id": {
+        "$oid": "67c4d385e1b6d78d446833ae"
+      }
+    },
+    {
+      "id": "architecture",
+      "name": "System Architecture",
+      "question": "Design the high-level architecture. What components would you include?",
+      "expectedTopics": [
+        "load balancing",
+        "app servers",
+        "database",
+        "caching"
+      ],
+      "_id": {
+        "$oid": "67c4d385e1b6d78d446833af"
+      }
+    },
+    {
+      "id": "optimization",
+      "name": "Advanced Considerations",
+      "question": "How would you handle analytics at scale? How would you deal with security concerns?",
+      "expectedTopics": [
+        "analytics",
+        "security",
+        "partitioning",
+        "monitoring"
+      ],
+      "_id": {
+        "$oid": "67c4d385e1b6d78d446833b0"
+      }
+    }
+  ],
+  "referenceArchitecture": {
+    "components": []
+  },
+  "createdAt": {
+    "$date": "2025-03-02T21:54:13.625Z"
+  },
+  "updatedAt": {
+    "$date": "2025-03-02T21:54:13.634Z"
+  },
+  "__v": 0
+}]

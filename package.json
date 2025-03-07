@@ -1,0 +1,14 @@
+{
+    "name": "system-design-coach",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+      "server": "cd server && node index.js",
+      "client": "cd client && npm run dev",
+      "dev": "concurrently \"npm run server\" \"npm run client\""
+    },
+    "devDependencies": {
+      "concurrently": "^9.1.2"
+    }
+  }
+  

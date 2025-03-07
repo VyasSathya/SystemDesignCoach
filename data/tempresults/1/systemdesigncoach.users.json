@@ -1,0 +1,57 @@
+[{
+  "_id": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "name": "Vyas Sathya",
+  "email": "vyas.sathya@gmail.com",
+  "password": "$2b$10$BP1WdNn1E0mcmp4hz9EQPuW1qONq7m0dJdkDiusuuBmQD7V/Nohyi",
+  "experience": "intermediate",
+  "profileCompleted": false,
+  "preferredProblems": [],
+  "progress": {
+    "streak": {
+      "current": 0,
+      "best": 0
+    },
+    "problemsCompleted": 0,
+    "problemsAttempted": 0,
+    "timeInvested": 0,
+    "avgScore": 0,
+    "strengths": [],
+    "weaknesses": []
+  },
+  "joinedAt": {
+    "$date": "2025-03-04T09:31:20.033Z"
+  },
+  "__v": 0,
+  "lastLoginAt": {
+    "$date": "2025-03-05T01:12:30.614Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67c78fbf09b405c016eb0c6c"
+  },
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "$2b$10$FtE3qWO5uRf4gdkd93IA8u8Khs2eEOZgmCtwtTVvK0mVgEovc/JNy",
+  "experience": "intermediate",
+  "profileCompleted": false,
+  "preferredProblems": [],
+  "progress": {
+    "streak": {
+      "current": 0,
+      "best": 0
+    },
+    "problemsCompleted": 0,
+    "problemsAttempted": 0,
+    "timeInvested": 0,
+    "avgScore": 0,
+    "strengths": [],
+    "weaknesses": []
+  },
+  "joinedAt": {
+    "$date": "2025-03-04T23:41:51.009Z"
+  },
+  "__v": 0
+}]

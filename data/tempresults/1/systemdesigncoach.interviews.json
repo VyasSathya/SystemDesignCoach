@@ -1,0 +1,258 @@
+[{
+  "_id": {
+    "$oid": "67c6f9798de7d9cfe1a834b7"
+  },
+  "userId": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "problemId": "url-shortener",
+  "status": "in_progress",
+  "currentStage": "introduction",
+  "evaluation": {
+    "requirementsScore": 0,
+    "scaleEstimationScore": 0,
+    "architectureScore": 0,
+    "componentDesignScore": 0,
+    "tradeoffsScore": 0,
+    "communicationScore": 0,
+    "overallScore": 0
+  },
+  "startTime": {
+    "$date": "2025-03-04T13:00:41.197Z"
+  },
+  "timeLimit": 60,
+  "conversation": [
+    {
+      "role": "interviewer",
+      "content": "Welcome to your system design interview. Today I'd like you to design Design a URL Shortening Service.\n      \nWe have about 60 minutes for this discussion. I'm interested in your thought process, so please think aloud as you work through the problem.\n\nCould you start by telling me how you understand this problem and what key requirements we should consider?",
+      "stage": "introduction",
+      "timestamp": {
+        "$date": "2025-03-04T13:00:41.198Z"
+      },
+      "_id": {
+        "$oid": "67c6f9798de7d9cfe1a834b8"
+      }
+    }
+  ],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67c7a1c494c3830ba239df21"
+  },
+  "userId": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "problemId": "url-shortener",
+  "status": "in_progress",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "Interview started for problem: Design a URL Shortening Service",
+      "_id": {
+        "$oid": "67c7a1c494c3830ba239df22"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T00:58:44.438Z"
+      }
+    },
+    {
+      "role": "interviewer",
+      "content": "Great! Here's an opening question for a system design interview about designing a URL shortening service:\n\n\"Let's say you are tasked with designing a URL shortening service like TinyURL or bit.ly. This service will take a long URL and create a shorter, unique URL that redirects to the original one. To begin, can you describe the high-level components and architecture needed for such a system? Walk me through the basic flow of how a user would interact with the service, starting from inputting a long URL to receiving and using the shortened URL.\"\n\nThis question helps to kick off the discussion by asking the candidate to:\n1. Identify the key components and overall architecture of the system\n2. Explain the basic flow and user interaction with the service\n\nIt allows the candidate to demonstrate their ability to break down the problem, identify the necessary components, and explain the system's functionality from a user's perspective. The interviewer can then dive deeper into specific aspects of the system design based on the candidate's initial response.",
+      "_id": {
+        "$oid": "67c7a1c494c3830ba239df23"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T00:58:44.438Z"
+      }
+    }
+  ],
+  "currentStage": "intro",
+  "currentQuestion": 0,
+  "evaluation": {
+    "strengths": [],
+    "weaknesses": [],
+    "areas_to_improve": []
+  },
+  "duration": 0,
+  "startedAt": {
+    "$date": "2025-03-05T00:58:44.439Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67c7a220e55c07ddb6e90bc1"
+  },
+  "userId": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "problemId": "url-shortener",
+  "status": "in_progress",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "Interview started for problem: Design a URL Shortening Service",
+      "_id": {
+        "$oid": "67c7a220e55c07ddb6e90bc2"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:00:16.137Z"
+      }
+    },
+    {
+      "role": "interviewer",
+      "content": "Great! Here's an opening question for a system design interview about designing a URL shortening service:\n\n\"Let's say we want to design a URL shortening service like TinyURL or bit.ly, which can take a long URL and create a shorter, unique URL that redirects to the original one. To start, can you describe the main components and high-level architecture you would consider for this system? And what would be the key aspects to focus on to ensure the service is scalable, reliable, and efficient?\"\n\nThis question aims to initiate a discussion about the candidate's approach to designing a URL shortening service. It encourages them to think about the essential components, the overall system architecture, and the critical factors to consider for scalability, reliability, and efficiency. The candidate's response will provide insights into their thought process, ability to break down a complex system, and understanding of system design principles.",
+      "_id": {
+        "$oid": "67c7a220e55c07ddb6e90bc3"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:00:16.137Z"
+      }
+    }
+  ],
+  "currentStage": "intro",
+  "currentQuestion": 0,
+  "evaluation": {
+    "strengths": [],
+    "weaknesses": [],
+    "areas_to_improve": []
+  },
+  "duration": 0,
+  "startedAt": {
+    "$date": "2025-03-05T01:00:16.138Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67c7a306b8409d896b171fb9"
+  },
+  "userId": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "problemId": "url-shortener",
+  "status": "in_progress",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "Interview initialized for Design a URL Shortening Service",
+      "_id": {
+        "$oid": "67c7a306b8409d896b171fba"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:04:06.701Z"
+      }
+    },
+    {
+      "role": "interviewer",
+      "content": "Here's a compelling opening question for a system design interview about designing a URL shortening service:\n\n\"Imagine you're tasked with designing a URL shortening service like bit.ly or TinyURL. This service will allow users to provide a long URL and receive a shorter, more manageable URL in return. The shortened URL, when accessed, should redirect to the original long URL. The system should be able to handle a high volume of URL shortening requests and redirections.\n\nTo start, can you walk me through your initial thoughts on how you would approach designing this system? What are some key components or aspects you would consider essential for this URL shortening service?\"\n\nThis question is designed to assess the candidate's ability to:\n\n1. Understand the core requirements and functionality of a URL shortening service.\n2. Identify the main components and aspects that need to be considered when designing such a system.\n3. Articulate their thought process and approach to tackling the system design problem.\n\nThe question encourages the candidate to think out loud and share their initial ideas, allowing the interviewer to gauge their problem-solving skills, system design knowledge, and ability to break down a complex problem into smaller, manageable parts. It sets the stage for further discussion and deeper exploration of the system design throughout the interview.",
+      "_id": {
+        "$oid": "67c7a306b8409d896b171fbb"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:04:06.701Z"
+      }
+    }
+  ],
+  "currentStage": "intro",
+  "currentQuestion": 0,
+  "evaluation": {
+    "strengths": [],
+    "weaknesses": [],
+    "areas_to_improve": []
+  },
+  "duration": 0,
+  "startedAt": {
+    "$date": "2025-03-05T01:04:06.702Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67c7a5100de6a6d15ebc8559"
+  },
+  "userId": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "problemId": "url-shortener",
+  "status": "in_progress",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "Interview initialized for Design a URL Shortening Service",
+      "_id": {
+        "$oid": "67c7a5100de6a6d15ebc855a"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:12:48.088Z"
+      }
+    },
+    {
+      "role": "interviewer",
+      "content": "Here's a compelling opening question for a system design interview about designing a URL shortening service:\n\n\"Imagine you're tasked with designing a URL shortening service like bit.ly or tinyurl.com. This service will take long URLs and generate short, unique aliases that redirect to the original URLs when accessed. Walk me through your initial thoughts on how you would approach designing such a system, focusing on the key components, data flow, and potential challenges you foresee. Feel free to ask clarifying questions along the way.\"\n\nThis opening question achieves several goals:\n\n1. It clearly defines the problem statement and provides context by referencing well-known URL shortening services.\n\n2. It asks the candidate to walk through their initial thoughts, encouraging them to think out loud and share their approach to tackling the problem.\n\n3. It prompts the candidate to identify the key components and data flow, allowing the interviewer to assess their understanding of the system's architecture.\n\n4. It encourages the candidate to anticipate potential challenges, demonstrating their ability to foresee and address issues proactively.\n\n5. It invites the candidate to ask clarifying questions, promoting a collaborative discussion and ensuring they have a clear understanding of the requirements.\n\nThis question sets the stage for a productive conversation, giving the candidate the opportunity to showcase their problem-solving skills, system design knowledge, and communication abilities. It allows the interviewer to evaluate",
+      "_id": {
+        "$oid": "67c7a5100de6a6d15ebc855b"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:12:48.089Z"
+      }
+    }
+  ],
+  "currentStage": "intro",
+  "currentQuestion": 0,
+  "evaluation": {
+    "strengths": [],
+    "weaknesses": [],
+    "areas_to_improve": []
+  },
+  "duration": 0,
+  "startedAt": {
+    "$date": "2025-03-05T01:12:48.090Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67c7a71198dd0207f56e3752"
+  },
+  "userId": {
+    "$oid": "67c6c868fd4f75762d7ce209"
+  },
+  "problemId": "url-shortener",
+  "status": "in_progress",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "Interview initialized for Design a URL Shortening Service",
+      "_id": {
+        "$oid": "67c7a71198dd0207f56e3753"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:21:21.350Z"
+      }
+    },
+    {
+      "role": "interviewer",
+      "content": "Here's a compelling opening question for a system design interview about designing a URL shortening service:\n\n\"Imagine you're tasked with designing a URL shortening service like bit.ly or tinyurl.com. This service will take long URLs and generate short, unique aliases that redirect to the original URLs when accessed. Walk me through your initial thoughts on how you would approach designing such a system, focusing on the key components, data flow, and potential challenges you foresee. Feel free to ask clarifying questions along the way.\"\n\nThis opening question accomplishes several things:\n\n1. It clearly defines the problem statement and provides context by referencing popular URL shortening services.\n\n2. It asks the candidate to walk through their initial thoughts, encouraging them to verbalize their approach and thought process right from the start.\n\n3. It highlights key areas to consider, such as the system's components, data flow, and potential challenges, guiding the candidate to think about the problem from various angles.\n\n4. It encourages the candidate to ask clarifying questions, promoting a dialogue and ensuring they have a clear understanding of the requirements before diving deeper into the design.\n\nThis question sets the stage for a collaborative discussion and allows the interviewer to assess the candidate's problem-solving skills, ability to break down complex systems, and communication skills in explaining their thought process.",
+      "_id": {
+        "$oid": "67c7a71198dd0207f56e3754"
+      },
+      "timestamp": {
+        "$date": "2025-03-05T01:21:21.351Z"
+      }
+    }
+  ],
+  "currentStage": "intro",
+  "currentQuestion": 0,
+  "evaluation": {
+    "strengths": [],
+    "weaknesses": [],
+    "areas_to_improve": []
+  },
+  "duration": 0,
+  "startedAt": {
+    "$date": "2025-03-05T01:21:21.351Z"
+  },
+  "__v": 0
+}]
