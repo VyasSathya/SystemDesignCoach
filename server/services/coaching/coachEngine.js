@@ -6,7 +6,7 @@ const knowledgeService = require('../knowledge/knowledgeService');
 const claudeService = require('../ai/claudeService');
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "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",
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 const COACHING_STAGES = [
