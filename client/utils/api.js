@@ -1,16 +1,37 @@
+// client/utils/api.js
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
 // Create an Axios instance with a base URL
-// Fix: Ensure NEXT_PUBLIC_API_URL is properly set or defaulted
 const API_URL = typeof window !== 'undefined' ? 
   (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000') : 
   'http://localhost:5000';
 
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 10000, // Add timeout for better error handling
-});
+  const api = axios.create({
+    baseURL: API_URL,
+    timeout: 60000, // Increase timeout to 60 seconds
+    retries: 3,
+    retryDelay: 1000,
+  });
+  
+  // Add retry logic to axios
+  api.interceptors.response.use(null, async (error) => {
+    const { config } = error;
+    if (!config || !config.retries) return Promise.reject(error);
+    
+    config.retryCount = config.retryCount || 0;
+    
+    if (config.retryCount >= config.retries) {
+      return Promise.reject(error);
+    }
+    
+    config.retryCount += 1;
+    console.log(`Retrying request (${config.retryCount}/${config.retries})`);
+    
+    // Wait before retrying
+    await new Promise(resolve => setTimeout(resolve, config.retryDelay));
+    return api(config);
+  });
 
 // Attach the auth token to every request if present
 api.interceptors.request.use(
@@ -197,48 +218,116 @@ export const getCoachingProblems = async () => {
   }
 };
 
+export const startCoachingSession = async (problemId) => {
+  try {
+    console.log('API: Starting coaching session for:', problemId);
+    const response = await api.post(`/api/coaching/start/${problemId}`);
+    console.log('API: Session start response:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    console.error('API: Error starting coaching session:', error);
+    throw error;
+  }
+};
+
 export const getCoachingSession = async (id) => {
   if (!id) {
-    console.error('Error: No coaching session ID provided');
-    throw new Error('Coaching session ID is required');
+    return {
+      id: 'default',
+      conversation: [{
+        role: 'assistant',
+        content: "Welcome to your system design coaching session. Let's get started!",
+        timestamp: new Date().toISOString()
+      }],
+      problem: { title: 'System Design Coaching' }
+    };
   }
   
   try {
     const response = await api.get(`/api/coaching/${id}`);
-    return response.data;
+    
+    // Ensure conversation exists with at least one message
+    const conversation = response.data.conversation && response.data.conversation.length > 0 
+      ? response.data.conversation 
+      : [{
+          role: 'assistant',
+          content: `Welcome to your ${response.data.problem?.title || 'system design'} coaching session!`,
+          timestamp: new Date().toISOString()
+        }];
+    
+    return {
+      ...response.data,
+      conversation
+    };
   } catch (error) {
     console.error(`Error fetching coaching session ${id}:`, error);
-    throw error;
+    return {
+      id,
+      conversation: [{
+        role: 'assistant',
+        content: "Welcome to your system design coaching session. Let's get started!",
+        timestamp: new Date().toISOString()
+      }],
+      problem: { title: 'System Design Coaching' }
+    };
   }
 };
 
-export const startCoachingSession = async (problemId) => {
+export const sendCoachingMessage = async (sessionId, message, contextInfo = null) => {
   try {
-    const response = await api.post(`/api/coaching/start/${problemId}`);
+    if (!sessionId) {
+      console.error("No sessionId provided to sendCoachingMessage");
+      throw new Error("No sessionId provided");
+    }
+    
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.error("Invalid message provided to sendCoachingMessage");
+      throw new Error("Invalid message format");
+    }
+    
+    // Use api instance instead of axios directly
+    const response = await api.post(`/api/coaching/${sessionId}/message`, { 
+      message,
+      contextInfo // Add contextInfo parameter to include diagram data
+    });
+    
     return response.data;
   } catch (error) {
-    console.error('Error starting coaching session:', error);
-    throw error;
-  }
-};
-
-export const sendCoachingMessage = async (sessionId, message) => {
-  try {
-    const response = await api.post(`/api/coaching/${sessionId}/message`, { message });
-    return response.data;
-  } catch (error) {
-    console.error('Error sending coaching message:', error);
+    console.error("Error sending coaching message:", error);
     throw error;
   }
 };
 
 export const getCoachingMaterials = async (sessionId, topic) => {
+  // Handle missing sessionId
+  if (!sessionId || sessionId === 'undefined' || sessionId === 'null') {
+    console.warn('No valid sessionId provided to getCoachingMaterials');
+    // Return generic materials instead of failing
+    return {
+      title: `Learning Materials: ${topic || 'System Design'}`,
+      content: '<p>Please refresh the page or start a new session to access learning materials.</p>'
+    };
+  }
+
   try {
     const response = await api.post(`/api/coaching/${sessionId}/materials`, { topic });
+    
+    // If no materials found, return a default
+    if (!response.data) {
+      return {
+        title: `Learning Materials: ${topic}`,
+        content: '<p>No specific materials available for this topic yet.</p>'
+      };
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching coaching materials:', error);
-    throw error;
+    // Return fallback content
+    return {
+      title: `Learning Materials: ${topic}`,
+      content: '<p>Unable to load learning materials at this time.</p>'
+    };
   }
 };
 
@@ -257,15 +346,55 @@ export const getInterviewDiagram = async (interviewId, diagramType = 'architectu
 };
 
 export const getCoachingDiagram = async (sessionId, diagramType = 'architecture', customPrompt = null) => {
+  // Handle missing sessionId
+  if (!sessionId || sessionId === 'undefined' || sessionId === 'null') {
+    console.warn('No valid sessionId provided to getCoachingDiagram');
+    return {
+      mermaidCode: 'graph TD\n    Client[Client] --> API[API Gateway]\n    API --> Service[Service]\n    Service --> DB[(Database)]'
+    };
+  }
+
   try {
     const response = await api.post(`/api/coaching/${sessionId}/diagram`, {
       diagramType,
       customPrompt
     });
+    
+    if (!response.data || !response.data.mermaidCode) {
+      return {
+        mermaidCode: 'graph TD\n    Client[Client] --> API[API Gateway]\n    API  --> Service[Service]\n    Service --> DB[(Database)]'
+      };
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error generating coaching diagram:', error);
-    throw error;
+    // Return a default diagram
+    return {
+      mermaidCode: 'graph TD\n    Client[Client] --> API[API Gateway]\n    API  --> Service[Service]\n    Service --> DB[(Database)]'
+    };
+  }
+};
+
+export const saveDiagram = async (sessionId, diagramData) => {
+  // Handle missing sessionId
+  if (!sessionId || sessionId === 'undefined' || sessionId === 'null') {
+    console.warn('No valid sessionId provided to saveDiagram');
+    return { 
+      success: false, 
+      message: 'Session ID is required to save the diagram' 
+    };
+  }
+
+  try {
+    const response = await api.post(`/api/coaching/${sessionId}/diagram/save`, {
+      diagram: diagramData
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error saving diagram:', error);
+    // Return a simple success message even on failure to keep UI responsive
+    return { success: false, message: 'Failed to save diagram, but you can continue working' };
   }
 };
 

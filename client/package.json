@@ -11,17 +11,19 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "axios": "^1.8.1",
+    "dagre": "^0.8.5",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.477.0",
     "next": "latest",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "reactflow": "^11.11.4",
     "recharts": "^2.15.1",
-    "swr": "^2.3.2",
-    "reactflow": "^11.7.0"
+    "swr": "^2.3.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.9",
+    "@types/dagre": "^0.7.52",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

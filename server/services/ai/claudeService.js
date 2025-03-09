@@ -2,8 +2,56 @@ const { default: Anthropic } = require('@anthropic-ai/sdk');
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || "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",
 });
+
+/**
+ * Simple message handler for direct conversations
+ * @param {Array} messages - Previous messages in the conversation
+ * @param {Object} options - Additional options like system prompt
+ * @returns {Promise<String>} - AI response text
+ */
+async function sendMessage(messages, options = {}) {
+  const maxRetries = 3;
+  let attempt = 0;
+  
+  while (attempt < maxRetries) {
+    try {
+      console.log(`Sending to Claude (attempt ${attempt + 1}):`, JSON.stringify(messages.slice(-3)));
+      
+      const formattedMessages = messages.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+      
+      const response = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-latest',
+        system: options.system || "You are a helpful system design coach.",
+        messages: formattedMessages,
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
+      
+      console.log('Claude response received');
+      return response.content[0].text;
+    } catch (error) {
+      attempt++;
+      
+      if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+        console.log(`Claude API timeout (attempt ${attempt}/${maxRetries})`);
+        
+        if (attempt < maxRetries) {
+          // Wait 2 seconds before retrying
+          await new Promise(resolve => setTimeout(resolve, 2000)); 
+          continue;
+        }
+      }
+      
+      console.error('Claude API error:', error.response?.data || error.message);
+      return "I'm having trouble connecting to my knowledge base. Let's try again in a moment.";
+    }
+  }
+}
 
 /**
  * Generate conversation response using Claude
@@ -486,5 +534,6 @@ function generateApiDiagram(entities, title) {
 
 module.exports = {
   generateResponse,
-  generateDiagram
+  generateDiagram,
+  sendMessage
 };

@@ -3,9 +3,10 @@ const { default: Anthropic } = require('@anthropic-ai/sdk');
 const Interview = require('../../models/Interview');
 const Problem = require('../../models/Problem');
 const knowledgeService = require('../knowledge/knowledgeService');
+const claudeService = require('../ai/claudeService');
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || "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",
 });
 
 const COACHING_STAGES = [
@@ -13,12 +14,99 @@ const COACHING_STAGES = [
   'data-modeling', 'scaling', 'evaluation'
 ];
 
+// In-memory session storage as fallback
+const sessions = {};
+
 // Helper for extracting key points from AI responses
 const _extractLearningPoints = (text, section) => {
   const regex = new RegExp(`${section}:\\s*(.+?)(?:\\n\\n|$)`, 'is');
   const match = text.match(regex);
   return match ? match[1].split('\n').map(p => p.trim()).filter(p => p) : [];
 };
+
+/**
+ * Process message for coaching session
+ * @param {String} sessionId - Session ID 
+ * @param {String} message - User's message
+ * @returns {Promise<Object>} - AI response message
+ */
+async function handleMessage(sessionId, message) {
+  console.log(`Processing message for session ${sessionId}`);
+  
+  try {
+    // Get session from database or fallback to in-memory
+    let session = null;
+    try {
+      session = await Interview.findById(sessionId);
+    } catch (err) {
+      console.log('Database error, falling back to in-memory session');
+    }
+    
+    // Use in-memory session if not found in database
+    if (!session) {
+      session = sessions[sessionId];
+      if (!session) {
+        console.log('Creating new in-memory session');
+        session = { id: sessionId, conversation: [] };
+        sessions[sessionId] = session;
+      }
+    }
+    
+    // Add user message to conversation
+    if (session.conversation) {
+      session.conversation.push({
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      session.conversation = [{
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      }];
+    }
+    
+    // Prepare messages for Claude
+    const messages = session.conversation.map(msg => ({
+      role: msg.role === 'coach' ? 'assistant' : msg.role,
+      content: msg.content
+    }));
+    
+    // Get response using the simplified sendMessage helper
+    const claudeResponse = await claudeService.sendMessage(messages, {
+      system: `You are a system design coach helping the user with their design problem. 
+      Provide clear, educational guidance about system design concepts.
+      Do not just ask questions - provide specific knowledge and recommendations.
+      Explain concepts thoroughly with examples when appropriate.
+      Structure your responses to be easy to follow.`
+    });
+    
+    // Add assistant response to conversation
+    const responseMsg = {
+      role: 'coach',
+      content: claudeResponse,
+      timestamp: new Date().toISOString()
+    };
+    
+    session.conversation.push(responseMsg);
+    
+    // Save if it's a database session
+    if (session.save) {
+      await session.save();
+    }
+    
+    return responseMsg;
+  } catch (error) {
+    console.error('Error handling message:', error);
+    return {
+      role: 'coach',
+      content: "I'm having trouble processing your request. Please try again in a moment.",
+      timestamp: new Date().toISOString(),
+      error: true
+    };
+  }
+}
 
 const coachEngine = {
   startCoachingSession: async (userId, problemId) => {
@@ -79,6 +167,7 @@ const coachEngine = {
     }
   },
   
+  // This method handles messages for database-stored sessions
   processResponse: async (sessionId, message) => {
     try {
       const session = await Interview.findById(sessionId);
@@ -91,85 +180,18 @@ const coachEngine = {
         throw new Error('This is not a coaching session');
       }
       
-      session.conversation.push({
-        role: 'student',
-        content: message
-      });
+      // Use the handleMessage function with the same session ID
+      const response = await handleMessage(sessionId, message);
       
-      const problem = await Problem.findOne({ id: session.problemId });
-      
-      // Get relevant knowledge based on the student's message and current stage
-      const relevantKnowledge = await knowledgeService.queryKnowledge(
-        `${message} ${session.currentStage} ${problem.title}`, 
-        'facebook'
-      );
-      
-      const formattedConversation = session.conversation
-        .filter(msg => msg.role !== 'system')
-        .map(msg => ({
-          role: msg.role === 'coach' ? 'assistant' : 'user',
-          content: msg.content
-        }));
-      
-      const stageGuidance = {
-        'introduction': 'Introduce the problem domain and key considerations',
-        'requirements': 'Guide them through gathering functional and non-functional requirements',
-        'architecture': 'Explain high-level system architecture concepts, components, and their interactions',
-        'data-modeling': 'Teach about data storage options, schema design, and access patterns',
-        'scaling': 'Explain techniques for horizontal and vertical scaling, caching, and load balancing',
-        'evaluation': 'Guide on how to evaluate design choices and trade-offs'
-      };
-
-      // Generate educational response
-      const response = await anthropic.messages.create({
-        model: "claude-3-opus-20240229",
-        system: `You are a system design coach mentoring a student on ${problem.title}.
-        
-        Current learning stage: ${session.currentStage}
-        Focus area: ${stageGuidance[session.currentStage]}
-        
-        Use this knowledge to provide educational content:
-        ${relevantKnowledge}
-        
-        Your role is to:
-        1. Explain concepts clearly with examples
-        2. Provide specific educational content rather than just questions
-        3. Guide the student's learning with scaffolded information
-        4. Suggest diagrams or visualizations where helpful
-        5. Respond in a supportive and detailed manner
-        
-        If the student has thoroughly understood the current stage concepts, 
-        advance to the next stage with a clear transition.`,
-        messages: formattedConversation,
-        max_tokens: 1000,
-        temperature: 0.7
-      });
-
-      // Add coach's response to conversation
-      session.conversation.push({
-        role: 'coach',
-        content: response.content[0].text
-      });
-      
-      // Check if we should advance to the next stage
-      const shouldAdvance = response.content[0].text.toLowerCase().includes("let's move on to") || 
-                            response.content[0].text.toLowerCase().includes("now that you understand") ||
-                            response.content[0].text.toLowerCase().includes("let's proceed to");
-                            
-      if (shouldAdvance) {
-        const currentStageIndex = COACHING_STAGES.indexOf(session.currentStage);
-        if (currentStageIndex < COACHING_STAGES.length - 1) {
-          session.currentStage = COACHING_STAGES[currentStageIndex + 1];
-        }
-      }
-      
-      await session.save();
       return session;
     } catch (error) {
       console.error('Coaching response error:', error);
       throw error;
     }
   },
+  
+  // New method for handling messages in any session type
+  handleMessage,
   
   generateLearningMaterials: async (sessionId, topic) => {
     try {

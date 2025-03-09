@@ -1,288 +1,292 @@
 // server/routes/coaching.js
 const express = require('express');
 const router = express.Router();
-const Interview = require('../models/Interview');
-const Problem = require('../models/Problem'); 
+const Problem = require('../models/Problem');
 const coachEngine = require('../services/coaching/coachEngine');
-const diagramService = require('../services/diagram/diagramService');
+const claudeService = require('../services/ai/claudeService');
 
-router.use((req, res, next) => {
-  console.log(`[Coaching] ${req.method} ${req.path}`);
-  next();
-});
+// In-memory storage for sessions (fallback when DB not available)
+const sessions = {};
 
-// Get all coaching sessions for the user
-router.get('/', async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const sessions = await Interview.find({ 
-      userId: userId,
-      type: 'coaching'
-    }).sort({ startedAt: -1 });
-    
-    res.json({ sessions });
-  } catch (error) {
-    console.error('Failed to get coaching sessions:', error);
-    res.status(500).json({ error: 'Failed to get coaching sessions' });
-  }
-});
-
-// Get available coaching problems
+// Get all coaching problems
 router.get('/problems', async (req, res) => {
+  console.log('GET request for coaching session problems');
+  
   try {
-    const problems = await Problem.find({});
-    res.json({ problems });
+    // Try to fetch problems from the database
+    const problems = await Problem.find({ 
+      $or: [{ type: 'coaching' }, { type: 'both' }] 
+    });
+    
+    console.log(`Found ${problems.length} problems in database`);
+    
+    // If problems exist in DB, return them
+    if (problems && problems.length > 0) {
+      const formattedProblems = problems.map(problem => ({
+        id: problem.id,
+        title: problem.title,
+        difficulty: problem.difficulty
+      }));
+      
+      return res.json(formattedProblems);
+    }
+    
+    // Fallback to mock data if no problems found
+    console.log('No problems found, using fallback data');
+    res.json([
+      { id: 'url-shortener', title: 'URL Shortener Service', difficulty: 'intermediate' },
+      { id: 'twitter', title: 'Twitter Clone', difficulty: 'advanced' },
+      { id: 'parking-lot', title: 'Parking Lot System', difficulty: 'beginner' }
+    ]);
   } catch (error) {
-    console.error('Failed to get coaching problems:', error);
-    res.status(500).json({ error: 'Failed to get problems' });
+    console.error('Error fetching coaching problems:', error);
+    // Fallback to mock data on error
+    res.json([
+      { id: 'url-shortener', title: 'URL Shortener Service', difficulty: 'intermediate' },
+      { id: 'twitter', title: 'Twitter Clone', difficulty: 'advanced' },
+      { id: 'parking-lot', title: 'Parking Lot System', difficulty: 'beginner' }
+    ]);
   }
 });
 
 // Start a new coaching session
 router.post('/start/:problemId', async (req, res) => {
+  const { problemId } = req.params;
+  
   try {
-    const { problemId } = req.params;
-    const userId = req.user.id;
+    const problem = await Problem.findOne({ id: problemId }) || {};
     
-    if (!problemId) {
-      return res.status(400).json({ error: 'Problem ID is required' });
-    }
+    const welcomeMessage = problem.promptSequence && problem.promptSequence[0] 
+      ? problem.promptSequence[0].question 
+      : `Welcome to your ${problem.title || 'System Design'} design session! Let's get started.`;
     
-    const session = await coachEngine.startCoachingSession(userId, problemId);
-    res.status(201).json({ session });
+    const newSession = {
+      id: problemId,
+      problem: {
+        id: problemId,
+        title: problem.title || 'System Design Problem'
+      },
+      conversation: [{
+        role: 'assistant',
+        content: welcomeMessage,
+        timestamp: new Date().toISOString()
+      }],
+      createdAt: new Date().toISOString()
+    };
+    
+    sessions[problemId] = newSession;
+    
+    return res.status(201).json(newSession);
   } catch (error) {
-    console.error('Coaching session start error:', error);
+    console.error('Error starting coaching session:', error);
     res.status(500).json({ error: 'Failed to start coaching session' });
   }
 });
 
-// Get coaching session by ID
-router.get('/:id', async (req, res) => {
+// Get a coaching session by ID
+router.get('/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
-    
-    let session;
-    
-    if (id === '1') {
-      // Find the most recent coaching session
-      session = await Interview.findOne({
-        userId: userId,
-        type: 'coaching'
-      }).sort({ startedAt: -1 });
-      
-      if (!session) {
-        // Create a mock session for development if none exists
-        session = {
-          _id: '000000000000000000000001',
-          userId: userId,
-          type: 'coaching',
-          status: 'in_progress',
-          startedAt: new Date(),
-          problemId: '1',
-          currentStage: 'planning',
-          conversation: [
-            {
-              role: 'coach',
-              content: 'Welcome to your system design coaching session! What system would you like to design today?',
-              timestamp: new Date()
-            }
-          ]
-        };
+    // Try to get session from database
+    try {
+      const session = await Interview.findById(sessionId);
+      if (session) {
+        return res.json({
+          id: session._id,
+          problem: {
+            id: session.problemId,
+            title: session.problemTitle || 'System Design Problem'
+          },
+          conversation: session.conversation,
+          currentStage: session.currentStage,
+          createdAt: session.startedAt
+        });
       }
-    } else if (/^[0-9a-fA-F]{24}$/.test(id)) {
-      session = await Interview.findOne({
-        _id: id,
-        userId: userId,
-        type: 'coaching'
-      });
-    } else {
-      return res.status(400).json({ error: 'Invalid session ID format' });
+    } catch (dbError) {
+      console.log('DB session fetch failed, checking in-memory');
     }
     
+    // Fallback to in-memory session
+    const session = sessions[sessionId];
     if (!session) {
-      return res.status(404).json({ error: 'Coaching session not found' });
+      return res.status(404).json({ error: 'Session not found' });
     }
     
-    res.json({ session });
+    res.json(session);
   } catch (error) {
-    console.error('Get coaching session error:', error);
+    console.error('Error fetching coaching session:', error);
     res.status(500).json({ error: 'Failed to get coaching session' });
   }
 });
 
-// Send message in coaching session
-router.post('/:id/message', async (req, res) => {
+// Send a message in a coaching session
+// Send a message in a coaching session
+router.post('/:sessionId/message', async (req, res) => {
   try {
-    const { message } = req.body;
-    const { id } = req.params;
-    const userId = req.user.id;
+    const { sessionId } = req.params;
+    const { message, contextInfo } = req.body;
     
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
+    console.log(`Processing message for session ${sessionId}:`, message);
+    
+    // Validate input
+    if (!message || typeof message !== 'string') {
+      console.error('Invalid message format:', message);
+      return res.status(400).json({ 
+        error: 'Message is required',
+        message: {
+          role: 'coach',
+          content: "I couldn't understand your message. Could you please try again?",
+          timestamp: new Date().toISOString()
+        }
+      });
     }
     
-    let sessionId;
+    // Get session from memory
+    const session = sessions[sessionId];
+    if (!session) {
+      return res.status(404).json({ 
+        error: 'Session not found',
+        message: {
+          role: 'coach',
+          content: "I couldn't find your session. Let's try starting a new one.",
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
     
-    if (id === '1') {
-      // Find the most recent coaching session
-      const session = await Interview.findOne({
-        userId: userId,
-        type: 'coaching',
-        status: 'in_progress'
-      }).sort({ startedAt: -1 });
+    // Add user message
+    session.conversation.push({
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Prepare messages for Claude
+    const messages = session.conversation.map(msg => ({
+      role: msg.role === 'coach' ? 'assistant' : msg.role,
+      content: msg.content
+    }));
+    
+    // Create system prompt, include diagram context if provided
+    let systemPrompt = `You are a system design coach helping the user design ${session.problem?.title || 'a system'}.
+        Provide clear, concise educational guidance about system design concepts.
+        Give specific recommendations rather than just asking questions.
+        Keep your responses brief and focused.
+        Use code blocks with proper syntax highlighting when showing code examples.`;
+    
+    if (session.problem && session.problem.description) {
+      systemPrompt += `\n\nThe problem statement is: ${session.problem.description}`;
+    }
+    
+    // Add diagram context if available
+    if (contextInfo && contextInfo.diagramContext) {
+      systemPrompt += `\n\nThe user has shared a system diagram with you. Here is the Mermaid code representation:
+      \`\`\`
+      ${contextInfo.diagramContext.mermaidCode}
+      \`\`\`
       
-      if (!session) {
-        return res.status(404).json({ error: 'No active coaching session found' });
+      Please reference this diagram in your response.
+      ${contextInfo.requestDiagramFeedback ? 'Provide specific feedback on the diagram and suggest improvements.' : ''}`;
+    }
+    
+    // Get response from Claude
+    try {
+      const claudeResponse = await claudeService.sendMessage(messages, {
+        system: systemPrompt
+      });
+      
+      // Add coach response
+      const responseMsg = {
+        role: 'coach',
+        content: claudeResponse,
+        timestamp: new Date().toISOString()
+      };
+      
+      session.conversation.push(responseMsg);
+      
+      // Generate diagram suggestions if requested
+      let diagramSuggestions = null;
+      if (contextInfo && (contextInfo.requestDiagramSuggestions || contextInfo.requestDiagramFeedback)) {
+        try {
+          diagramSuggestions = await coachEngine.generateDiagramDescription(sessionId, 'architecture');
+        } catch (suggestErr) {
+          console.error("Error generating diagram suggestions:", suggestErr);
+        }
       }
       
-      sessionId = session._id;
-    } else if (/^[0-9a-fA-F]{24}$/.test(id)) {
-      sessionId = id;
-    } else {
-      return res.status(400).json({ error: 'Invalid session ID format' });
+      res.json({ message: responseMsg, diagramSuggestions });
+    } catch (aiError) {
+      console.error('Error getting AI response:', aiError);
+      
+      // Provide a fallback response
+      const errorMsg = {
+        role: 'coach',
+        content: "I'm having trouble connecting to my knowledge base right now. Let's try to continue our discussion in a moment.",
+        timestamp: new Date().toISOString(),
+        error: true
+      };
+      
+      session.conversation.push(errorMsg);
+      res.json({ message: errorMsg });
     }
-    
-    const processedSession = await coachEngine.processResponse(sessionId, message);
-    res.json({ session: processedSession });
   } catch (error) {
-    console.error('Process coaching message error:', error);
-    res.status(500).json({ error: 'Failed to process message' });
+    console.error('Error processing message:', error);
+    res.status(500).json({ 
+      error: 'Failed to process message',
+      message: {
+        role: 'coach',
+        content: "There was an error processing your message. Please try again.",
+        timestamp: new Date().toISOString()
+      }
+    });
   }
 });
 
-// Get learning materials
-router.post('/:id/materials', async (req, res) => {
-    try {
-      const { topic } = req.body;
-      const { id } = req.params;
-      
-      if (!topic) {
-        return res.status(400).json({ error: 'Topic is required' });
-      }
-      
-      const materials = await coachEngine.generateLearningMaterials(id, topic);
-      res.json({ materials });
-    } catch (error) {
-      console.error('Generate learning materials error:', error);
-      res.status(500).json({ error: 'Failed to generate learning materials' });
+// Helper function to generate diagram suggestions
+async function generateDiagramSuggestions(session, message, currentDiagram) {
+  // Implementation depends on your AI setup
+  // This could call Claude or another AI service with specialized prompting
+  // Return an object with at least a mermaidCode property
+  return {
+    mermaidCode: '...' // Generated suggestion
+  };
+}
+
+// Generate learning materials for a specific topic
+router.post('/:sessionId/materials', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { topic } = req.body;
+    
+    if (!topic) {
+      return res.status(400).json({ error: 'Topic is required' });
     }
-  });
-  
-  // Generate a diagram based on conversation
-  router.post('/:id/diagram', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { diagramType = 'architecture', customPrompt = null } = req.body;
-      const userId = req.user.id;
-  
-      if (!userId) {
-        return res.status(401).json({ 
-          error: 'Authentication Required', 
-          details: 'You must be logged in to generate diagrams' 
-        });
-      }
-  
-      // Find coaching session
-      let session;
-      
-      if (id === '1') {
-        session = await Interview.findOne({
-          userId: userId,
-          type: 'coaching',
-          status: 'in_progress'
-        }).sort({ startedAt: -1 });
-      } else if (/^[0-9a-fA-F]{24}$/.test(id)) {
-        session = await Interview.findOne({
-          _id: id,
-          userId: userId,
-          type: 'coaching'
-        });
-      } else {
-        return res.status(400).json({ error: 'Invalid session ID format' });
-      }
-  
-      if (!session) {
-        return res.status(404).json({ 
-          error: 'Coaching Session Not Found', 
-          details: 'No matching coaching session found' 
-        });
-      }
-  
-      // Generate diagram
-      const diagram = await diagramService.generateDiagram(
-        session._id,
-        diagramType,
-        customPrompt
-      );
-  
-      // Add the diagram to the session
-      if (!session.diagrams) {
-        session.diagrams = [];
-      }
-      
-      session.diagrams.push({
-        type: diagram.type,
-        mermaidCode: diagram.mermaidCode,
-        description: diagram.description,
-        timestamp: new Date()
-      });
-      
-      await session.save();
-  
-      res.json({ diagram });
-    } catch (error) {
-      console.error('Coaching diagram error:', error);
-      res.status(500).json({ error: 'Failed to generate diagram' });
+    
+    const materials = await coachEngine.generateLearningMaterials(sessionId, topic);
+    res.json(materials);
+  } catch (error) {
+    console.error('Error generating learning materials:', error);
+    res.status(500).json({ error: 'Failed to generate materials' });
+  }
+});
+
+// Generate a diagram description for the coaching session
+router.post('/:sessionId/diagram', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { diagramType } = req.body;
+    
+    if (!diagramType) {
+      return res.status(400).json({ error: 'Diagram type is required' });
     }
-  });
-  
-  // Get diagrams from a coaching session
-  router.get('/:id/diagrams', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.user.id;
-  
-      if (!userId) {
-        return res.status(401).json({ 
-          error: 'Authentication Required', 
-          details: 'You must be logged in to access diagrams' 
-        });
-      }
-  
-      let session;
-      
-      if (id === '1') {
-        session = await Interview.findOne({
-          userId: userId,
-          type: 'coaching',
-          status: 'in_progress'
-        }).sort({ startedAt: -1 });
-      } else if (/^[0-9a-fA-F]{24}$/.test(id)) {
-        session = await Interview.findOne({
-          _id: id,
-          userId: userId,
-          type: 'coaching'
-        });
-      } else {
-        return res.status(400).json({ error: 'Invalid session ID format' });
-      }
-  
-      if (!session) {
-        return res.status(404).json({ 
-          error: 'Coaching Session Not Found', 
-          details: 'No matching coaching session found' 
-        });
-      }
-  
-      res.json({ diagrams: session.diagrams || [] });
-    } catch (error) {
-      console.error('Error fetching diagrams:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch diagrams', 
-        details: error.message 
-      });
-    }
-  });
-  
-  module.exports = router;
+    
+    const diagram = await coachEngine.generateDiagramDescription(sessionId, diagramType);
+    res.json(diagram);
+  } catch (error) {
+    console.error('Error generating diagram:', error);
+    res.status(500).json({ error: 'Failed to generate diagram' });
+  }
+});
+
+module.exports = router;
