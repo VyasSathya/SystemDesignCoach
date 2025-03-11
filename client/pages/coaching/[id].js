@@ -1,33 +1,44 @@
+// client/pages/coaching/[id].js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
 import {
-  ArrowLeft,
-  Save,
-  Send,
-  RefreshCw,
-  MessageSquare,
-  CheckCircle,
-  XCircle
+  ArrowLeft, Save, Send, RefreshCw, MessageSquare, CheckCircle, XCircle, Eye, Edit, 
+  ClipboardList, Database, Code, Layout, BarChart, Shield, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  getCoachingSession,
-  sendCoachingMessage,
-  getCoachingMaterials,
-  getCoachingDiagram,
-  saveDiagram
+  getCoachingSession, sendCoachingMessage, getCoachingMaterials,
+  getCoachingDiagram, saveDiagram
 } from '../../utils/api';
 import { mermaidToReactFlow, reactFlowToMermaid } from '../../components/diagram/utils/conversion';
 import TopicGuidedCoaching from '../../components/coaching/TopicGuidedCoaching';
+
+// Import workbook components directly
+import RequirementsPage from '../RequirementsPage';
+import APIDesignPage from '../APIDesignPage';
+import DataModelPage from '../DataModelPage';
+import SystemArchitecturePage from '../SystemArchitecturePage';
+import ScalingStrategyPage from '../ScalingStrategyPage';
+import ReliabilitySecurityPage from '../ReliabilitySecurityPage';
 
 const MermaidRenderer = dynamic(() => import('../../components/diagram/MermaidRenderer'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-gray-100 h-full w-full"></div>
 });
+
 const ReactFlowDiagramWithProvider = dynamic(() => import('../../components/diagram/ReactFlowDiagram'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center bg-gray-50">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+    </div>
+  )
+});
+
+const SequenceDiagram = dynamic(() => import('../../components/diagram/SequenceDiagram'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-50">
@@ -38,9 +49,11 @@ const ReactFlowDiagramWithProvider = dynamic(() => import('../../components/diag
 
 const CoachingSessionPage = () => {
   const router = useRouter();
-  const { sessionId } = router.query;
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
+  
+  // Safely extract session ID from router query
+  const sessionId = router.query?.id;
 
   // Session state
   const [session, setSession] = useState(null);
@@ -54,6 +67,13 @@ const CoachingSessionPage = () => {
   const [currentTopic, setCurrentTopic] = useState('REQUIREMENTS');
   const [includeDiagram, setIncludeDiagram] = useState(false);
   const [requestDiagramSuggestions, setRequestDiagramSuggestions] = useState(false);
+  
+  // Add state for TopicGuidedCoaching collapsible section
+  const [topicGuidedOpen, setTopicGuidedOpen] = useState(false);
+  
+  // Add dropdown reference
+  const workbookDropdownRef = useRef(null);
+  const [showWorkbookDropdown, setShowWorkbookDropdown] = useState(false);
 
   // Chat state
   const [messages, setMessages] = useState([]);
@@ -71,60 +91,108 @@ const CoachingSessionPage = () => {
   const [diagramSuggestions, setDiagramSuggestions] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-// Entire file remains the same, with modifications in fetchSession function
+  // Workbook state
+  const [rightPanelMode, setRightPanelMode] = useState('workbook'); // 'workbook' or 'diagram'
+  const [activeWorkbookTab, setActiveWorkbookTab] = useState('requirements');
+  const [formData, setFormData] = useState({
+    requirements: {},
+    api: {},
+    data: {},
+    architecture: {},
+    scaling: {},
+    reliability: {}
+  });
 
-useEffect(() => {
-  console.log('FULL ROUTER QUERY:', router.query);
-  console.log('SESSION ID FROM ROUTER:', router.query.id);
-
-  const sessionId = router.query.id;
-
-  if (!sessionId) {
-    console.error('NO VALID SESSION ID');
-    setLoading(false);
-    return;
-  }
-
-  const fetchSession = async () => {
-    try {
-      const data = await getCoachingSession(sessionId);
-      console.log('SESSION DATA:', JSON.stringify(data, null, 2));
-
-      const initialMessages = data.conversation 
-        ? data.conversation.map((msg, index) => ({
-            id: index,
-            role: msg.role === 'system' ? 'system' : 
-                   msg.role === 'assistant' ? 'assistant' : 'user',
-            content: msg.content || "No content available",
-            timestamp: msg.timestamp || new Date().toISOString()
-          }))
-        : [{
-            id: 0,
-            role: 'assistant',
-            content: `Welcome to your ${data.problem?.title || 'system design'} coaching session. Let's begin our system design journey!`,
-            timestamp: new Date().toISOString()
-          }];
-
-      console.log('INITIAL MESSAGES:', JSON.stringify(initialMessages, null, 2));
-      setMessages(initialMessages);
-      setSession(data);
-      setError(null);
-    } catch (err) {
-      console.error('FETCH SESSION ERROR:', err);
-      setError("Failed to load coaching session");
-      setMessages([{
-        id: 0,
-        role: 'assistant',
-        content: "Welcome to your system design coaching session. There was an error loading the session.",
-        timestamp: new Date().toISOString()
-      }]);
-    } finally {
-      setLoading(false);
-    }
+  // Define workbook tabs
+  const workbookTabs = [
+    { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
+    { id: 'api', label: 'API Design', icon: <Code size={18} /> },
+    { id: 'data', label: 'Data Model', icon: <Database size={18} /> },
+    { id: 'architecture', label: 'Architecture', icon: <Layout size={18} /> },
+    { id: 'scaling', label: 'Scaling Strategy', icon: <BarChart size={18} /> },
+    { id: 'reliability', label: 'Reliability & Security', icon: <Shield size={18} /> }
+  ];
+  
+  // Define diagram tabs
+  const [diagramTabs, setDiagramTabs] = useState([
+    { id: 'flowchart', label: 'Flow Diagram', active: true },
+    { id: 'sequence', label: 'Sequence Diagram', active: false }
+  ]);
+  
+  const setActiveDiagramTab = (tabId) => {
+    setDiagramTabs(diagramTabs.map(tab => ({
+      ...tab,
+      active: tab.id === tabId
+    })));
   };
 
-  fetchSession();
-}, [router.query]);
+  // Update form data
+  const updateFormData = (section, data) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: data
+    }));
+  };
+  
+  // Add click outside handler for workbook dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (workbookDropdownRef.current && !workbookDropdownRef.current.contains(event.target)) {
+        setShowWorkbookDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [workbookDropdownRef]);
+
+  // Load session data
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    const fetchSession = async () => {
+      try {
+        const data = await getCoachingSession(sessionId);
+        console.log('SESSION DATA:', JSON.stringify(data, null, 2));
+
+        const initialMessages = data.conversation 
+          ? data.conversation.map((msg, index) => ({
+              id: index,
+              role: msg.role === 'system' ? 'system' : 
+                    msg.role === 'assistant' ? 'assistant' : 'user',
+              content: msg.content || "No content available",
+              timestamp: msg.timestamp || new Date().toISOString()
+            }))
+          : [{
+              id: 0,
+              role: 'assistant',
+              content: `Welcome to your ${data.problem?.title || 'system design'} coaching session. Let's begin our system design journey!`,
+              timestamp: new Date().toISOString()
+            }];
+
+        console.log('INITIAL MESSAGES:', JSON.stringify(initialMessages, null, 2));
+        setMessages(initialMessages);
+        setSession(data);
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching coaching session ${sessionId}:`, err);
+        setError("Failed to load coaching session");
+        setMessages([{
+          id: 0,
+          role: 'assistant',
+          content: "Welcome to your system design coaching session. Let's get started!",
+          timestamp: new Date().toISOString()
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, [sessionId]);
+  
+  // Auto-scroll to bottom of messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -158,23 +226,13 @@ useEffect(() => {
       console.error("Invalid message:", message);
       return;
     }
+    if (!sessionId) {
+      console.error("No valid sessionId available");
+      return;
+    }
+    
     setIsSending(true);
-    console.log("Sending message to session:", router.query.id, message);
     try {
-      if (!router.query.id) {
-        console.error("No valid sessionId provided to sendCoachingMessage");
-        setMessages(prev => [
-          ...prev,
-          {
-            id: prev.length,
-            role: 'assistant',
-            content: "There seems to be an issue with the session ID. Please refresh or start a new session.",
-            timestamp: new Date().toISOString()
-          }
-        ]);
-        setIsSending(false);
-        return;
-      }
       const userMessage = {
         id: messages.length,
         role: 'user',
@@ -193,10 +251,11 @@ useEffect(() => {
       
       setIsTyping(true);
       const response = await sendCoachingMessage(
-        router.query.id,
+        sessionId,
         message,
         Object.keys(finalContextInfo).length > 0 ? finalContextInfo : null
       );
+      
       console.log("Message response:", response);
       if (response && response.message) {
         const responseMessage = {
@@ -221,12 +280,9 @@ useEffect(() => {
             ]
           };
         });
-        console.log("Checking for diagram suggestions:", response.diagramSuggestions);
         if (response.diagramSuggestions) {
-          console.log("Diagram suggestions found, processing them...");
           handleDiagramSuggestions(response.diagramSuggestions);
         } else if (requestDiagramSuggestions) {
-          console.log("No suggestions in response, generating from context...");
           handleGetDiagramSuggestion();
         }
       } else {
@@ -489,6 +545,21 @@ useEffect(() => {
   };
 
   const renderDiagramEditor = () => {
+    // Get active diagram tab
+    const activeDiagramTab = diagramTabs.find(tab => tab.active)?.id || 'flowchart';
+    
+    if (activeDiagramTab === 'sequence') {
+      return (
+        <div className="relative h-full">
+          <SequenceDiagram 
+            initialDiagram={currentDiagramState}
+            onDiagramUpdate={handleDiagramUpdate}
+          />
+        </div>
+      );
+    }
+    
+    // Default flowchart diagram
     if (viewMode === 'edit') {
       return (
         <div className="relative h-full">
@@ -571,6 +642,26 @@ useEffect(() => {
     }
   };
 
+  // Render active workbook component
+  const getActiveWorkbookComponent = () => {
+    switch (activeWorkbookTab) {
+      case 'requirements':
+        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+      case 'api':
+        return <APIDesignPage data={formData.api} updateData={(data) => updateFormData('api', data)} />;
+      case 'data':
+        return <DataModelPage data={formData.data} updateData={(data) => updateFormData('data', data)} />;
+      case 'architecture':
+        return <SystemArchitecturePage data={formData.architecture} updateData={(data) => updateFormData('architecture', data)} />;
+      case 'scaling':
+        return <ScalingStrategyPage data={formData.scaling} updateData={(data) => updateFormData('scaling', data)} />;
+      case 'reliability':
+        return <ReliabilitySecurityPage data={formData.reliability} updateData={(data) => updateFormData('reliability', data)} />;
+      default:
+        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+    }
+  };
+
   if (loading && !session) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -611,6 +702,30 @@ useEffect(() => {
             </h1>
           </div>
           <div className="flex items-center space-x-2">
+            <div className="mr-2">
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setRightPanelMode('workbook')}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    rightPanelMode === 'workbook'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Workbook
+                </button>
+                <button
+                  onClick={() => setRightPanelMode('diagram')}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    rightPanelMode === 'diagram'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Diagram
+                </button>
+              </div>
+            </div>
             <button
               onClick={handleSaveDiagram}
               className={`flex items-center px-3 py-1 rounded text-sm ${
@@ -633,11 +748,27 @@ useEffect(() => {
         <div className="w-1/2 flex flex-col border-r border-gray-200">
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <TopicGuidedCoaching 
-              currentTopic={currentTopic}
-              onSendMessage={(question) => handleSendMessage(question)}
-              onGetMaterials={handleGetMaterials}
-            />
+            <div className="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
+              <div className="flex justify-between items-center cursor-pointer p-3 bg-indigo-50 border-b border-gray-200" 
+                   onClick={() => setTopicGuidedOpen(!topicGuidedOpen)}>
+                <h3 className="font-medium text-indigo-700">Topic Guided Coaching</h3>
+                {topicGuidedOpen ? (
+                  <ChevronUp className="h-5 w-5 text-indigo-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-indigo-600" />
+                )}
+              </div>
+              {topicGuidedOpen && (
+                <div className="p-3">
+                  <TopicGuidedCoaching 
+                    currentTopic={currentTopic}
+                    onSendMessage={(question) => handleSendMessage(question)}
+                    onGetMaterials={handleGetMaterials}
+                  />
+                </div>
+              )}
+            </div>
+            
             {messages.length > 0 ? (
               messages.map((msg, index) => (
                 <div
@@ -705,7 +836,7 @@ useEffect(() => {
                     checked={includeDiagram}
                     onChange={() => setIncludeDiagram(!includeDiagram)}
                   />
-                  <span className="text-blue-700 font-medium">Include current diagram</span>
+                  <span className="text-blue-700 font-medium">Include current design</span>
                 </label>
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -755,55 +886,146 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Right panel - Diagram */}
+        {/* Right panel - Diagram or Workbook */}
         <div className="w-1/2 flex flex-col">
-          <div className="p-4 bg-white border-b border-gray-200 flex justify-between items-center">
-            <div className="flex items-center">
-              <h2 className="text-md font-medium">System Design Diagram</h2>
-              <div className="ml-4 flex border border-gray-300 rounded-md overflow-hidden">
-                <button
-                  onClick={() => setViewMode('edit')}
-                  className={`px-2 py-1 text-xs ${viewMode === 'edit' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setViewMode('preview')}
-                  className={`px-2 py-1 text-xs ${viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Preview
-                </button>
-                <button
-                  onClick={() => setViewMode('code')}
-                  className={`px-2 py-1 text-xs ${viewMode === 'code' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Code
-                </button>
+          {rightPanelMode === 'diagram' ? (
+            <>
+              {/* Diagram mode controls */}
+              <div className="bg-white border-b border-gray-200 p-3">
+                <div className="flex justify-between items-center">
+                  {/* Diagram type tabs */}
+                  <div className="flex space-x-4">
+                    {diagramTabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveDiagramTab(tab.id)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                          tab.active
+                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Diagram view controls */}
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => setViewMode('edit')}
+                      className={`px-3 py-1 text-xs rounded-lg border ${
+                        viewMode === 'edit'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Edit className="h-3 w-3 inline mr-1" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setViewMode('preview')}
+                      className={`px-3 py-1 text-xs rounded-lg border ${
+                        viewMode === 'preview'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Eye className="h-3 w-3 inline mr-1" />
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => setViewMode('code')}
+                      className={`px-3 py-1 text-xs rounded-lg border ${
+                        viewMode === 'code'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Code className="h-3 w-3 inline mr-1" />
+                      Code
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={handleSendDiagramToCoach}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Get Feedback
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleGetDiagramSuggestion}
-                className="flex items-center px-2 py-1 text-xs bg-gray-100 rounded border border-gray-300 hover:bg-gray-200"
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                AI Suggest
-              </button>
-              <button
-                onClick={handleSendDiagramToCoach}
-                className="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded border border-blue-300 hover:bg-blue-200"
-              >
-                <MessageSquare className="h-3 w-3 mr-1" />
-                Get Feedback
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            {renderDiagramEditor()}
-          </div>
+              {/* Diagram content */}
+              <div className="flex-1 overflow-hidden">
+                {renderDiagramEditor()}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Workbook tabs */}
+              <div className="bg-white border-b border-gray-200">
+                <div className="flex w-full overflow-hidden relative">
+                  <div className="flex flex-1 overflow-x-auto">
+                    {workbookTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveWorkbookTab(tab.id)}
+                        className={`flex items-center py-3 px-4 text-sm font-medium whitespace-nowrap transition-colors ${
+                          activeWorkbookTab === tab.id
+                            ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
+                            : 'border-b-2 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="mr-2">{tab.icon}</span>
+                        <span className="truncate">{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="absolute right-0 top-0 h-full bg-gradient-to-l from-white to-transparent w-12 flex items-center justify-end">
+                    <button 
+                      onClick={() => setShowWorkbookDropdown(!showWorkbookDropdown)}
+                      className="h-full px-2 text-gray-500 hover:text-indigo-600">
+                      <ChevronDown size={16} />
+                    </button>
+                  </div>
+                  {/* Workbook tab dropdown */}
+                  {showWorkbookDropdown && (
+                    <div 
+                      ref={workbookDropdownRef}
+                      className="absolute right-2 top-12 bg-white shadow-lg border border-gray-200 rounded-md z-10">
+                      <div className="py-1">
+                        {workbookTabs.map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => {
+                              setActiveWorkbookTab(tab.id);
+                              setShowWorkbookDropdown(false);
+                            }}
+                            className={`flex items-center w-full text-left px-4 py-2 text-sm ${
+                              activeWorkbookTab === tab.id
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span className="mr-2">{tab.icon}</span>
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Workbook content area */}
+              <div className="flex-1 overflow-auto">
+                {getActiveWorkbookComponent()}
+              </div>
+            </>
+          )}
         </div>
       </div>
-
+      
       {/* Learning materials modal */}
       {activeMaterial && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
