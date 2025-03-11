@@ -1,81 +1,49 @@
+// server/routes/problems.js
 const express = require('express');
-const Problem = require('../models/Problem');
-const Session = require('../models/Session');
-
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
 
-// Get all problems
-router.get('/', async (req, res) => {
-  try {
-    const problems = await Problem.find().sort('difficulty');
-    
-    // Format for client
-    const formattedProblems = problems.map(problem => ({
-      id: problem.id,
-      title: problem.title,
-      difficulty: problem.difficulty,
-      description: problem.description.substring(0, 150) + '...',
-      estimatedTime: problem.estimatedTime
-    }));
-    
-    res.json({ problems: formattedProblems });
-  } catch (error) {
-    console.error('Get problems error:', error);
-    res.status(500).json({ error: 'Failed to get problems' });
-  }
-});
+const problemsDir = path.join(__dirname, '../../data/problems');
 
-// Get single problem
-router.get('/:id', async (req, res) => {
+function loadProblems() {
+  let problems = [];
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
-    
-    // Get problem and active session
-    const problem = await Problem.findOne({ id });
-    if (!problem) {
-      return res.status(404).json({ error: 'Problem not found' });
-    }
-    
-    const session = await Session.findOne({ 
-      userId, 
-      problemId: id,
-      completed: false
-    }).sort('-startedAt');
-    
-    res.json({ 
-      problem,
-      session
+    const files = fs.readdirSync(problemsDir);
+    files.forEach(file => {
+      const ext = path.extname(file).toLowerCase();
+      const filePath = path.join(problemsDir, file);
+      if (ext === '.md') {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const lines = content.split('\n');
+        let title = file.replace('.md', '');
+        if (lines[0].startsWith('#')) {
+          title = lines[0].replace('#', '').trim();
+        }
+        problems.push({
+          id: file.replace('.md', ''),
+          title,
+          content,
+          difficulty: 'medium'
+        });
+      } else if (ext === '.json') {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        problems.push(data);
+      }
     });
+    console.log(`Loaded ${problems.length} problems from ${problemsDir}.`);
   } catch (error) {
-    console.error('Get problem error:', error);
-    res.status(500).json({ error: 'Failed to get problem' });
+    console.error("Error reading problem files:", error);
   }
-});
+  return problems;
+}
 
-// Get recommended problems
-router.get('/recommended', async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    // Get user's completed problems
-    const completedSessions = await Session.find({
-      userId,
-      completed: true
-    });
-    
-    const completedProblemIds = completedSessions.map(session => session.problemId);
-    
-    // Get two random problems the user hasn't completed
-    const recommendedProblems = await Problem.find({
-      id: { $nin: completedProblemIds }
-    }).limit(2);
-    
-    res.json({ problems: recommendedProblems });
-  } catch (error) {
-    console.error('Get recommended problems error:', error);
-    res.status(500).json({ error: 'Failed to get recommended problems' });
+router.get('/', (req, res) => {
+  const problems = loadProblems();
+  if (problems.length === 0) {
+    return res.status(404).json({ error: "No problems found" });
   }
+  res.json(problems);
 });
 
 module.exports = router;

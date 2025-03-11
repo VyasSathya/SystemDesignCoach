@@ -1,16 +1,15 @@
 // client/components/diagram/DiagramPanel.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
-import { X, Download, RefreshCw, MessageSquare, Code, Eye, Edit, Undo, Redo, Save, 
-         Database, Server, Globe, Archive, Grid, Share2, Box } from 'lucide-react';
+import { X, Download, RefreshCw, MessageSquare, Code, Eye, Edit, Undo, Redo, Save, Database, Server, Globe, Archive, Grid, Share2, Box } from 'lucide-react';
 import { mermaidToReactFlow, reactFlowToMermaid } from './utils/conversion';
 import dynamic from 'next/dynamic';
 
-// Use dynamic imports for browser-only components
 const MermaidRenderer = dynamic(() => import('./MermaidRenderer'), { ssr: false });
 const ReactFlowDiagramWithProvider = dynamic(() => import('./ReactFlowDiagram'), { ssr: false });
 
 const DiagramPanel = ({
+  hideModes = false,
   sessionId,
   sessionType = 'coaching',
   initialDiagram = null,
@@ -19,9 +18,18 @@ const DiagramPanel = ({
   onRefresh,
   onAiSuggest
 }) => {
+  // When hideModes is true, force viewMode to 'edit' and don't allow changing it
   const [viewMode, setViewMode] = useState('edit');
+  
+  // Always force edit mode when hideModes is true
+  useEffect(() => {
+    if (hideModes) {
+      setViewMode('edit');
+    }
+  }, [hideModes]);
+
   const [mermaidCode, setMermaidCode] = useState(
-    initialDiagram?.mermaidCode || 
+    initialDiagram?.mermaidCode ||
     'graph TD\n    Client[Client] --> API[API Gateway]\n    API --> Service[Service]\n    Service --> DB[(Database)]'
   );
   const [nodes, setNodes] = useState([]);
@@ -32,35 +40,31 @@ const DiagramPanel = ({
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const initializedRef = useRef(false);
 
-  // Initialize from mermaid code when initialDiagram changes
+  // Initialize from mermaid code only once
   useEffect(() => {
-    if (!initialDiagram) return;
-    
-    try {
-      const code = initialDiagram.mermaidCode;
-      setMermaidCode(code);
-      const { nodes: convertedNodes, edges: convertedEdges } = mermaidToReactFlow(code);
-      setNodes(convertedNodes);
-      setEdges(convertedEdges);
-      
-      // Reset history
-      setHistory([{ 
-        mermaidCode: code, 
-        nodes: convertedNodes, 
-        edges: convertedEdges 
-      }]);
-      setHistoryIndex(0);
-      setError(null);
-    } catch (err) {
-      console.error('Error converting Mermaid to React Flow:', err);
-      setError('Failed to initialize diagram: ' + err.message);
+    if (initialDiagram && !initializedRef.current) {
+      try {
+        const code = initialDiagram.mermaidCode;
+        setMermaidCode(code);
+        const { nodes: convertedNodes, edges: convertedEdges } = mermaidToReactFlow(code);
+        setNodes(convertedNodes);
+        setEdges(convertedEdges);
+        setHistory([{ mermaidCode: code, nodes: convertedNodes, edges: convertedEdges }]);
+        setHistoryIndex(0);
+        setError(null);
+        initializedRef.current = true;
+      } catch (err) {
+        console.error('Error converting Mermaid to React Flow:', err);
+        setError('Failed to initialize diagram: ' + err.message);
+      }
     }
   }, [initialDiagram]);
 
-  // Initialize default diagram if none provided
+  // Only initialize if nodes/edges are still empty and not already initialized
   useEffect(() => {
-    if (nodes.length === 0 && edges.length === 0 && mermaidCode) {
+    if (!initializedRef.current && nodes.length === 0 && edges.length === 0 && mermaidCode) {
       try {
         const { nodes: convertedNodes, edges: convertedEdges } = mermaidToReactFlow(mermaidCode);
         setNodes(convertedNodes);
@@ -74,6 +78,7 @@ const DiagramPanel = ({
           }]);
           setHistoryIndex(0);
         }
+        initializedRef.current = true;
       } catch (err) {
         console.error('Error initializing diagram:', err);
       }
@@ -83,124 +88,74 @@ const DiagramPanel = ({
   const onNodesChange = useCallback((changes) => {
     setNodes((nds) => {
       const updatedNodes = applyNodeChanges(changes, nds);
-      
-      // Update mermaid code on significant changes
+      // Only update if the change is significant
       if (changes.some(change => change.type !== 'select' && change.type !== 'position')) {
         try {
-          const newMermaidCode = reactFlowToMermaid({ 
-            nodes: updatedNodes, 
-            edges 
-          });
-          setMermaidCode(newMermaidCode);
-          
-          // Add to history if this is a meaningful change
-          const newState = { 
-            mermaidCode: newMermaidCode,
-            nodes: JSON.parse(JSON.stringify(updatedNodes)),
-            edges: JSON.parse(JSON.stringify(edges))
-          };
-          
-          // Cut history at current index if we're not at the end
-          if (historyIndex < history.length - 1) {
-            setHistory([...history.slice(0, historyIndex + 1), newState]);
-            setHistoryIndex(historyIndex + 1);
-          } else {
-            setHistory([...history, newState]);
-            setHistoryIndex(history.length);
+          const newMermaidCode = reactFlowToMermaid({ nodes: updatedNodes, edges });
+          // Only update if new code is actually different
+          if (newMermaidCode !== mermaidCode) {
+            setMermaidCode(newMermaidCode);
+            const newState = { mermaidCode: newMermaidCode, nodes: updatedNodes, edges: JSON.parse(JSON.stringify(edges)) };
+            setHistory(prev => [...prev.slice(0, historyIndex + 1), newState]);
+            setHistoryIndex(prevIndex => prevIndex + 1);
           }
         } catch (err) {
           console.error('Error updating Mermaid from nodes:', err);
         }
       }
-      
       return updatedNodes;
     });
-  }, [edges, history, historyIndex]);
+  }, [edges, historyIndex, mermaidCode]);
 
   const onEdgesChange = useCallback((changes) => {
     setEdges((eds) => {
       const updatedEdges = applyEdgeChanges(changes, eds);
-      
-      // Update mermaid code when edges change
       if (changes.length > 0) {
         try {
-          const newMermaidCode = reactFlowToMermaid({ 
-            nodes, 
-            edges: updatedEdges 
-          });
-          setMermaidCode(newMermaidCode);
-          
-          // Add to history
-          const newState = { 
-            mermaidCode: newMermaidCode,
-            nodes: JSON.parse(JSON.stringify(nodes)),
-            edges: JSON.parse(JSON.stringify(updatedEdges))
-          };
-          
-          if (historyIndex < history.length - 1) {
-            setHistory([...history.slice(0, historyIndex + 1), newState]);
-            setHistoryIndex(historyIndex + 1);
-          } else {
-            setHistory([...history, newState]);
-            setHistoryIndex(history.length);
+          const newMermaidCode = reactFlowToMermaid({ nodes, edges: updatedEdges });
+          if (newMermaidCode !== mermaidCode) {
+            setMermaidCode(newMermaidCode);
+            const newState = { mermaidCode: newMermaidCode, nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(updatedEdges)) };
+            setHistory(prev => [...prev.slice(0, historyIndex + 1), newState]);
+            setHistoryIndex(prevIndex => prevIndex + 1);
           }
         } catch (err) {
           console.error('Error updating Mermaid from edges:', err);
         }
       }
-      
       return updatedEdges;
     });
-  }, [nodes, history, historyIndex]);
+  }, [nodes, historyIndex, mermaidCode]);
 
   const onConnect = useCallback((connection) => {
     const newEdge = {
-      ...connection, 
-      id: `edge-${connection.source}-${connection.target}`, 
+      ...connection,
+      id: `edge-${connection.source}-${connection.target}`,
       type: 'smoothstep'
     };
     
     setEdges((eds) => {
       const updatedEdges = addEdge(newEdge, eds);
-      
-      // Update mermaid code when a connection is made
       try {
-        const newMermaidCode = reactFlowToMermaid({ 
-          nodes, 
-          edges: updatedEdges 
-        });
-        setMermaidCode(newMermaidCode);
-        
-        // Add to history
-        const newState = { 
-          mermaidCode: newMermaidCode,
-          nodes: JSON.parse(JSON.stringify(nodes)),
-          edges: JSON.parse(JSON.stringify(updatedEdges))
-        };
-        
-        if (historyIndex < history.length - 1) {
-          setHistory([...history.slice(0, historyIndex + 1), newState]);
-          setHistoryIndex(historyIndex + 1);
-        } else {
-          setHistory([...history, newState]);
-          setHistoryIndex(history.length);
+        const newMermaidCode = reactFlowToMermaid({ nodes, edges: updatedEdges });
+        if (newMermaidCode !== mermaidCode) {
+          setMermaidCode(newMermaidCode);
+          const newState = { mermaidCode: newMermaidCode, nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(updatedEdges)) };
+          setHistory(prev => [...prev.slice(0, historyIndex + 1), newState]);
+          setHistoryIndex(prevIndex => prevIndex + 1);
         }
       } catch (err) {
         console.error('Error updating Mermaid from connection:', err);
       }
-      
       return updatedEdges;
     });
-  }, [nodes, history, historyIndex]);
+  }, [nodes, historyIndex, mermaidCode]);
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
       if (onSave) {
-        await onSave({ 
-          mermaidCode, 
-          reactFlowData: { nodes, edges } 
-        });
+        await onSave({ mermaidCode, reactFlowData: { nodes, edges } });
       }
       setError(null);
     } catch (err) {
@@ -218,21 +173,12 @@ const DiagramPanel = ({
         const suggestion = await onAiSuggest(mermaidCode, customPrompt);
         if (suggestion?.mermaidCode) {
           setMermaidCode(suggestion.mermaidCode);
-          
-          // Convert the suggested mermaid code to nodes and edges
           const { nodes: suggestedNodes, edges: suggestedEdges } = mermaidToReactFlow(suggestion.mermaidCode);
           setNodes(suggestedNodes);
           setEdges(suggestedEdges);
-          
-          // Add to history
-          const newState = { 
-            mermaidCode: suggestion.mermaidCode,
-            nodes: suggestedNodes,
-            edges: suggestedEdges
-          };
-          
-          setHistory([...history.slice(0, historyIndex + 1), newState]);
-          setHistoryIndex(historyIndex + 1);
+          const newState = { mermaidCode: suggestion.mermaidCode, nodes: suggestedNodes, edges: suggestedEdges };
+          setHistory(prev => [...prev.slice(0, historyIndex + 1), newState]);
+          setHistoryIndex(prevIndex => prevIndex + 1);
         }
       }
       setError(null);
@@ -248,11 +194,10 @@ const DiagramPanel = ({
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
-      const previousState = history[newIndex];
-      
-      setMermaidCode(previousState.mermaidCode);
-      setNodes(previousState.nodes);
-      setEdges(previousState.edges);
+      const prevState = history[newIndex];
+      setMermaidCode(prevState.mermaidCode);
+      setNodes(prevState.nodes);
+      setEdges(prevState.edges);
       setHistoryIndex(newIndex);
     }
   }, [history, historyIndex]);
@@ -261,7 +206,6 @@ const DiagramPanel = ({
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       const nextState = history[newIndex];
-      
       setMermaidCode(nextState.mermaidCode);
       setNodes(nextState.nodes);
       setEdges(nextState.edges);
@@ -306,32 +250,30 @@ const DiagramPanel = ({
 
   const updateMermaidFromEditor = useCallback(() => {
     try {
-      const { nodes: convertedNodes, edges: convertedEdges } = mermaidToReactFlow(mermaidCode);
-      
-      setNodes(convertedNodes);
-      setEdges(convertedEdges);
+      const { nodes: newNodes, edges: newEdges } = mermaidToReactFlow(mermaidCode);
+      setNodes(newNodes);
+      setEdges(newEdges);
       setError(null);
-      
-      // Add to history if code was changed
       const lastState = history[historyIndex];
       if (!lastState || lastState.mermaidCode !== mermaidCode) {
         const newState = {
           mermaidCode,
-          nodes: convertedNodes,
-          edges: convertedEdges
+          nodes: newNodes,
+          edges: newEdges
         };
-        
-        setHistory([...history.slice(0, historyIndex + 1), newState]);
-        setHistoryIndex(historyIndex + 1);
+        setHistory(prev => [...prev.slice(0, historyIndex + 1), newState]);
+        setHistoryIndex(prevIndex => prevIndex + 1);
       }
       
-      setViewMode('edit');
+      // Only change view mode if hideModes is false
+      if (!hideModes) {
+        setViewMode('edit');
+      }
     } catch (err) {
       setError('Invalid Mermaid code: ' + err.message);
     }
-  }, [mermaidCode, history, historyIndex]);
+  }, [mermaidCode, history, historyIndex, hideModes]);
 
-  // Drag-and-drop handlers for the toolbar
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
@@ -353,7 +295,6 @@ const DiagramPanel = ({
     const updatedNodes = [...nodes, newNode];
     setNodes(updatedNodes);
     
-    // Update mermaid code
     try {
       const newMermaidCode = reactFlowToMermaid({ 
         nodes: updatedNodes, 
@@ -361,67 +302,82 @@ const DiagramPanel = ({
       });
       setMermaidCode(newMermaidCode);
       
-      // Add to history
       const newState = { 
         mermaidCode: newMermaidCode,
         nodes: updatedNodes,
         edges: JSON.parse(JSON.stringify(edges))
       };
       
-      setHistory([...history.slice(0, historyIndex + 1), newState]);
-      setHistoryIndex(historyIndex + 1);
+      setHistory(prev => [...prev.slice(0, historyIndex + 1), newState]);
+      setHistoryIndex(prevIndex => prevIndex + 1);
     } catch (err) {
       console.error('Error updating after node insertion:', err);
     }
   };
 
+  // The actual content to render depends on viewMode, but we force 'edit' mode when hideModes is true
+  const effectiveViewMode = hideModes ? 'edit' : viewMode;
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
-      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <h2 className="font-semibold text-gray-800 text-sm">System Design Diagram</h2>
-          <div className="flex border border-gray-300 rounded-md overflow-hidden">
-            <button onClick={() => setViewMode('edit')} className={`px-2 py-1 text-xs ${viewMode === 'edit' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              <Edit className="h-3 w-3 inline-block mr-1" />
-              Edit
+      {/* Only show the toolbar when hideModes is false */}
+      {!hideModes && (
+        <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <h2 className="font-semibold text-gray-800 text-sm">System Design Diagram</h2>
+            <div className="flex border border-gray-300 rounded-md overflow-hidden">
+              <button 
+                onClick={() => setViewMode('edit')} 
+                className={`px-2 py-1 text-xs ${viewMode === 'edit' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                <Edit className="h-3 w-3 inline-block mr-1" />
+                Edit
+              </button>
+              <button 
+                onClick={() => setViewMode('preview')} 
+                className={`px-2 py-1 text-xs ${viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                <Eye className="h-3 w-3 inline-block mr-1" />
+                Preview
+              </button>
+              <button 
+                onClick={() => setViewMode('code')} 
+                className={`px-2 py-1 text-xs ${viewMode === 'code' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                <Code className="h-3 w-3 inline-block mr-1" />
+                Code
+              </button>
+            </div>
+          </div>
+          <div className="flex space-x-1">
+            <button onClick={handleUndo} disabled={historyIndex <= 0} className={`p-1 rounded ${historyIndex > 0 ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-300'}`} title="Undo">
+              <Undo className="h-3 w-3" />
             </button>
-            <button onClick={() => setViewMode('preview')} className={`px-2 py-1 text-xs ${viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              <Eye className="h-3 w-3 inline-block mr-1" />
-              Preview
+            <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className={`p-1 rounded ${historyIndex < history.length - 1 ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-300'}`} title="Redo">
+              <Redo className="h-3 w-3" />
             </button>
-            <button onClick={() => setViewMode('code')} className={`px-2 py-1 text-xs ${viewMode === 'code' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              <Code className="h-3 w-3 inline-block mr-1" />
-              Code
+            <button onClick={handleSave} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Save Diagram" disabled={isLoading}>
+              <Save className={`h-3 w-3 ${isLoading ? 'animate-pulse' : ''}`} />
             </button>
+            <button onClick={handleDownload} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Download">
+              <Download className="h-3 w-3" />
+            </button>
+            <button onClick={() => handleAiSuggest()} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Get AI Suggestions" disabled={isLoading}>
+              <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button onClick={() => setShowCustomForm(!showCustomForm)} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Custom Request">
+              <MessageSquare className="h-3 w-3" />
+            </button>
+            {onClose && (
+              <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Close">
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
         </div>
-        <div className="flex space-x-1">
-          <button onClick={handleUndo} disabled={historyIndex <= 0} className={`p-1 rounded ${historyIndex > 0 ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-300'}`} title="Undo">
-            <Undo className="h-3 w-3" />
-          </button>
-          <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className={`p-1 rounded ${historyIndex < history.length - 1 ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-300'}`} title="Redo">
-            <Redo className="h-3 w-3" />
-          </button>
-          <button onClick={handleSave} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Save Diagram" disabled={isLoading}>
-            <Save className={`h-3 w-3 ${isLoading ? 'animate-pulse' : ''}`} />
-          </button>
-          <button onClick={handleDownload} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Download">
-            <Download className="h-3 w-3" />
-          </button>
-          <button onClick={() => handleAiSuggest()} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Get AI Suggestions" disabled={isLoading}>
-            <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          <button onClick={() => setShowCustomForm(!showCustomForm)} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Custom Request">
-            <MessageSquare className="h-3 w-3" />
-          </button>
-          {onClose && (
-            <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 text-gray-600" title="Close">
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-      </div>
-      {showCustomForm && (
+      )}
+      
+      {showCustomForm && !hideModes && (
         <div className="p-3 border-b border-gray-200 bg-gray-50">
           <form onSubmit={handleCustomRequest} className="flex">
             <input
@@ -437,13 +393,16 @@ const DiagramPanel = ({
           </form>
         </div>
       )}
+      
       {error && (
         <div className="px-3 py-2 bg-red-50 border-b border-red-200 text-red-700 text-xs">
           {error}
         </div>
       )}
+      
       <div className="flex-1 overflow-hidden">
-        {viewMode === 'edit' && (
+        {/* Always render the edit view when hideModes is true */}
+        {(effectiveViewMode === 'edit') && (
           <div className="h-full flex flex-col">
             <div className="flex-1">
               <ReactFlowDiagramWithProvider
@@ -452,6 +411,11 @@ const DiagramPanel = ({
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                onDiagramUpdate={(diagramData) => {
+                  if (onSave) {
+                    onSave(diagramData);
+                  }
+                }}
               />
             </div>
             <div className="p-2 border-t border-gray-200 bg-gray-50">
@@ -468,9 +432,10 @@ const DiagramPanel = ({
                 ].map(({ type, icon, label }) => (
                   <div
                     key={type}
-                    className="flex flex-col items-center p-2 bg-white border border-gray-200 rounded shadow-sm hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-move"
+                    className="flex flex-col items-center p-2 bg-white border border-gray-200 rounded shadow-sm hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
                     draggable
                     onDragStart={(event) => onDragStart(event, type)}
+                    onClick={() => handleInsertNode(type)}
                   >
                     {icon}
                     <span className="text-xs mt-1">{label}</span>
@@ -480,12 +445,12 @@ const DiagramPanel = ({
             </div>
           </div>
         )}
-        {viewMode === 'preview' && (
+        {effectiveViewMode === 'preview' && !hideModes && (
           <div className="h-full p-4 overflow-auto">
             <MermaidRenderer code={mermaidCode} onError={(errorMsg) => setError(errorMsg)} />
           </div>
         )}
-        {viewMode === 'code' && (
+        {effectiveViewMode === 'code' && !hideModes && (
           <div className="h-full p-4 flex flex-col">
             <textarea
               value={mermaidCode}

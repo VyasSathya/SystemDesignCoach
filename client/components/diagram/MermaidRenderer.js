@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 
-// Initialize mermaid with default configuration
 mermaid.initialize({
   startOnLoad: true,
   theme: 'neutral',
@@ -23,52 +22,38 @@ const MermaidRenderer = ({ code, onError }) => {
   const [renderAttempts, setRenderAttempts] = useState(0);
   
   useEffect(() => {
-    // Reset state when code changes
     setSvgContent('');
     setError(null);
     setIsRendering(true);
     
-    // Generate a unique ID for this render
     const id = `mermaid-${Date.now()}`;
     
-    // Cleanup function
     const cleanup = () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
     };
     
-    // Setup render function
     const renderDiagram = async () => {
       if (!code || !containerRef.current) return;
       
       try {
-        // Remove any existing SVG
         cleanup();
-        
-        // Generate SVG
         const { svg } = await mermaid.render(id, code);
-        
-        // Set SVG content
         setSvgContent(svg);
         setError(null);
-        
-        // Clear any previous error
         if (onError) {
           onError(null);
         }
       } catch (err) {
         console.error('Mermaid render error:', err);
         setError(err.message || 'Failed to render diagram');
-        
-        // Check if we should retry (sometimes Mermaid needs a second attempt)
         if (renderAttempts < 2) {
           setTimeout(() => {
             setRenderAttempts(prev => prev + 1);
             renderDiagram();
           }, 100);
         } else {
-          // Report error to parent if callback provided
           if (onError) {
             onError(err.message || 'Failed to render diagram');
           }
@@ -78,13 +63,11 @@ const MermaidRenderer = ({ code, onError }) => {
       }
     };
     
-    // Render the diagram
     renderDiagram();
     
     return cleanup;
   }, [code, onError, renderAttempts]);
   
-  // If there's an error, display it
   if (error) {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 whitespace-pre-wrap">
@@ -94,7 +77,6 @@ const MermaidRenderer = ({ code, onError }) => {
     );
   }
   
-  // If we're still rendering, show loading state
   if (isRendering) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-50">
@@ -103,7 +85,6 @@ const MermaidRenderer = ({ code, onError }) => {
     );
   }
   
-  // If we have SVG content, display it
   if (svgContent) {
     return (
       <div 
@@ -113,7 +94,6 @@ const MermaidRenderer = ({ code, onError }) => {
     );
   }
   
-  // Fallback for cases where we're not rendering but don't have content or error yet
   return (
     <div className="flex items-center justify-center h-full" ref={containerRef}>
       <div className="text-gray-500">Initializing diagram...</div>

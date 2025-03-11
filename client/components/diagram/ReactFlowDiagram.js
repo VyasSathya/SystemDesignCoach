@@ -1,5 +1,5 @@
 // client/components/diagram/ReactFlowDiagram.js
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   Controls,
@@ -20,7 +20,7 @@ import CacheNode from './NodeTypes/CacheNode';
 import QueueNode from './NodeTypes/QueueNode';
 import CustomNode from './NodeTypes/CustomNode';
 
-// Define node types
+// Define nodeTypes outside the component to prevent re-creation on each render
 const nodeTypes = {
   database: DatabaseNode,
   service: ServiceNode,
@@ -31,7 +31,6 @@ const nodeTypes = {
   custom: CustomNode
 };
 
-// The implementation component that uses ReactFlow hooks
 const Flow = ({ 
   initialNodes, 
   initialEdges, 
@@ -49,24 +48,18 @@ const Flow = ({
   const [nodeNotes, setNodeNotes] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   
-  // On initialization, generate mermaid representation
-  useEffect(() => {
-    if (initialNodes?.length > 0 && onDiagramUpdate) {
-      onDiagramUpdate({
-        nodes: initialNodes,
-        edges: initialEdges,
-        mermaidCode: ''  // We'll generate this in the parent component
-      });
-    }
-  }, []);
+  // Safely get nodes and edges with defaults
+  const safeNodes = Array.isArray(initialNodes) && initialNodes.length > 0 
+    ? initialNodes 
+    : [{ id: 'default', position: { x: 100, y: 100 }, data: { label: 'Default Node' } }];
+  
+  const safeEdges = Array.isArray(initialEdges) ? initialEdges : [];
 
-  // Handle node dragging
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // Handle node click for editing (single click)
   const onNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
     setNodeName(node.data.label || '');
@@ -74,7 +67,6 @@ const Flow = ({
     setShowNodeEditor(true);
   }, []);
 
-  // Double click handler - alternative way to edit nodes
   const onNodeDoubleClick = useCallback((event, node) => {
     setSelectedNode(node);
     setNodeName(node.data.label || '');
@@ -82,12 +74,10 @@ const Flow = ({
     setShowNodeEditor(true);
   }, []);
 
-  // Save node edits
   const handleSaveNodeEdit = useCallback(() => {
     if (!selectedNode) return;
     
-    // Create a deep copy of all nodes and apply the direct change
-    const updatedNodes = initialNodes.map(n => {
+    const updatedNodes = safeNodes.map(n => {
       if (n.id === selectedNode.id) {
         return {
           ...n,
@@ -101,23 +91,18 @@ const Flow = ({
       return n;
     });
     
-    // Replace the entire nodes state
-    onNodesChange([{
-      type: 'reset',
-      items: updatedNodes
-    }]);
-    
+    onNodesChange([{ type: 'reset', items: updatedNodes }]);
     setShowNodeEditor(false);
     setSelectedNode(null);
     
-    // Notify parent of diagram update with the new nodes
-    onDiagramUpdate?.({
-      nodes: updatedNodes,
-      edges: initialEdges
-    });
-  }, [selectedNode, nodeName, nodeNotes, initialNodes, initialEdges, onNodesChange, onDiagramUpdate]);
+    if (onDiagramUpdate) {
+      onDiagramUpdate({
+        nodes: updatedNodes,
+        edges: safeEdges
+      });
+    }
+  }, [selectedNode, nodeName, nodeNotes, safeNodes, safeEdges, onNodesChange, onDiagramUpdate]);
 
-  // Handle node dropping from palette
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
@@ -130,19 +115,16 @@ const Flow = ({
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const type = event.dataTransfer.getData('application/reactflow');
 
-      // Check if the dropped element is valid
       if (typeof type === 'undefined' || !type) {
         console.log("Invalid drag data:", type);
         return;
       }
 
-      // Calculate exact drop position
       const position = reactFlowInstance.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
 
-      // Generate default label based on type
       const defaultLabel = type.charAt(0).toUpperCase() + type.slice(1);
       const nodeId = `${type}_${Date.now()}`;
       
@@ -156,22 +138,20 @@ const Flow = ({
         },
       };
 
-      // Create a new nodes array with the added node - IMPORTANT for position stability
-      const updatedNodes = [...initialNodes, newNode];
+      const updatedNodes = [...safeNodes, newNode];
       
-      // Send a single "add" change operation instead of replacing all nodes
       onNodesChange([{ type: 'add', item: newNode }]);
       
-      // Notify parent of diagram update
-      onDiagramUpdate?.({
-        nodes: updatedNodes,
-        edges: initialEdges
-      });
+      if (onDiagramUpdate) {
+        onDiagramUpdate({
+          nodes: updatedNodes,
+          edges: safeEdges
+        });
+      }
     },
-    [reactFlowInstance, initialNodes, initialEdges, onNodesChange, onDiagramUpdate]
+    [reactFlowInstance, safeNodes, safeEdges, onNodesChange, onDiagramUpdate]
   );
 
-  // Custom connect handler
   const handleConnect = useCallback((params) => {
     const newEdge = {
       ...params,
@@ -180,20 +160,18 @@ const Flow = ({
       data: { label: '' }
     };
     
-    // Create a new edges array with the added edge
-    const updatedEdges = addEdge(newEdge, initialEdges);
+    const updatedEdges = addEdge(newEdge, safeEdges);
     onConnect(params);
     
-    // Notify parent of diagram update
-    onDiagramUpdate?.({
-      nodes: initialNodes,
-      edges: updatedEdges
-    });
-  }, [initialNodes, initialEdges, onConnect, onDiagramUpdate]);
+    if (onDiagramUpdate) {
+      onDiagramUpdate({
+        nodes: safeNodes,
+        edges: updatedEdges
+      });
+    }
+  }, [safeNodes, safeEdges, onConnect, onDiagramUpdate]);
 
-  // Add a node programmatically (directly from buttons, not drag & drop)
   const addNode = useCallback((type) => {
-    // Generate a random position that's visible in the viewport
     const position = reactFlowInstance ? 
       { 
         x: Math.random() * 300 + 50, 
@@ -201,7 +179,6 @@ const Flow = ({
       } : 
       { x: 100, y: 100 };
     
-    // Generate default name based on type
     const defaultLabel = type.charAt(0).toUpperCase() + type.slice(1);
     const nodeId = `${type}_${Date.now()}`;
     
@@ -215,54 +192,24 @@ const Flow = ({
       },
     };
     
-    // Add the new node
-    const updatedNodes = [...initialNodes, newNode];
+    const updatedNodes = [...safeNodes, newNode];
     onNodesChange([{ type: 'add', item: newNode }]);
     
-    // Notify parent of diagram update
-    onDiagramUpdate?.({
-      nodes: updatedNodes,
-      edges: initialEdges
-    });
-  }, [reactFlowInstance, initialNodes, initialEdges, onNodesChange, onDiagramUpdate]);
-
-  // Fallback for empty nodes array
-  const safeNodes = Array.isArray(initialNodes) && initialNodes.length > 0 
-    ? initialNodes 
-    : [{ id: 'default', position: { x: 100, y: 100 }, data: { label: 'Default Node' } }];
-
-  // Fallback for empty edges array
-  const safeEdges = Array.isArray(initialEdges) ? initialEdges : [];
+    if (onDiagramUpdate) {
+      onDiagramUpdate({
+        nodes: updatedNodes,
+        edges: safeEdges
+      });
+    }
+  }, [reactFlowInstance, safeNodes, safeEdges, onNodesChange, onDiagramUpdate]);
 
   return (
-    <div className="w-full h-full relative" ref={reactFlowWrapper} style={{minHeight: '300px'}}>
+    <div className="w-full h-full relative" ref={reactFlowWrapper} style={{ minHeight: '300px' }}>
       <ReactFlow
         nodes={safeNodes}
         edges={safeEdges}
-        onNodesChange={(changes) => {
-          // Process each change individually
-          onNodesChange(changes);
-          
-          // After a short delay to let React state update, notify parent of diagram update
-          // This fixes issues with position changes not being reflected
-          setTimeout(() => {
-            onDiagramUpdate?.({
-              nodes: initialNodes,
-              edges: initialEdges
-            });
-          }, 50);
-        }}
-        onEdgesChange={(changes) => {
-          onEdgesChange(changes);
-          
-          // After a short delay to let React state update
-          setTimeout(() => {
-            onDiagramUpdate?.({
-              nodes: initialNodes,
-              edges: initialEdges
-            });
-          }, 50);
-        }}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onConnect={handleConnect}
         onInit={setReactFlowInstance}
         onDrop={onDrop}
@@ -270,14 +217,13 @@ const Flow = ({
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeDoubleClick}
         nodeTypes={nodeTypes}
-        fitView={false} // Disable auto-fit to maintain positions
+        fitView={false}
         attributionPosition="bottom-left"
         minZoom={0.5}
         maxZoom={2}
-        defaultZoom={1}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode={['Control', 'Meta']}
-        snapToGrid={autoLayout} // Only snap to grid when auto layout is enabled
+        snapToGrid={autoLayout}
         snapGrid={[15, 15]}
         connectionLineStyle={{ strokeWidth: 2, stroke: '#999' }}
         connectionLineType="smoothstep"
@@ -285,8 +231,6 @@ const Flow = ({
         <Controls />
         <MiniMap />
         <Background variant="dots" gap={12} size={1} />
-        
-        {/* Layout controls */}
         <Panel position="top-right">
           <div className="bg-white p-2 rounded shadow-md flex flex-col space-y-2">
             <button 
@@ -295,7 +239,6 @@ const Flow = ({
             >
               {autoLayout ? 'Disable Auto Layout' : 'Enable Auto Layout'}
             </button>
-            
             <button 
               onClick={() => {
                 if (reactFlowInstance) {
@@ -308,8 +251,6 @@ const Flow = ({
             </button>
           </div>
         </Panel>
-        
-        {/* Component palette for quick adding without drag & drop */}
         <Panel position="bottom" className="w-full">
           <div className="bg-white p-2 border-t border-gray-200 flex flex-wrap justify-center gap-2">
             {[
@@ -324,7 +265,7 @@ const Flow = ({
               <button
                 key={type}
                 onClick={() => addNode(type)}
-                className={`flex items-center px-2 py-1 text-xs rounded bg-${color}-100 text-${color}-700 border border-${color}-200 hover:bg-${color}-200`}
+                className="flex items-center px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
                 draggable
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/reactflow', type);
@@ -340,12 +281,10 @@ const Flow = ({
         </Panel>
       </ReactFlow>
       
-      {/* Node Editor Modal */}
       {showNodeEditor && selectedNode && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
           <div className="bg-white rounded-lg p-4 w-64">
             <h3 className="font-medium mb-2">Edit Node</h3>
-            
             <div className="mb-4">
               <label className="block text-sm text-gray-700 mb-1">Name</label>
               <input 
@@ -355,7 +294,6 @@ const Flow = ({
                 className="w-full px-2 py-1 border rounded"
               />
             </div>
-            
             <div className="mb-4">
               <label className="block text-sm text-gray-700 mb-1">Notes</label>
               <textarea 
@@ -364,7 +302,6 @@ const Flow = ({
                 className="w-full px-2 py-1 border rounded h-20"
               />
             </div>
-            
             <div className="flex justify-end space-x-2">
               <button 
                 onClick={() => setShowNodeEditor(false)}
@@ -388,21 +325,11 @@ const Flow = ({
 
 // Wrapper with error handling
 const ReactFlowDiagramWithProvider = (props) => {
-  try {
-    return (
-      <ReactFlowProvider>
-        <Flow {...props} />
-      </ReactFlowProvider>
-    );
-  } catch (err) {
-    console.error('ReactFlow initialization error:', err);
-    return (
-      <div className="flex h-full items-center justify-center bg-gray-50 text-gray-500 text-sm">
-        <p>Could not initialize diagram editor. Please switch to code view.</p>
-        <p className="text-red-500">{err.message}</p>
-      </div>
-    );
-  }
+  return (
+    <ReactFlowProvider>
+      <Flow {...props} />
+    </ReactFlowProvider>
+  );
 };
 
 export default ReactFlowDiagramWithProvider;

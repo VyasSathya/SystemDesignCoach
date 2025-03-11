@@ -1,14 +1,29 @@
-const claudeService = require('./claudeService');
+// server/services/ai/index.js
+const CoachEngine = require('../engines/coachEngine');
+const InterviewEngine = require('../engines/interviewEngine');
+const aiConfig = require('../../config/aiConfig');
 
-/**
- * Factory function to get the appropriate AI service
- */
-function getAIService(serviceType) {
-  switch(serviceType) {
-    case 'claude':
-    default:
-      return claudeService;
-  }
-}
+console.log('🔵 Creating AI engines with config:', aiConfig[aiConfig.defaultProvider]);
 
-module.exports = { getAIService };
+const coachEngine = new CoachEngine({
+  provider: aiConfig.defaultProvider,
+  stages: [
+    'introduction',
+    'requirements',
+    'architecture',
+    'data-modeling',
+    'scaling',
+    'evaluation'
+  ]
+});
+
+const interviewEngine = new InterviewEngine({
+  provider: aiConfig.defaultProvider,
+  evaluationThreshold: 0.8,
+  diagramStageThreshold: 2
+});
+
+module.exports = {
+  coachEngine,
+  interviewEngine
+};

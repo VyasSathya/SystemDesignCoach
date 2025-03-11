@@ -1,11 +1,14 @@
 // server/services/diagram/diagramService.js
-const { default: Anthropic } = require('@anthropic-ai/sdk');
 const Interview = require('../../models/Interview');
 const Problem = require('../../models/Problem');
+const AIFactory = require('../ai/aiFactory');
+const aiConfig = require('../../config/aiConfig');
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Create AI service from factory using configuration
+const aiService = AIFactory.createService(
+  aiConfig.defaultProvider, 
+  aiConfig[aiConfig.defaultProvider]
+);
 
 // Supported diagram types
 const DIAGRAM_TYPES = {
@@ -223,25 +226,22 @@ const diagramService = {
       // Add user input if provided
       const userContext = customPrompt ? `\nAdditional requirements: ${customPrompt}` : '';
       
-      // Generate Mermaid code using Claude
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20240229",
+      // Generate Mermaid code using shared AI service
+      const prompt = `Here is a conversation about designing ${problem.title}:
+          
+      ${sessionContent}
+      ${userContext}
+      
+      Based on this conversation, create a Mermaid diagram that captures the key components and relationships.`;
+      
+      const response = await aiService.generateContent(prompt, {
         system: getPromptForDiagramType(diagramType, problem.title, customPrompt),
-        messages: [{
-          role: "user",
-          content: `Here is a conversation about designing ${problem.title}:
-          
-          ${sessionContent}
-          ${userContext}
-          
-          Based on this conversation, create a Mermaid diagram that captures the key components and relationships.`
-        }],
-        max_tokens: 1500,
-        temperature: 0.2
+        temperature: 0.2,
+        maxTokens: 1500
       });
       
       // Extract Mermaid code from response
-      const mermaidCode = extractMermaidCode(response.content[0].text);
+      const mermaidCode = extractMermaidCode(response);
       
       return {
         mermaidCode,
