@@ -140,7 +140,6 @@
 |   |   |-- ConciseModeToggle.js
 |   |   |   |-- module:ConciseModeToggle.js
 |   |   |   |-- fn: ConciseModeToggle({ isEnabled, onToggle }) [internal]
-|   |   |   |-- fn: handleToggle(enabled) [internal]
 |   |   |   |-- component:ConciseModeToggle [internal]
 |   |   |-- ExperienceLevelSelector.js
 |   |   |   |-- module:ExperienceLevelSelector.js
@@ -339,23 +338,18 @@
 |   |   |   |-- component:TestPage [exported]
 |   |   +-- WorkbookLayout.js
 |   |       |-- module:WorkbookLayout.js
-|   |       |-- fn: RequirementsPage() [internal]
-|   |       |-- fn: APIDesignPage() [internal]
-|   |       |-- fn: DataModelPage() [internal]
-|   |       |-- fn: SystemArchitecturePage() [internal]
-|   |       |-- fn: ScalingStrategyPage() [internal]
-|   |       |-- fn: ReliabilitySecurityPage() [internal]
-|   |       |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
+|   |       |-- fn: getTabStyles(tabId, isActive) [internal]
+|   |       |-- fn: getMobileTabStyles(tabId, isActive) [internal]
+|   |       |-- fn: getCoachButtonStyles(tabId) [internal]
+|   |       |-- fn: getProgressBarStyles(tabId) [internal]
+|   |       |-- fn: getExportButtonStyles(tabId) [internal]
+|   |       |-- fn: getCoachPanelBgStyle(tabId) [internal]
+|   |       |-- fn: getCoachPanelTextStyle(tabId) [internal]
+|   |       |-- fn: getCoachInputFocusStyle(tabId) [internal]
 |   |       |-- fn: WorkbookLayout({ onBack, sessionId }) [internal]
 |   |       |-- fn: updateFormData(section, data) [internal]
 |   |       |-- fn: getActivePageComponent() [internal]
-|   |       |-- component:RequirementsPage [internal]
-|   |       |-- component:APIDesignPage [internal]
-|   |       |-- component:DataModelPage [internal]
-|   |       |-- component:SystemArchitecturePage [internal]
-|   |       |-- component:ScalingStrategyPage [internal]
-|   |       |-- component:ReliabilitySecurityPage [internal]
-|   |       |-- component:CoachAgentInterface [internal]
+|   |       |-- fn: handleSave() [internal]
 |   |       |-- component:WorkbookLayout [internal]
 |   |-- public
 |   |-- styles

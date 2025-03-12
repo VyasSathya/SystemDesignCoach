@@ -13,7 +13,7 @@ import ReactFlow, {
   Panel
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { User, Server, ArrowRight, Plus, Edit, Trash2 } from 'lucide-react';
+import { User, Server, ArrowRight, Plus, Edit, Trash2, Save, Download, HelpCircle, Layout } from 'lucide-react';
 
 // Custom Node Types for Sequence Diagrams
 const ActorNode = memo(({ data, selected }) => (
@@ -28,7 +28,7 @@ const ActorNode = memo(({ data, selected }) => (
       type="source"
       position={Position.Bottom}
       id="bottom"
-      isConnectable={false}
+      isConnectable={true}
       className="w-3 h-3 bg-blue-500"
     />
   </div>
@@ -46,7 +46,7 @@ const ParticipantNode = memo(({ data, selected }) => (
       type="source"
       position={Position.Bottom}
       id="bottom"
-      isConnectable={false}
+      isConnectable={true}
       className="w-3 h-3 bg-purple-500"
     />
   </div>
@@ -62,8 +62,8 @@ const LifelineNode = memo(({ data, selected }) => (
       type="target"
       position={Position.Top}
       id="top"
-      isConnectable={false}
-      style={{ visibility: 'hidden' }}
+      isConnectable={true}
+      style={{ opacity: 0 }}
       className="w-3 h-3 bg-gray-500"
     />
     {data.activations && data.activations.map((activation, index) => (
@@ -79,18 +79,25 @@ const LifelineNode = memo(({ data, selected }) => (
         }}
       />
     ))}
-    <Handle
-      type="source"
-      position={Position.Right}
-      id="right"
-      className="w-3 h-3 bg-gray-500"
-    />
-    <Handle
-      type="target"
-      position={Position.Left}
-      id="left"
-      className="w-3 h-3 bg-gray-500"
-    />
+    {/* Multiple connection points along the lifeline */}
+    {Array.from({ length: 8 }).map((_, index) => (
+      <React.Fragment key={`connection-points-${index}`}>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`right-${index}`}
+          style={{ top: `${(index + 1) * 50}px` }}
+          className="w-3 h-3 bg-gray-500"
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id={`left-${index}`}
+          style={{ top: `${(index + 1) * 50}px` }}
+          className="w-3 h-3 bg-gray-500"
+        />
+      </React.Fragment>
+    ))}
   </div>
 ));
 
@@ -103,14 +110,34 @@ const MessageEdge = ({
   data,
   style = {},
 }) => {
-  const edgePath = `M${sourceX},${sourceY} L${targetX},${targetY}`;
+  // For sequence diagrams, keep messages horizontal
+  // Use the source Y position for both source and target points
+  const straightEdgePath = `M${sourceX},${sourceY} L${targetX},${sourceY}`;
   const messageText = data?.label || '';
   const isReturn = data?.type === 'return';
   const isAsync = data?.type === 'async';
   
+  // Automatically determine direction based on node positions
+  const direction = sourceX < targetX ? 'ltr' : 'rtl';
+  
   // Calculate text positioning
   const textX = (sourceX + targetX) / 2;
   const textY = sourceY - 10; // Position text above the line
+  
+  // Determine which end gets the arrow based on direction
+  let arrowX, arrowY;
+  if (direction === 'ltr') {
+    arrowX = targetX;
+    arrowY = sourceY;
+  } else {
+    arrowX = sourceX;
+    arrowY = sourceY;
+  }
+  
+  // Generate arrow path based on direction
+  const arrowPath = direction === 'ltr'
+    ? `M${arrowX - 5},${arrowY - 5} L${arrowX},${arrowY} L${arrowX - 5},${arrowY + 5}`
+    : `M${arrowX + 5},${arrowY - 5} L${arrowX},${arrowY} L${arrowX + 5},${arrowY + 5}`;
   
   return (
     <>
@@ -123,7 +150,7 @@ const MessageEdge = ({
           strokeWidth: 1.5
         }}
         className="react-flow__edge-path"
-        d={edgePath}
+        d={straightEdgePath}
       />
       {messageText && (
         <text
@@ -132,14 +159,14 @@ const MessageEdge = ({
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-xs fill-gray-700"
-          style={{ fontSize: 10 }}
+          style={{ fontSize: 10, fontFamily: 'sans-serif' }}
         >
           {messageText}
         </text>
       )}
       {/* Arrow head */}
       <path
-        d={`M${targetX - 5},${targetY - 5} L${targetX},${targetY} L${targetX - 5},${targetY + 5}`}
+        d={arrowPath}
         style={{
           fill: 'none',
           stroke: isReturn ? '#888' : '#333',
@@ -239,14 +266,42 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
   const [messageType, setMessageType] = useState('sync');
   const [editingLabel, setEditingLabel] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   
   // Use refs to prevent circular updates
-  const nodesRef = useRef([]);
-  const edgesRef = useRef([]);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
   const mermaidCodeRef = useRef('');
   const isInitializedRef = useRef(false);
   const isMountedRef = useRef(false);
   const isUpdatingRef = useRef(false);
+  
+  // Safe update functions to prevent infinite loops - defined before they're used
+  const safeSetNodes = useCallback((newNodes) => {
+    if (isUpdatingRef.current) return;
+    
+    isUpdatingRef.current = true;
+    setNodes(newNodes);
+    nodesRef.current = newNodes;
+    
+    // Reset the flag after a small delay
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 0);
+  }, []);
+  
+  const safeSetEdges = useCallback((newEdges) => {
+    if (isUpdatingRef.current) return;
+    
+    isUpdatingRef.current = true;
+    setEdges(newEdges);
+    edgesRef.current = newEdges;
+    
+    // Reset the flag after a small delay
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 0);
+  }, []);
   
   // Initialize diagram only once
   useEffect(() => {
@@ -360,34 +415,7 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
     return () => {
       isMountedRef.current = false;
     };
-  }, [initialDiagram]);
-  
-  // Safe update functions to prevent infinite loops
-  const safeSetNodes = useCallback((newNodes) => {
-    if (isUpdatingRef.current) return;
-    
-    isUpdatingRef.current = true;
-    setNodes(newNodes);
-    nodesRef.current = newNodes;
-    
-    // Reset the flag after a small delay
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 0);
-  }, []);
-  
-  const safeSetEdges = useCallback((newEdges) => {
-    if (isUpdatingRef.current) return;
-    
-    isUpdatingRef.current = true;
-    setEdges(newEdges);
-    edgesRef.current = newEdges;
-    
-    // Reset the flag after a small delay
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 0);
-  }, []);
+  }, [initialDiagram, safeSetNodes, safeSetEdges]);
   
   // Update mermaid code whenever nodes or edges change
   useEffect(() => {
@@ -496,17 +524,36 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
   const onConnect = useCallback((params) => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    // Only allow connections between lifelines
-    if (params.sourceHandle === 'right' && params.targetHandle === 'left') {
+    // Allow connections between any connection points along lifelines
+    // Check for both directions (left-to-right and right-to-left)
+    const isLeftToRight = params.sourceHandle?.startsWith('right') && params.targetHandle?.startsWith('left');
+    const isRightToLeft = params.sourceHandle?.startsWith('left') && params.targetHandle?.startsWith('right');
+    
+    if (isLeftToRight || isRightToLeft) {
+      // Get the source and target nodes
+      const sourceNode = nodesRef.current.find(n => n.id === params.source);
+      const targetNode = nodesRef.current.find(n => n.id === params.target);
+      
+      if (!sourceNode || !targetNode) return;
+      
+      // For proper sequence diagram behavior, extract vertical position from handle IDs
+      const sourcePos = parseInt(params.sourceHandle.split('-')[1]) || 0;
+      const targetPos = parseInt(params.targetHandle.split('-')[1]) || 0;
+      
+      // Add connection at the same vertical level (maintaining sequence diagram conventions)
       const newEdge = {
         id: `edge-${params.source}-${params.target}-${Date.now()}`,
         source: params.source,
         target: params.target,
-        sourceHandle: 'right',
-        targetHandle: 'left',
+        sourceHandle: params.sourceHandle,
+        targetHandle: params.targetHandle,
         data: { 
           label: 'New Message',
-          type: messageType
+          type: messageType,
+          // Store vertical position for reference
+          verticalPosition: Math.max(sourcePos, targetPos),
+          // Store direction for drawing
+          direction: isLeftToRight ? 'ltr' : 'rtl'
         },
         type: 'message',
         animated: false
@@ -748,84 +795,182 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
     setIsEditing(true);
   }, [selectedElement]);
   
+  // Export to Mermaid code
+  const exportMermaid = useCallback(() => {
+    const mermaidCode = generateMermaidCode(nodesRef.current, edgesRef.current);
+    const blob = new Blob([mermaidCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sequence-diagram-${Date.now()}.mmd`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+  
   return (
     <div className="w-full h-full flex flex-col">
       {/* Toolbar */}
-      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-        <div className="flex space-x-2 items-center">
-          <span className="text-sm font-semibold mr-2">Add:</span>
-          <button
-            onClick={addActor}
-            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center"
-          >
-            <Plus size={16} className="mr-1" />
-            Actor
-          </button>
-          <button
-            onClick={addParticipant}
-            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 flex items-center"
-          >
-            <Plus size={16} className="mr-1" />
-            Object
-          </button>
-          <span className="text-sm font-semibold mx-2">Message:</span>
-          <select
-            value={messageType}
-            onChange={(e) => setMessageType(e.target.value)}
-            className="px-2 py-1 border border-gray-300 rounded text-sm"
-          >
-            <option value="sync">Synchronous</option>
-            <option value="async">Asynchronous</option>
-            <option value="return">Return</option>
-          </select>
-          <button
-            onClick={addMessage}
-            className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 flex items-center"
-          >
-            <ArrowRight size={16} className="mr-1" />
-            Add Message
-          </button>
-          {selectedElement && (
+      <div className="p-3 bg-white shadow-sm border-b border-gray-200">
+        <div className="flex flex-wrap justify-between items-center">
+          <div className="flex items-center">
+            <div className="flex items-center mr-2">
+              <Layout className="h-5 w-5 text-blue-600 mr-1" />
+              <span className="text-sm font-semibold text-blue-800">Sequence Diagram</span>
+            </div>
+          </div>
+          
+          <div className="flex space-x-2 items-center">
+            {selectedElement && (
+              <>
+                <button
+                  onClick={deleteSelected}
+                  className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 flex items-center shadow-sm"
+                  title="Delete selected element"
+                >
+                  <Trash2 size={16} className="mr-1" />
+                  Delete
+                </button>
+                {!isEditing && (
+                  <button
+                    onClick={startEditing}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center shadow-sm"
+                    title="Edit label"
+                  >
+                    <Edit size={16} className="mr-1" />
+                    Rename
+                  </button>
+                )}
+              </>
+            )}
             <button
-              onClick={deleteSelected}
-              className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 flex items-center"
+              onClick={exportMermaid}
+              className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 flex items-center shadow-sm"
+              title="Export diagram as Mermaid code"
             >
-              <Trash2 size={16} className="mr-1" />
-              Delete
+              <Download size={16} className="mr-1" />
+              Export
             </button>
-          )}
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="ml-2 p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+              title="Show help"
+            >
+              <HelpCircle size={18} />
+            </button>
+          </div>
         </div>
         
-        {selectedElement && (
-          <div className="flex items-center space-x-2">
-            {isEditing ? (
-              <div className="flex items-center">
-                <input
-                  type="text"
-                  value={editingLabel}
-                  onChange={(e) => setEditingLabel(e.target.value)}
-                  className="border border-gray-300 rounded-l px-2 py-1 text-sm"
-                  autoFocus
-                />
-                <button
-                  onClick={saveLabel}
-                  className="px-3 py-1 bg-green-500 text-white rounded-r hover:bg-green-600 text-sm"
-                >
-                  Save
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={startEditing}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
-              >
-                <Edit size={16} className="mr-1" />
-                Rename
-              </button>
-            )}
+        {/* Second toolbar row for adding elements */}
+        <div className="flex mt-3 justify-between">
+          <div className="flex items-center space-x-1">
+            <span className="text-xs text-gray-500 mr-1">Add:</span>
+            <button
+              onClick={addActor}
+              className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center shadow-sm"
+              title="Add a human actor"
+            >
+              <User size={14} className="mr-1" />
+              Actor
+            </button>
+            <button
+              onClick={addParticipant}
+              className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 flex items-center shadow-sm"
+              title="Add a system component"
+            >
+              <Server size={14} className="mr-1" />
+              System
+            </button>
           </div>
-        )}
+          
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <label className="text-xs text-gray-600">Message Type:</label>
+              <select
+                value={messageType}
+                onChange={(e) => setMessageType(e.target.value)}
+                className="px-2 py-1 border border-gray-300 rounded text-sm bg-white shadow-sm text-xs"
+                title="Select message type"
+              >
+                <option value="sync">Synchronous</option>
+                <option value="async">Asynchronous</option>
+                <option value="return">Return</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
+      
+      {/* Help Panel (Slides in from the top when showHelp is true) */}
+      {showHelp && (
+        <div className="bg-white border-b border-gray-200 p-4 shadow-md">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-medium text-lg">Sequence Diagram Help</h3>
+            <button 
+              onClick={() => setShowHelp(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+          
+          <div className="text-sm text-gray-700 space-y-2">
+            <p className="font-medium">Creating Your Diagram:</p>
+            <ol className="list-decimal ml-5 space-y-1">
+              <li>Add actors (humans) and components (systems) using the toolbar buttons</li>
+              <li>Select a message type, then drag between lifelines (vertical lines) to create messages</li>
+              <li>Click on any element to select it, then use the rename button to edit its label</li>
+              <li>Messages flow from top to bottom, representing the sequence of events over time</li>
+            </ol>
+            
+            <p className="font-medium mt-3">Tips:</p>
+            <ul className="list-disc ml-5 space-y-1">
+              <li>Actors and components can only move horizontally</li>
+              <li>Each message should have a clear, descriptive label</li>
+              <li>Use synchronous messages for blocking calls</li>
+              <li>Use asynchronous messages for non-blocking operations</li>
+              <li>Use return messages to show responses</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Editing Panel */}
+      {isEditing && selectedElement && (
+        <div className="p-3 border-b border-gray-200 bg-blue-50">
+          <div className="flex items-center">
+            <label className="mr-2 text-sm font-medium text-gray-700">Label:</label>
+            <input
+              type="text"
+              value={editingLabel}
+              onChange={(e) => setEditingLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  saveLabel();
+                }
+              }}
+              className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter label..."
+              autoFocus
+            />
+            <button
+              onClick={saveLabel}
+              className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+            >
+              <Save size={14} className="mr-1" />
+              Save
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="ml-2 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Diagram Area */}
       <div className="flex-1 h-full relative" style={{ touchAction: 'none' }}>
@@ -848,18 +993,10 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
         >
           <Controls />
           <Background variant="dots" size={1} gap={16} color="#f0f0f0" />
-          <Panel position="bottom-right" className="bg-white py-1 px-2 rounded shadow text-xs text-gray-500">
+          <Panel position="bottom-center" className="bg-white py-1 px-3 rounded-t-lg shadow-md text-xs text-gray-600 font-medium border border-gray-200">
             Time flows downward
           </Panel>
         </ReactFlow>
-        
-        {/* Simple instructions */}
-        <div className="absolute top-2 left-2 bg-white p-2 rounded shadow-md border border-gray-200 text-xs">
-          <p>• Click on elements to select them</p>
-          <p>• Use the Rename button to edit labels</p>
-          <p>• Connect lifelines (vertical lines) to create messages</p>
-          <p>• Drag actors/objects horizontally to arrange them</p>
-        </div>
       </div>
     </div>
   );
