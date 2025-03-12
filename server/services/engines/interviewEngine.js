@@ -23,11 +23,22 @@ class InterviewEngine extends BaseEngine {
       
       const context = await knowledgeService.queryKnowledge(`System design interview for ${problem.title}`, options.knowledgeSource || 'facebook');
       
-      const systemPrompt = options.systemPrompt || `You are an expert system design interviewer.
+      let systemPrompt = options.systemPrompt || `You are an expert system design interviewer.
 Use the following context:
 ${context}
-Guide the candidate through designing ${problem.title}. Ask probing questions and challenge assumptions.
-Begin with a brief introduction.`;
+Guide the candidate through designing ${problem.title}. Ask probing questions and challenge assumptions.`;
+
+      // Add concise mode instructions if enabled
+      if (options.conciseMode !== false) { // Default to concise mode
+        systemPrompt += `\n\nUse a CONCISE communication style:
+- Ask focused questions with clear intent
+- Keep follow-ups brief and targeted
+- Use short paragraphs (2-3 sentences maximum)
+- Prioritize probing questions over explanations
+- Eliminate unnecessary preambles`;
+      }
+
+      systemPrompt += `\n\nBegin with a brief introduction.`;
 
       const initialResponse = await this.aiService.sendMessage([], {
         system: systemPrompt,
@@ -67,8 +78,19 @@ Begin with a brief introduction.`;
       const problem = await Problem.findOne({ id: interview.problemId });
       const prompt = `Provide detailed feedback for the interview on ${problem.title}.`;
       
+      let systemPrompt = "You are an experienced interviewer providing detailed feedback.";
+      
+      // Add concise mode if enabled
+      if (options.conciseMode !== false) {
+        systemPrompt += `\n\nUse a CONCISE communication style:
+- Focus on key observations
+- Use bullet points for strengths and weaknesses
+- Keep paragraphs short (2-3 sentences)
+- Prioritize actionable feedback over general advice`;
+      }
+      
       const content = await this.aiService.generateContent(prompt, {
-        system: "You are an experienced interviewer providing detailed feedback.",
+        system: systemPrompt,
         temperature: options.temperature || 0.6
       });
       
@@ -132,8 +154,11 @@ Begin with a brief introduction.`;
         console.warn(`Problem not found for interview ${interviewId}`);
       }
       
+      // User experience level
+      const userLevel = options.userLevel || 'mid-level';
+      
       // Add system message with interview context
-      const systemMessage = {
+      let systemMessage = {
         role: 'system',
         content: `You are conducting a system design interview for ${problem?.title || 'a system design problem'}. 
 The current stage is: ${interview.currentStage}.
@@ -141,6 +166,19 @@ Respond to the candidate's last message with thoughtful questions that probe the
 Be conversational and react to what they've said, don't give generic responses.
 If they ask about requirements, explore them thoroughly before moving to architecture.`
       };
+      
+      // Add concise mode instructions if enabled
+      if (options.conciseMode !== false) { // Default to concise mode
+        systemMessage.content += `\n\nUse a CONCISE communication style:
+- Ask focused questions with clear intent
+- Keep follow-ups brief and targeted
+- Use short paragraphs (2-3 sentences maximum)
+- Prioritize probing questions over explanations
+- Eliminate unnecessary preambles`;
+      }
+      
+      // Add user level information
+      systemMessage.content += `\n\nThe candidate has identified as a ${userLevel} engineer. Adjust your expectations accordingly.`;
       
       // Generate AI response
       console.log('Generating interviewer response...');
@@ -221,14 +259,41 @@ If they ask about requirements, explore them thoroughly before moving to archite
       
       // Prepare evaluation if not already done
       if (!interview.evaluation) {
-        const problem = await Problem.findOne({ id: interview.problemId });
+        // Get grader assessment if available
+        let graderAssessment = null;
+        try {
+          const graderEngine = require('./graderEngine');
+          const userLevel = interview.userLevel || 'mid-level';
+          
+          // Get assessment from grader
+          const assessment = await graderEngine.provideFinalAssessment(interview._id, { userLevel });
+          if (assessment) {
+            graderAssessment = assessment;
+          }
+        } catch (graderError) {
+          console.error('Error getting grader assessment:', graderError);
+          // Continue with regular evaluation if grader fails
+        }
         
-        // Extract the conversation for evaluation
-        const conversationText = interview.conversation
-          .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
-          .join('\n\n');
-        
-        const systemPrompt = `You are an expert system design interviewer evaluating a candidate.
+        // If we got grader assessment, use it
+        if (graderAssessment) {
+          interview.evaluation = {
+            score: graderAssessment.scores.overall?.score || 70,
+            feedback: graderAssessment.assessment,
+            strengths: [],
+            weaknesses: [],
+            areas_to_improve: []
+          };
+        } else {
+          // Fall back to original evaluation logic
+          const problem = await Problem.findOne({ id: interview.problemId });
+          
+          // Extract the conversation for evaluation
+          const conversationText = interview.conversation
+            .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
+            .join('\n\n');
+          
+          let systemPrompt = `You are an expert system design interviewer evaluating a candidate.
 The problem was: ${problem?.title || 'a system design problem'}.
 Provide a detailed evaluation with:
 1. Overall score (0-100)
@@ -236,38 +301,48 @@ Provide a detailed evaluation with:
 3. Key strengths (3-5 bullet points)
 4. Areas for improvement (3-5 bullet points)
 5. Specific advice for next steps`;
-        
-        // Generate evaluation
-        const evaluationPrompt = `Based on this interview conversation, provide a detailed evaluation:\n\n${conversationText}`;
-        
-        const evaluationResponse = await this.aiService.sendMessage(
-          [{role: 'system', content: systemPrompt}, {role: 'user', content: evaluationPrompt}],
-          { temperature: 0.4, max_tokens: 1500 }
-        );
-        
-        // Parse the evaluation
-        try {
-          // Extract score with regex (looking for a number from 0-100)
-          const scoreMatch = evaluationResponse.match(/score:?\s*(\d{1,3})/i);
-          const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 70;
           
-          // Basic structure for evaluation
-          interview.evaluation = {
-            score: Math.min(100, Math.max(0, score)), // Ensure score is between 0-100
-            feedback: evaluationResponse,
-            strengths: [],
-            weaknesses: [],
-            areas_to_improve: []
-          };
-        } catch (parseError) {
-          console.error('Error parsing evaluation:', parseError);
-          interview.evaluation = {
-            score: 70,
-            feedback: evaluationResponse || "Evaluation could not be generated.",
-            strengths: [],
-            weaknesses: [], 
-            areas_to_improve: []
-          };
+          // Add concise mode if enabled
+          if (interview.conciseMode !== false) {
+            systemPrompt += `\n\nUse a CONCISE communication style:
+- Keep paragraphs short (2-3 sentences)
+- Use bullet points for lists
+- Be direct and focused
+- Eliminate filler phrases and redundancy`;
+          }
+          
+          // Generate evaluation
+          const evaluationPrompt = `Based on this interview conversation, provide a detailed evaluation:\n\n${conversationText}`;
+          
+          const evaluationResponse = await this.aiService.sendMessage(
+            [{role: 'system', content: systemPrompt}, {role: 'user', content: evaluationPrompt}],
+            { temperature: 0.4, max_tokens: 1500 }
+          );
+          
+          // Parse the evaluation
+          try {
+            // Extract score with regex (looking for a number from 0-100)
+            const scoreMatch = evaluationResponse.match(/score:?\s*(\d{1,3})/i);
+            const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 70;
+            
+            // Basic structure for evaluation
+            interview.evaluation = {
+              score: Math.min(100, Math.max(0, score)), // Ensure score is between 0-100
+              feedback: evaluationResponse,
+              strengths: [],
+              weaknesses: [],
+              areas_to_improve: []
+            };
+          } catch (parseError) {
+            console.error('Error parsing evaluation:', parseError);
+            interview.evaluation = {
+              score: 70,
+              feedback: evaluationResponse || "Evaluation could not be generated.",
+              strengths: [],
+              weaknesses: [], 
+              areas_to_improve: []
+            };
+          }
         }
       }
       

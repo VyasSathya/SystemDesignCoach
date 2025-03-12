@@ -5,22 +5,34 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const path = require('path');
-const fs = require('fs');
-const jwt = require('jsonwebtoken');
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`${timestamp} - ${req.method} ${req.originalUrl} - Body:`, req.body);
-  next();
-});
-app.use(cors());
+// ------------------------------
+// Initialize PersonaService
+// ------------------------------
+const coachPersona = require('../data/persona/coachPersona');
+const interviewerPersona = require('../data/persona/interviewerPersona');
+const graderPersona = require('../data/persona/graderPersona');
+
+const personaConfig = {
+  personas: [coachPersona, interviewerPersona, graderPersona]
+};
+
+const PersonaService = require('./services/engines/PersonaService');
+PersonaService.initialize(personaConfig);
+console.log("Initialized personas:", PersonaService.getAllPersonas().map(p => p.id).join(", "));
+
+// ------------------------------
+// Middleware Setup
+// ------------------------------
 app.use(express.json());
+app.use(cors());
 app.use(morgan('dev'));
 
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
     status: "healthy",
@@ -29,26 +41,29 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-const sessions = {};
-
-let authRoutes, coachingRoutes, interviewRoutes, problemRoutes, usersRoutes;
-try { authRoutes = require('./routes/auth'); console.log("Auth routes loaded successfully"); } catch (err) { console.log("Auth routes not available"); }
-try { coachingRoutes = require('./routes/coaching'); console.log("Coaching routes loaded successfully"); } catch (err) { console.log("Coaching routes not available"); }
-try { interviewRoutes = require('./routes/interviews'); console.log("Interview routes loaded successfully"); } catch (err) { console.log("Interview routes not available"); }
-try { problemRoutes = require('./routes/problems'); console.log("Problem routes loaded successfully"); } catch (err) { console.log("Problem routes not available"); }
-try { usersRoutes = require('./routes/users'); console.log("User routes loaded successfully"); } catch (err) { console.log("User routes not available"); }
-
-app.use('/api/auth', authRoutes || ((req, res, next) => next()));
-app.use('/api/coaching', coachingRoutes || ((req, res, next) => next()));
-app.use('/api/interviews', interviewRoutes || ((req, res) => res.json({ message: "Mock interview response" })));
-app.use('/api/problems', problemRoutes || ((req, res) => {
+// ------------------------------
+// Load Routes
+// ------------------------------
+const authRoutes = require('./routes/auth') || ((req, res, next) => next());
+const coachingRoutes = require('./routes/coaching') || ((req, res, next) => next());
+const interviewRoutes = require('./routes/interviews') || ((req, res) => res.json({ message: "Mock interview response" }));
+const problemRoutes = require('./routes/problems') || ((req, res) => {
   res.json([
     { id: 1, title: "Design a URL Shortener", difficulty: "medium" },
     { id: 2, title: "Design Twitter", difficulty: "hard" }
   ]);
-}));
-app.use('/api/users', usersRoutes || ((req, res) => res.json({ id: 1, name: "Test User", email: "test@example.com" })));
+});
+const usersRoutes = require('./routes/users') || ((req, res) => res.json({ id: 1, name: "Test User", email: "test@example.com" }));
 
+app.use('/api/auth', authRoutes);
+app.use('/api/coaching', coachingRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/problems', problemRoutes);
+app.use('/api/users', usersRoutes);
+
+// ------------------------------
+// Serve Client in Production
+// ------------------------------
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
   app.get('*', (req, res) => {
@@ -56,6 +71,9 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// ------------------------------
+// MongoDB Connection
+// ------------------------------
 if (process.env.MONGO_URI) {
   mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected successfully"))
@@ -67,6 +85,9 @@ if (process.env.MONGO_URI) {
   console.log("No MongoDB URI provided, skipping database connection");
 }
 
+// ------------------------------
+// Start Server
+// ------------------------------
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

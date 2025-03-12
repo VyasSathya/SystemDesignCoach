@@ -1,6 +1,9 @@
 // pages/WorkbookLayout.js
 import React, { useState } from 'react';
-import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X } from 'lucide-react';
+import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X, User } from 'lucide-react';
+import ExperienceLevelSelector from '../components/ExperienceLevelSelector';
+import ConciseModeToggle from '../components/ConciseModeToggle';
+import { getEvaluation } from '../utils/api';
 
 // Placeholder components - replace these with your actual components when ready
 const RequirementsPage = () => <div>Requirements Page</div>;
@@ -13,10 +16,12 @@ const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => (
   isOpen ? <div>Coach Interface for {currentPage}</div> : null
 );
 
-const WorkbookLayout = ({ onBack }) => {
+const WorkbookLayout = ({ onBack, sessionId }) => {
   const [activeTab, setActiveTab] = useState('requirements');
   const [showCoach, setShowCoach] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userLevel, setUserLevel] = useState('mid-level');
+  const [conciseMode, setConciseMode] = useState(true);
   
   const [formData, setFormData] = useState({
     requirements: {},
@@ -65,7 +70,34 @@ const WorkbookLayout = ({ onBack }) => {
   };
   
   // Handler for "Ask Coach" button clicks from any page
-  const handleAskCoach = () => {
+  const handleAskCoach = async () => {
+    const currentData = {
+      ...formData[activeTab],
+      userLevel,
+      conciseMode,
+      currentPage: activeTab
+    };
+    
+    try {
+      // Get all workbook content for evaluation
+      if (sessionId) {
+        const allWorkbookData = {
+          requirements: formData.requirements,
+          api: formData.api,
+          data: formData.data,
+          architecture: formData.architecture,
+          scaling: formData.scaling,
+          reliability: formData.reliability
+        };
+        
+        // Get evaluation in background (don't await to keep UI responsive)
+        getEvaluation(sessionId, allWorkbookData, userLevel, conciseMode)
+          .catch(err => console.error('Background evaluation error:', err));
+      }
+    } catch (error) {
+      console.error('Error in handleAskCoach:', error);
+    }
+    
     setShowCoach(true);
   };
   
@@ -95,11 +127,35 @@ const WorkbookLayout = ({ onBack }) => {
               <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                 History
               </button>
+              
+              {/* Add settings panel with concise mode toggle and experience level */}
+              <div className="ml-4 flex items-center space-x-4">
+                <ConciseModeToggle 
+                  isEnabled={conciseMode}
+                  onToggle={setConciseMode}
+                />
+                
+                <div className="border-l border-gray-300 h-6"></div>
+                
+                <div className="flex items-center">
+                  <User size={16} className="text-gray-500 mr-2" />
+                  <select 
+                    value={userLevel} 
+                    onChange={(e) => setUserLevel(e.target.value)}
+                    className="text-sm border-none bg-transparent focus:ring-0 text-gray-600 p-0"
+                  >
+                    <option value="junior">Junior</option>
+                    <option value="mid-level">Mid-Level</option>
+                    <option value="senior">Senior</option>
+                    <option value="staff+">Staff+</option>
+                  </select>
+                </div>
+              </div>
             </div>
             
             <div className="flex items-center">
               <button 
-                onClick={() => setShowCoach(true)}
+                onClick={handleAskCoach}
                 className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
               >
                 <MessageSquare size={18} className="mr-2" />
@@ -175,6 +231,42 @@ const WorkbookLayout = ({ onBack }) => {
               </button>
             ))}
           </div>
+          
+          {/* Mobile Settings */}
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="flex items-center px-4">
+              <div className="flex-shrink-0">
+                <User className="h-10 w-10 text-gray-400" />
+              </div>
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800">Settings</div>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1">
+              <div className="px-4 py-2 flex justify-between items-center">
+                <span className="text-base font-medium text-gray-800">Concise Mode</span>
+                <ConciseModeToggle 
+                  isEnabled={conciseMode}
+                  onToggle={setConciseMode}
+                />
+              </div>
+              <div className="px-4 py-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-base font-medium text-gray-800">Experience Level</span>
+                  <select 
+                    value={userLevel} 
+                    onChange={(e) => setUserLevel(e.target.value)}
+                    className="mt-1 block w-1/2 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  >
+                    <option value="junior">Junior</option>
+                    <option value="mid-level">Mid-Level</option>
+                    <option value="senior">Senior</option>
+                    <option value="staff+">Staff+</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       
@@ -191,7 +283,11 @@ const WorkbookLayout = ({ onBack }) => {
           isOpen={showCoach}
           onClose={() => setShowCoach(false)}
           currentPage={activeTab}
-          currentData={formData[activeTab]}
+          currentData={{
+            ...formData[activeTab],
+            userLevel,
+            conciseMode
+          }}
         />
       )}
     </div>

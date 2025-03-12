@@ -26,7 +26,22 @@ class ClaudeService extends AIService {
           role: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
-        const systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+        
+        // Apply concise mode to system prompt if not explicitly disabled
+        let systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+        if (options.conciseMode !== false) {
+          // Only add concise instructions if they're not already in the prompt
+          if (!systemPrompt.includes("CONCISE communication style")) {
+            systemPrompt += `\n\nUse a CONCISE communication style:
+- Keep paragraphs short (2-3 sentences maximum)
+- Use bullet points for lists
+- Be direct and focused
+- Eliminate filler words and redundant phrases
+- Get to the point quickly
+- Avoid unnecessary explanations`;
+          }
+        }
+        
         const response = await this.anthropic.messages.create({
           model: options.model || this.defaultModel,
           system: systemPrompt,
@@ -51,7 +66,22 @@ class ClaudeService extends AIService {
   async generateContent(prompt, options = {}) {
     try {
       const messages = [{ role: "user", content: prompt }];
-      const systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+      
+      // Apply concise mode to system prompt if not explicitly disabled
+      let systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+      if (options.conciseMode !== false) {
+        // Only add concise instructions if they're not already in the prompt
+        if (!systemPrompt.includes("CONCISE communication style")) {
+          systemPrompt += `\n\nUse a CONCISE communication style:
+- Keep paragraphs short (2-3 sentences maximum)
+- Use bullet points for lists
+- Be direct and focused
+- Eliminate filler words and redundant phrases
+- Get to the point quickly
+- Avoid unnecessary explanations`;
+        }
+      }
+      
       const response = await this.anthropic.messages.create({
         model: options.model || this.defaultModel,
         system: systemPrompt,

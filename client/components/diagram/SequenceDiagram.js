@@ -13,14 +13,15 @@ import ReactFlow, {
   Panel
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { User, Server, ArrowRight, Plus, Edit, Trash2, ArrowDown } from 'lucide-react';
+import { User, Server, ArrowRight, Plus, Edit, Trash2 } from 'lucide-react';
 
 // Custom Node Types for Sequence Diagrams
 const ActorNode = memo(({ data, selected }) => (
-  <div className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-blue-700' : 'border-blue-500'}`}>
+  <div 
+    className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-blue-700' : 'border-blue-500'}`}
+  >
     <div className="flex flex-col items-center">
       <User className="h-8 w-8 text-blue-500 mb-2" />
-      <div className="text-xs text-blue-700 font-medium bg-blue-50 px-2 rounded mb-1">Actor</div>
       <div className="text-sm font-bold text-center">{data.label}</div>
     </div>
     <Handle
@@ -34,10 +35,11 @@ const ActorNode = memo(({ data, selected }) => (
 ));
 
 const ParticipantNode = memo(({ data, selected }) => (
-  <div className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-purple-700' : 'border-purple-500'}`}>
+  <div 
+    className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-purple-700' : 'border-purple-500'}`}
+  >
     <div className="flex flex-col items-center">
       <Server className="h-8 w-8 text-purple-500 mb-2" />
-      <div className="text-xs text-purple-700 font-medium bg-purple-50 px-2 rounded mb-1">Participant</div>
       <div className="text-sm font-bold text-center">{data.label}</div>
     </div>
     <Handle
@@ -51,7 +53,10 @@ const ParticipantNode = memo(({ data, selected }) => (
 ));
 
 const LifelineNode = memo(({ data, selected }) => (
-  <div className={`sequence-lifeline-node ${selected ? 'border-l-2 border-gray-500' : ''}`} style={{ width: '2px', height: data.height || 300 }}>
+  <div 
+    className={`sequence-lifeline-node ${selected ? 'border-l-2 border-gray-500' : ''}`} 
+    style={{ width: '2px', height: 400 }}
+  >
     <div className="w-0.5 h-full bg-gray-300 mx-auto"></div>
     <Handle
       type="target"
@@ -78,14 +83,12 @@ const LifelineNode = memo(({ data, selected }) => (
       type="source"
       position={Position.Right}
       id="right"
-      style={{ top: data.handlePos || '30%' }}
       className="w-3 h-3 bg-gray-500"
     />
     <Handle
       type="target"
       position={Position.Left}
       id="left"
-      style={{ top: data.handlePos || '30%' }}
       className="w-3 h-3 bg-gray-500"
     />
   </div>
@@ -97,11 +100,8 @@ const MessageEdge = ({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
   data,
   style = {},
-  markerEnd,
 }) => {
   const edgePath = `M${sourceX},${sourceY} L${targetX},${targetY}`;
   const messageText = data?.label || '';
@@ -124,7 +124,6 @@ const MessageEdge = ({
         }}
         className="react-flow__edge-path"
         d={edgePath}
-        markerEnd={markerEnd}
       />
       {messageText && (
         <text
@@ -132,7 +131,7 @@ const MessageEdge = ({
           y={textY}
           textAnchor="middle"
           dominantBaseline="middle"
-          className="text-xs fill-gray-700 pointer-events-none"
+          className="text-xs fill-gray-700"
           style={{ fontSize: 10 }}
         >
           {messageText}
@@ -220,23 +219,6 @@ function generateMermaidCode(nodes, edges) {
   return code;
 }
 
-// Helper function to create a new message with proper type
-const createMessage = (sourceId, targetId, label, type = 'sync') => {
-  return {
-    id: `edge-${sourceId}-${targetId}-${Date.now()}`,
-    source: sourceId,
-    target: targetId,
-    sourceHandle: 'right',
-    targetHandle: 'left',
-    data: { 
-      label: label || 'Message',
-      type: type
-    },
-    type: 'message',
-    animated: false
-  };
-};
-
 // Main Sequence Diagram Component
 const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
   // Define node and edge types
@@ -253,10 +235,10 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
   // State initialization
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editLabel, setEditLabel] = useState('');
+  const [selectedElement, setSelectedElement] = useState(null);
   const [messageType, setMessageType] = useState('sync');
+  const [editingLabel, setEditingLabel] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   
   // Use refs to prevent circular updates
   const nodesRef = useRef([]);
@@ -278,6 +260,7 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
     
     try {
       if (initialDiagram && initialDiagram.nodes && initialDiagram.nodes.length > 0) {
+        // Use the provided diagram data
         diagramNodes = [...initialDiagram.nodes];
         diagramEdges = initialDiagram.edges ? [...initialDiagram.edges] : [];
         
@@ -300,13 +283,19 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
             id: actor1Id, 
             type: 'actor', 
             position: { x: 150, y: 50 }, 
-            data: { label: 'User' } 
+            data: { 
+              label: 'User',
+              id: actor1Id
+            } 
           },
           { 
             id: actor2Id, 
             type: 'participant', 
             position: { x: 350, y: 50 }, 
-            data: { label: 'System' } 
+            data: { 
+              label: 'System',
+              id: actor2Id
+            } 
           },
           // Lifelines below each participant
           {
@@ -317,7 +306,8 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
               label: '', 
               participantId: actor1Id,
               height: 400,
-              activations: [] 
+              activations: [],
+              id: lifeline1Id
             }
           },
           {
@@ -328,21 +318,34 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
               label: '', 
               participantId: actor2Id,
               height: 400,
-              activations: [] 
+              activations: [],
+              id: lifeline2Id
             }
           }
         ];
         
         diagramEdges = [
-          createMessage(lifeline1Id, lifeline2Id, 'Request', 'sync')
+          {
+            id: `edge-${lifeline1Id}-${lifeline2Id}-${timestamp}`,
+            source: lifeline1Id,
+            target: lifeline2Id,
+            sourceHandle: 'right',
+            targetHandle: 'left',
+            data: { 
+              label: 'Request',
+              type: 'sync'
+            },
+            type: 'message',
+            animated: false
+          }
         ];
         
         mermaidCodeRef.current = generateMermaidCode(diagramNodes, diagramEdges);
       }
       
-      // Use update functions to batch state updates
-      setNodes([...diagramNodes]);
-      setEdges([...diagramEdges]);
+      // Set initial state
+      safeSetNodes(diagramNodes);
+      safeSetEdges(diagramEdges);
       
       // Update refs
       nodesRef.current = diagramNodes;
@@ -359,407 +362,398 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
     };
   }, [initialDiagram]);
   
-  // Safe update function for nodes that prevents infinite updates
-  const safeUpdateNodes = useCallback((updater) => {
+  // Safe update functions to prevent infinite loops
+  const safeSetNodes = useCallback((newNodes) => {
     if (isUpdatingRef.current) return;
     
     isUpdatingRef.current = true;
-    setNodes((prevNodes) => {
-      const newNodes = typeof updater === 'function' ? updater(prevNodes) : updater;
-      nodesRef.current = newNodes;
-      return newNodes;
-    });
+    setNodes(newNodes);
+    nodesRef.current = newNodes;
     
-    // Reset update flag with small delay to allow batched updates
+    // Reset the flag after a small delay
     setTimeout(() => {
       isUpdatingRef.current = false;
     }, 0);
   }, []);
   
-  // Safe update function for edges that prevents infinite updates
-  const safeUpdateEdges = useCallback((updater) => {
+  const safeSetEdges = useCallback((newEdges) => {
     if (isUpdatingRef.current) return;
     
     isUpdatingRef.current = true;
-    setEdges((prevEdges) => {
-      const newEdges = typeof updater === 'function' ? updater(prevEdges) : updater;
-      edgesRef.current = newEdges;
-      return newEdges;
-    });
+    setEdges(newEdges);
+    edgesRef.current = newEdges;
     
-    // Reset update flag with small delay to allow batched updates
+    // Reset the flag after a small delay
     setTimeout(() => {
       isUpdatingRef.current = false;
     }, 0);
   }, []);
   
-  // Update parent component with diagram changes
-  const notifyDiagramUpdate = useCallback(() => {
-    if (!isInitializedRef.current || !isMountedRef.current || isUpdatingRef.current) return;
-    
-    try {
-      const newMermaidCode = generateMermaidCode(nodesRef.current, edgesRef.current);
-      
-      // Only update if the code has changed
-      if (newMermaidCode !== mermaidCodeRef.current) {
-        mermaidCodeRef.current = newMermaidCode;
-        
-        if (onDiagramUpdate && isMountedRef.current) {
-          onDiagramUpdate({
-            nodes: nodesRef.current,
-            edges: edgesRef.current,
-            mermaidCode: newMermaidCode
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error updating mermaid code:", error);
-    }
-  }, [onDiagramUpdate]);
-  
-  // Update callback when nodes or edges change
+  // Update mermaid code whenever nodes or edges change
   useEffect(() => {
-    if (!isInitializedRef.current) return;
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    nodesRef.current = nodes;
-    edgesRef.current = edges;
+    // We've already updated refs in safeSet* functions
+    const newMermaidCode = generateMermaidCode(nodesRef.current, edgesRef.current);
     
-    // Use debounced notification to prevent too many updates
-    const timerId = setTimeout(() => {
-      if (isMountedRef.current) {
-        notifyDiagramUpdate();
+    // Only update if code has changed
+    if (newMermaidCode !== mermaidCodeRef.current) {
+      mermaidCodeRef.current = newMermaidCode;
+      
+      // Notify parent if callback exists
+      if (onDiagramUpdate && isMountedRef.current) {
+        onDiagramUpdate({
+          nodes: nodesRef.current,
+          edges: edgesRef.current,
+          mermaidCode: newMermaidCode
+        });
       }
-    }, 100);
-    
-    return () => clearTimeout(timerId);
-  }, [nodes, edges, notifyDiagramUpdate]);
+    }
+  }, [nodes, edges, onDiagramUpdate]);
   
   // Handle node changes - with strict rules for sequence diagrams
   const onNodesChange = useCallback((changes) => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    safeUpdateNodes((nds) => {
-      try {
-        // Apply standard changes first
-        const updatedNodes = applyNodeChanges(changes, nds);
+    const updatedNodes = applyNodeChanges(changes, nodesRef.current);
+    
+    // For position changes, enforce sequence diagram rules
+    const positionChanges = changes.filter(change => change.type === 'position');
+    if (positionChanges.length > 0) {
+      const finalNodes = updatedNodes.map(node => {
+        // Find if this node was moved
+        const change = positionChanges.find(c => c.id === node.id);
+        if (!change) return node;
         
-        // For position changes, enforce sequence diagram rules
-        const positionChanges = changes.filter(change => change.type === 'position');
-        if (positionChanges.length > 0) {
-          return updatedNodes.map(node => {
-            // Find if this node was moved
-            const change = positionChanges.find(c => c.id === node.id);
-            if (!change) return node;
-            
-            // For actors/participants, only allow horizontal movement
-            if (node.type === 'actor' || node.type === 'participant') {
-              const newY = 50; // Fix Y position at top
-              
-              // Update lifeline position to match
-              const correspondingLifeline = updatedNodes.find(
-                n => n.type === 'lifeline' && n.data?.participantId === node.id
-              );
-              
-              if (correspondingLifeline) {
-                // Update the lifeline's x position to match the participant
-                const lifelineIndex = updatedNodes.findIndex(n => n.id === correspondingLifeline.id);
-                if (lifelineIndex >= 0) {
-                  updatedNodes[lifelineIndex] = {
-                    ...updatedNodes[lifelineIndex],
-                    position: {
-                      x: node.position.x + 25, // Center the lifeline under the participant
-                      y: updatedNodes[lifelineIndex].position.y
-                    }
-                  };
-                }
-              }
-              
-              return {
-                ...node,
+        // For actors/participants, only allow horizontal movement
+        if (node.type === 'actor' || node.type === 'participant') {
+          const newY = 50; // Fix Y position at top
+          
+          // Update lifeline position to match
+          const correspondingLifeline = updatedNodes.find(
+            n => n.type === 'lifeline' && n.data?.participantId === node.id
+          );
+          
+          if (correspondingLifeline) {
+            // Update the lifeline's x position to match the participant
+            const lifelineIndex = updatedNodes.findIndex(n => n.id === correspondingLifeline.id);
+            if (lifelineIndex >= 0) {
+              updatedNodes[lifelineIndex] = {
+                ...updatedNodes[lifelineIndex],
                 position: {
-                  x: node.position.x, // Allow X movement
-                  y: newY // Fix Y position
+                  x: node.position.x + 25, // Center the lifeline under the participant
+                  y: updatedNodes[lifelineIndex].position.y
                 }
               };
             }
-            
-            // For lifelines, only allow vertical position changes
-            if (node.type === 'lifeline') {
-              // Find the associated participant
-              const participant = updatedNodes.find(
-                n => (n.type === 'actor' || n.type === 'participant') && n.id === node.data?.participantId
-              );
-              
-              if (participant) {
-                return {
-                  ...node,
-                  position: {
-                    x: participant.position.x + 25, // Keep aligned with participant
-                    y: node.position.y // Allow vertical movement
-                  }
-                };
-              }
+          }
+          
+          return {
+            ...node,
+            position: {
+              x: node.position.x, // Allow X movement
+              y: newY // Fix Y position
             }
-            
-            return node;
-          });
+          };
         }
         
-        return updatedNodes;
-      } catch (error) {
-        console.error("Error applying node changes:", error);
-        return nds;
-      }
-    });
-  }, [safeUpdateNodes]);
+        // For lifelines, only allow vertical position changes
+        if (node.type === 'lifeline') {
+          // Find the associated participant
+          const participant = updatedNodes.find(
+            n => (n.type === 'actor' || n.type === 'participant') && n.id === node.data?.participantId
+          );
+          
+          if (participant) {
+            return {
+              ...node,
+              position: {
+                x: participant.position.x + 25, // Keep aligned with participant
+                y: node.position.y // Allow vertical movement
+              }
+            };
+          }
+        }
+        
+        return node;
+      });
+      
+      safeSetNodes(finalNodes);
+    } else {
+      safeSetNodes(updatedNodes);
+    }
+  }, [safeSetNodes]);
   
   // Handle edge changes
   const onEdgesChange = useCallback((changes) => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    safeUpdateEdges((eds) => {
-      try {
-        // Just apply edge changes, no special logic needed
-        return applyEdgeChanges(changes, eds);
-      } catch (error) {
-        console.error("Error applying edge changes:", error);
-        return eds;
-      }
-    });
-  }, [safeUpdateEdges]);
+    const updatedEdges = applyEdgeChanges(changes, edgesRef.current);
+    safeSetEdges(updatedEdges);
+  }, [safeSetEdges]);
   
   // Handle connections - enforce sequence diagram rules
   const onConnect = useCallback((params) => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    try {
-      // Only allow connections between lifelines
-      if (params.sourceHandle === 'right' && params.targetHandle === 'left') {
-        // Create a message with proper formatting
-        const newEdge = createMessage(
-          params.source,
-          params.target,
-          'Message',
-          messageType
-        );
-        
-        safeUpdateEdges(eds => addEdge(newEdge, eds));
-      }
-    } catch (error) {
-      console.error("Error connecting nodes:", error);
+    // Only allow connections between lifelines
+    if (params.sourceHandle === 'right' && params.targetHandle === 'left') {
+      const newEdge = {
+        id: `edge-${params.source}-${params.target}-${Date.now()}`,
+        source: params.source,
+        target: params.target,
+        sourceHandle: 'right',
+        targetHandle: 'left',
+        data: { 
+          label: 'New Message',
+          type: messageType
+        },
+        type: 'message',
+        animated: false
+      };
+      
+      const newEdges = addEdge(newEdge, edgesRef.current);
+      safeSetEdges(newEdges);
+      
+      // Select the new edge
+      setSelectedElement(newEdge);
+      setIsEditing(true);
+      setEditingLabel('New Message');
     }
-  }, [messageType, safeUpdateEdges]);
+  }, [messageType, safeSetEdges]);
   
   // Handle node selection
   const onNodeClick = useCallback((_, node) => {
     if (!isInitializedRef.current) return;
     
-    setSelectedNode(node);
-    setEditLabel(node.data?.label || '');
+    if (node.type === 'actor' || node.type === 'participant') {
+      setSelectedElement(node);
+      setEditingLabel(node.data?.label || '');
+      setIsEditing(false);
+    }
   }, []);
   
-  // Handle edge selection for editing labels
+  // Handle edge selection
   const onEdgeClick = useCallback((_, edge) => {
     if (!isInitializedRef.current) return;
     
-    setSelectedNode(edge);
-    setEditLabel(edge.data?.label || '');
+    setSelectedElement(edge);
+    setEditingLabel(edge.data?.label || '');
+    setIsEditing(false);
   }, []);
   
   // Save edited label
-  const saveNodeLabel = useCallback(() => {
-    if (!isInitializedRef.current || !selectedNode || !editLabel.trim()) return;
+  const saveLabel = useCallback(() => {
+    if (!isInitializedRef.current || !selectedElement || !editingLabel.trim()) return;
     
-    try {
-      if (selectedNode.source) {
-        // It's an edge
-        safeUpdateEdges(eds => 
-          eds.map(e => 
-            e.id === selectedNode.id 
-              ? { ...e, data: { ...e.data, label: editLabel } }
-              : e
-          )
-        );
-      } else {
-        // It's a node
-        safeUpdateNodes(nds => 
-          nds.map(n => 
-            n.id === selectedNode.id 
-              ? { ...n, data: { ...n.data, label: editLabel } }
-              : n
-          )
-        );
-      }
-      
-      setEditMode(false);
-    } catch (error) {
-      console.error("Error saving label:", error);
+    if (selectedElement.source) {
+      // It's an edge
+      const updatedEdges = edgesRef.current.map(e => 
+        e.id === selectedElement.id 
+          ? { ...e, data: { ...e.data, label: editingLabel } }
+          : e
+      );
+      safeSetEdges(updatedEdges);
+    } else {
+      // It's a node
+      const updatedNodes = nodesRef.current.map(n => 
+        n.id === selectedElement.id 
+          ? { ...n, data: { ...n.data, label: editingLabel } }
+          : n
+      );
+      safeSetNodes(updatedNodes);
     }
-  }, [selectedNode, editLabel, safeUpdateEdges, safeUpdateNodes]);
+    
+    setIsEditing(false);
+  }, [selectedElement, editingLabel, safeSetEdges, safeSetNodes]);
   
   // Add a new actor
   const addActor = useCallback(() => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    try {
-      // Generate unique IDs for new nodes
-      const timestamp = Date.now();
-      const actorId = `actor-${timestamp}`;
-      const lifelineId = `lifeline-${timestamp + 1}`;
-      
-      // Determine position (place new actor to the right of existing ones)
-      const currentNodes = nodesRef.current;
-      const lastX = Math.max(
-        ...currentNodes
-          .filter(n => n.type === 'actor' || n.type === 'participant')
-          .map(n => n.position.x + 200),
-        100 // default starting position if no nodes exist
-      );
-      
-      const newActor = { 
-        id: actorId, 
-        type: 'actor', 
-        position: { x: lastX, y: 50 }, 
-        data: { label: 'New Actor' } 
-      };
-      
-      const newLifeline = {
-        id: lifelineId,
-        type: 'lifeline',
-        position: { x: lastX + 25, y: 120 }, // 25px offset to center under the actor
-        data: { 
-          label: '', 
-          participantId: actorId,
-          height: 400,
-          activations: []
-        }
-      };
-      
-      safeUpdateNodes(nds => [...nds, newActor, newLifeline]);
-    } catch (error) {
-      console.error("Error adding actor:", error);
-    }
-  }, [safeUpdateNodes]);
+    // Generate unique IDs for new nodes
+    const timestamp = Date.now();
+    const actorId = `actor-${timestamp}`;
+    const lifelineId = `lifeline-${timestamp + 1}`;
+    
+    // Determine position (place new actor to the right of existing ones)
+    const lastX = Math.max(
+      ...nodesRef.current
+        .filter(n => n.type === 'actor' || n.type === 'participant')
+        .map(n => n.position.x + 200),
+      100 // default starting position if no nodes exist
+    );
+    
+    const newActor = { 
+      id: actorId, 
+      type: 'actor', 
+      position: { x: lastX, y: 50 }, 
+      data: { 
+        label: 'New Actor',
+        id: actorId
+      } 
+    };
+    
+    const newLifeline = {
+      id: lifelineId,
+      type: 'lifeline',
+      position: { x: lastX + 25, y: 120 },
+      data: { 
+        label: '', 
+        participantId: actorId,
+        height: 400,
+        activations: [],
+        id: lifelineId
+      }
+    };
+    
+    const updatedNodes = [...nodesRef.current, newActor, newLifeline];
+    safeSetNodes(updatedNodes);
+    
+    // Select the new actor for immediate editing
+    setSelectedElement(newActor);
+    setEditingLabel('New Actor');
+    setIsEditing(true);
+  }, [safeSetNodes]);
   
   // Add a new participant (object)
   const addParticipant = useCallback(() => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    try {
-      // Generate unique IDs for new nodes
-      const timestamp = Date.now();
-      const participantId = `participant-${timestamp}`;
-      const lifelineId = `lifeline-${timestamp + 1}`;
-      
-      // Determine position (place new participant to the right of existing ones)
-      const currentNodes = nodesRef.current;
-      const lastX = Math.max(
-        ...currentNodes
-          .filter(n => n.type === 'actor' || n.type === 'participant')
-          .map(n => n.position.x + 200),
-        100 // default starting position if no nodes exist
-      );
-      
-      const newParticipant = { 
-        id: participantId, 
-        type: 'participant', 
-        position: { x: lastX, y: 50 }, 
-        data: { label: 'New Participant' } 
-      };
-      
-      const newLifeline = {
-        id: lifelineId,
-        type: 'lifeline',
-        position: { x: lastX + 25, y: 120 }, // 25px offset to center under the participant
-        data: { 
-          label: '', 
-          participantId: participantId,
-          height: 400,
-          activations: []
-        }
-      };
-      
-      safeUpdateNodes(nds => [...nds, newParticipant, newLifeline]);
-    } catch (error) {
-      console.error("Error adding participant:", error);
-    }
-  }, [safeUpdateNodes]);
-  
-  // Delete selected node or edge
-  const deleteSelected = useCallback(() => {
-    if (!isInitializedRef.current || !selectedNode) return;
+    // Generate unique IDs for new nodes
+    const timestamp = Date.now();
+    const participantId = `participant-${timestamp}`;
+    const lifelineId = `lifeline-${timestamp + 1}`;
     
-    try {
-      if (selectedNode.source) {
-        // It's an edge - simply remove it
-        safeUpdateEdges(eds => eds.filter(e => e.id !== selectedNode.id));
-      } else {
-        // It's a node - handle based on type
-        if (selectedNode.type === 'actor' || selectedNode.type === 'participant') {
-          // Remove participant and its lifeline
-          safeUpdateNodes(nds => nds.filter(n => 
-            n.id !== selectedNode.id && n.data?.participantId !== selectedNode.id
-          ));
-          
-          // Remove any edges connected to the lifeline
-          const currentNodes = nodesRef.current;
-          const lifeline = currentNodes.find(n => n.data?.participantId === selectedNode.id);
-          if (lifeline) {
-            safeUpdateEdges(eds => eds.filter(e => 
-              e.source !== lifeline.id && e.target !== lifeline.id
-            ));
-          }
-        } else if (selectedNode.type === 'lifeline') {
-          // Cannot delete lifelines directly - must delete the participant instead
-          const currentNodes = nodesRef.current;
-          const participant = currentNodes.find(n => n.id === selectedNode.data?.participantId);
-          if (participant) {
-            safeUpdateNodes(nds => nds.filter(n => 
-              n.id !== participant.id && n.id !== selectedNode.id
-            ));
-            
-            // Remove any edges connected to this lifeline
-            safeUpdateEdges(eds => eds.filter(e => 
-              e.source !== selectedNode.id && e.target !== selectedNode.id
-            ));
-          }
+    // Determine position (place new participant to the right of existing ones)
+    const lastX = Math.max(
+      ...nodesRef.current
+        .filter(n => n.type === 'actor' || n.type === 'participant')
+        .map(n => n.position.x + 200),
+      100 // default starting position if no nodes exist
+    );
+    
+    const newParticipant = { 
+      id: participantId, 
+      type: 'participant', 
+      position: { x: lastX, y: 50 }, 
+      data: { 
+        label: 'New Participant',
+        id: participantId
+      } 
+    };
+    
+    const newLifeline = {
+      id: lifelineId,
+      type: 'lifeline',
+      position: { x: lastX + 25, y: 120 },
+      data: { 
+        label: '', 
+        participantId: participantId,
+        height: 400,
+        activations: [],
+        id: lifelineId
+      }
+    };
+    
+    const updatedNodes = [...nodesRef.current, newParticipant, newLifeline];
+    safeSetNodes(updatedNodes);
+    
+    // Select the new participant for immediate editing
+    setSelectedElement(newParticipant);
+    setEditingLabel('New Participant');
+    setIsEditing(true);
+  }, [safeSetNodes]);
+  
+  // Delete selected element
+  const deleteSelected = useCallback(() => {
+    if (!isInitializedRef.current || !selectedElement) return;
+    
+    if (selectedElement.source) {
+      // It's an edge - simply remove it
+      const updatedEdges = edgesRef.current.filter(e => e.id !== selectedElement.id);
+      safeSetEdges(updatedEdges);
+    } else {
+      // It's a node
+      if (selectedElement.type === 'actor' || selectedElement.type === 'participant') {
+        // Remove participant and its lifeline
+        const updatedNodes = nodesRef.current.filter(n => 
+          n.id !== selectedElement.id && n.data?.participantId !== selectedElement.id
+        );
+        safeSetNodes(updatedNodes);
+        
+        // Remove any edges connected to the lifeline
+        const lifeline = nodesRef.current.find(n => n.data?.participantId === selectedElement.id);
+        if (lifeline) {
+          const updatedEdges = edgesRef.current.filter(e => 
+            e.source !== lifeline.id && e.target !== lifeline.id
+          );
+          safeSetEdges(updatedEdges);
         }
       }
-      
-      setSelectedNode(null);
-      setEditMode(false);
-    } catch (error) {
-      console.error("Error deleting element:", error);
     }
-  }, [selectedNode, safeUpdateNodes, safeUpdateEdges]);
+    
+    setSelectedElement(null);
+    setIsEditing(false);
+  }, [selectedElement, safeSetNodes, safeSetEdges]);
   
-  // Add a new message between two participants
-  const addMessage = useCallback((type = 'sync') => {
+  // Add a new message between existing lifelines
+  const addMessage = useCallback(() => {
     if (!isInitializedRef.current || isUpdatingRef.current) return;
     
-    try {
-      // Need at least two lifelines to add a message
-      const currentNodes = nodesRef.current;
-      const lifelines = currentNodes.filter(n => n.type === 'lifeline');
-      if (lifelines.length < 2) return;
-      
-      // Get first two lifelines
-      const [source, target] = lifelines.slice(0, 2);
-      
-      // Create a new message edge
-      const newMessage = createMessage(source.id, target.id, 'New Message', type);
-      
-      safeUpdateEdges(eds => [...eds, newMessage]);
-    } catch (error) {
-      console.error("Error adding message:", error);
+    // Need at least two lifelines to add a message
+    const lifelines = nodesRef.current.filter(n => n.type === 'lifeline');
+    if (lifelines.length < 2) return;
+    
+    // Get first two lifelines
+    const [source, target] = lifelines.slice(0, 2);
+    
+    // Create a new message edge
+    const newEdge = {
+      id: `edge-${source.id}-${target.id}-${Date.now()}`,
+      source: source.id,
+      target: target.id,
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      data: { 
+        label: 'New Message',
+        type: messageType
+      },
+      type: 'message',
+      animated: false
+    };
+    
+    const updatedEdges = [...edgesRef.current, newEdge];
+    safeSetEdges(updatedEdges);
+    
+    // Select the new message for immediate editing
+    setSelectedElement(newEdge);
+    setEditingLabel('New Message');
+    setIsEditing(true);
+  }, [messageType, safeSetEdges]);
+  
+  // Enable editing mode for the selected element
+  const startEditing = useCallback(() => {
+    if (!selectedElement) return;
+    
+    // Set the label based on selected element type
+    if (selectedElement.source) {
+      // It's an edge
+      setEditingLabel(selectedElement.data?.label || '');
+    } else {
+      // It's a node
+      setEditingLabel(selectedElement.data?.label || '');
     }
-  }, [safeUpdateEdges]);
-
+    
+    setIsEditing(true);
+  }, [selectedElement]);
+  
   return (
     <div className="w-full h-full flex flex-col">
       {/* Toolbar */}
-      <div className="p-3 border-b border-gray-200 flex justify-between">
-        <div className="flex space-x-2">
+      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+        <div className="flex space-x-2 items-center">
+          <span className="text-sm font-semibold mr-2">Add:</span>
           <button
             onClick={addActor}
             className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center"
@@ -772,80 +766,61 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
             className="px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 flex items-center"
           >
             <Plus size={16} className="mr-1" />
-            Participant
+            Object
           </button>
-          <div className="h-6 w-px bg-gray-300 mx-1"></div>
-          <div className="flex border border-gray-300 rounded overflow-hidden">
-            <button
-              onClick={() => setMessageType('sync')}
-              className={`px-2 py-1 text-xs ${messageType === 'sync' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}`}
-              title="Synchronous Message"
-            >
-              Sync
-            </button>
-            <button
-              onClick={() => setMessageType('async')}
-              className={`px-2 py-1 text-xs ${messageType === 'async' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}`}
-              title="Asynchronous Message"
-            >
-              Async
-            </button>
-            <button
-              onClick={() => setMessageType('return')}
-              className={`px-2 py-1 text-xs ${messageType === 'return' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}`}
-              title="Return Message"
-            >
-              Return
-            </button>
-          </div>
+          <span className="text-sm font-semibold mx-2">Message:</span>
+          <select
+            value={messageType}
+            onChange={(e) => setMessageType(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="sync">Synchronous</option>
+            <option value="async">Asynchronous</option>
+            <option value="return">Return</option>
+          </select>
           <button
-            onClick={() => addMessage(messageType)}
+            onClick={addMessage}
             className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 flex items-center"
           >
             <ArrowRight size={16} className="mr-1" />
             Add Message
           </button>
-          <button
-            onClick={deleteSelected}
-            className={`px-3 py-1 ${selectedNode ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'} rounded-md flex items-center`}
-            disabled={!selectedNode}
-          >
-            <Trash2 size={16} className="mr-1" />
-            Delete
-          </button>
+          {selectedElement && (
+            <button
+              onClick={deleteSelected}
+              className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 flex items-center"
+            >
+              <Trash2 size={16} className="mr-1" />
+              Delete
+            </button>
+          )}
         </div>
         
-        {selectedNode && (
+        {selectedElement && (
           <div className="flex items-center space-x-2">
-            {editMode ? (
-              <>
+            {isEditing ? (
+              <div className="flex items-center">
                 <input
                   type="text"
-                  value={editLabel}
-                  onChange={(e) => setEditLabel(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  value={editingLabel}
+                  onChange={(e) => setEditingLabel(e.target.value)}
+                  className="border border-gray-300 rounded-l px-2 py-1 text-sm"
                   autoFocus
                 />
                 <button
-                  onClick={saveNodeLabel}
-                  className="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm"
+                  onClick={saveLabel}
+                  className="px-3 py-1 bg-green-500 text-white rounded-r hover:bg-green-600 text-sm"
                 >
                   Save
                 </button>
-                <button
-                  onClick={() => setEditMode(false)}
-                  className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
-                >
-                  Cancel
-                </button>
-              </>
+              </div>
             ) : (
               <button
-                onClick={() => setEditMode(true)}
+                onClick={startEditing}
                 className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
               >
                 <Edit size={16} className="mr-1" />
-                Edit Label
+                Rename
               </button>
             )}
           </div>
@@ -853,7 +828,7 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
       </div>
       
       {/* Diagram Area */}
-      <div className="flex-1 h-full" style={{ touchAction: 'none' }}>
+      <div className="flex-1 h-full relative" style={{ touchAction: 'none' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -867,17 +842,24 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
           fitView
           minZoom={0.3}
           maxZoom={2}
-          attributionPosition="bottom-left"
+          defaultEdgeOptions={{
+            type: 'message'
+          }}
         >
           <Controls />
           <Background variant="dots" size={1} gap={16} color="#f0f0f0" />
-          <Panel position="top-center" className="bg-white p-2 rounded shadow text-xs">
-            <div className="flex items-center text-gray-500">
-              <ArrowDown className="h-4 w-4 mr-1" />
-              <span>Time flows downward</span>
-            </div>
+          <Panel position="bottom-right" className="bg-white py-1 px-2 rounded shadow text-xs text-gray-500">
+            Time flows downward
           </Panel>
         </ReactFlow>
+        
+        {/* Simple instructions */}
+        <div className="absolute top-2 left-2 bg-white p-2 rounded shadow-md border border-gray-200 text-xs">
+          <p>• Click on elements to select them</p>
+          <p>• Use the Rename button to edit labels</p>
+          <p>• Connect lifelines (vertical lines) to create messages</p>
+          <p>• Drag actors/objects horizontally to arrange them</p>
+        </div>
       </div>
     </div>
   );

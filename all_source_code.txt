@@ -1,4 +1,4 @@
-# CODE EXTRACTION - 2025-03-11 13:27:44
+# CODE EXTRACTION - 2025-03-12 00:13:50
 
 # PROJECT STRUCTURE
 |-- client
@@ -106,24 +106,47 @@
 |   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
 |   |   |   +-- SequenceDiagram.js
 |   |   |       |-- module:SequenceDiagram.js
-|   |   |       |-- fn: ActorNode({ data }) [internal]
-|   |   |       |-- fn: ObjectNode({ data }) [internal]
-|   |   |       |-- fn: LifelineNode({ data }) [internal]
-|   |   |       |-- fn: MessageNode({ data }) [internal]
+|   |   |       |-- fn: generateMermaidCode(nodes, edges) [internal]
+|   |   |       |-- fn: return() [internal]
+|   |   |       |-- fn: MessageEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  style = {},
+}) [internal]
 |   |   |       |-- fn: SequenceDiagram({ initialDiagram, onDiagramUpdate }) [internal]
 |   |   |       |-- fn: SequenceDiagramWrapped(props) [internal]
+|   |   |       |-- method: generateMermaidCode(nodes, edges)
+|   |   |       |-- method: forEach(participant => {
+    if (participant.type === 'actor')
 |   |   |       |-- component:ActorNode [internal]
-|   |   |       |-- component:ObjectNode [internal]
+|   |   |       |-- component:ParticipantNode [internal]
 |   |   |       |-- component:LifelineNode [internal]
-|   |   |       |-- component:MessageNode [internal]
+|   |   |       |-- component:MessageEdge [internal]
 |   |   |       |-- component:SequenceDiagram [internal]
 |   |   |       |-- component:SequenceDiagramWrapped [internal]
+|   |   |-- evaluation
+|   |   |   +-- EvaluationSummary.js
+|   |   |       |-- module:EvaluationSummary.js
+|   |   |       |-- fn: EvaluationSummary({ evaluation, scores }) [internal]
+|   |   |       |-- fn: getScoreColor(score) [internal]
+|   |   |       |-- component:EvaluationSummary [internal]
 |   |   |-- CoachAgentInterface.js
 |   |   |   |-- module:CoachAgentInterface.js
 |   |   |   |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
-|   |   |   |-- fn: getCoachContext() [internal]
-|   |   |   |-- fn: handleSuggestionClick(suggestion) [internal]
 |   |   |   |-- component:CoachAgentInterface [internal]
+|   |   |-- ConciseModeToggle.js
+|   |   |   |-- module:ConciseModeToggle.js
+|   |   |   |-- fn: ConciseModeToggle({ isEnabled, onToggle }) [internal]
+|   |   |   |-- fn: handleToggle(enabled) [internal]
+|   |   |   |-- component:ConciseModeToggle [internal]
+|   |   |-- ExperienceLevelSelector.js
+|   |   |   |-- module:ExperienceLevelSelector.js
+|   |   |   |-- fn: ExperienceLevelSelector({ currentLevel, onLevelChange }) [internal]
+|   |   |   |-- component:ExperienceLevelSelector [internal]
 |   |   |-- MermaidToolbar.js
 |   |   |   |-- module:MermaidToolbar.js
 |   |   |   |-- fn: ComponentButton({ icon, label, snippet, onInsert }) [internal]
@@ -275,10 +298,9 @@
 |   |       |-- fn: ScalingStrategyPage() [internal]
 |   |       |-- fn: ReliabilitySecurityPage() [internal]
 |   |       |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
-|   |       |-- fn: WorkbookLayout({ onBack }) [internal]
+|   |       |-- fn: WorkbookLayout({ onBack, sessionId }) [internal]
 |   |       |-- fn: updateFormData(section, data) [internal]
 |   |       |-- fn: getActivePageComponent() [internal]
-|   |       |-- fn: handleAskCoach() [internal]
 |   |       |-- component:RequirementsPage [internal]
 |   |       |-- component:APIDesignPage [internal]
 |   |       |-- component:DataModelPage [internal]
@@ -313,15 +335,24 @@
 |   |       +-- interview_format
 |   |           +-- standard_progression.md
 |   |-- persona
-|   |-- problems
-|   +-- tempresults
-|       +-- 1
+|   |   |-- coachPersona.js
+|   |   |   |-- module:coachPersona.js
+|   |   |-- graderPersona.js
+|   |   |   |-- module:graderPersona.js
+|   |   +-- interviewerPersona.js
+|   |       |-- module:interviewerPersona.js
+|   |-- tempresults
+|   |   +-- 1
+|   +-- problems.js
+|       |-- module:problems.js
 |-- server
 |   |-- __pycache__
 |   |-- config
 |   |   +-- aiConfig.js
 |   |       |-- module:aiConfig.js
 |   |-- models
+|   |   |-- Evaluation.js
+|   |   |   |-- module:Evaluation.js
 |   |   |-- Interview.js
 |   |   |   |-- module:Interview.js
 |   |   |-- Problem.js
@@ -340,6 +371,8 @@
 |   |   |   |-- module:auth.js
 |   |   |-- coaching.js
 |   |   |   |-- module:coaching.js
+|   |   |-- grader.js
+|   |   |   |-- module:grader.js
 |   |   |-- interviews.js
 |   |   |   |-- module:interviews.js
 |   |   |   |-- fn: handleError(res, error, defaultMessage = 'An unexpected error occurred') [internal]
@@ -367,6 +400,9 @@
 |   |   |   |       |-- method: sendMessage(messages, options = {})
 |   |   |   |       |-- method: generateResponse(messages, context, options = {})
 |   |   |   |       |-- method: generateContent(prompt, options = {})
+|   |   |   |-- prompts
+|   |   |   |   +-- grader.js
+|   |   |   |       |-- module:grader.js
 |   |   |   |-- aiFactory.js
 |   |   |   |   |-- module:aiFactory.js
 |   |   |   |   |-- class:AIFactory [internal]
@@ -401,10 +437,15 @@
 |   |   |   |   |-- method: processMessage(sessionId, message, options = {})
 |   |   |   |   |-- method: startSession(userId, problemId, options = {})
 |   |   |   |   |-- method: generateContent(sessionId, topic, options = {})
-|   |   |   |   |-- method: _generateLearningMaterials(session, topic, options = {})
-|   |   |   |   |-- method: _generateDiagramDescription(session, diagramType, options = {})
-|   |   |   |   |-- method: _extractEntities(messages, currentStage)
-|   |   |   |   |-- method: _getCurrentStageIndex(stageName)
+|   |   |   |-- graderEngine.js
+|   |   |   |   |-- module:graderEngine.js
+|   |   |   |   |-- class:GraderEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: evaluateWorkbook(sessionId, workbookContent, options = {})
+|   |   |   |   |-- method: _extractScores(evaluationText)
+|   |   |   |   |-- method: provideFinalAssessment(interviewId, options = {})
+|   |   |   |   |-- method: _buildGraderPrompt(context)
+|   |   |   |   |-- method: _getDefaultGraderPrompt(context = {})
 |   |   |   |-- interviewEngine.js
 |   |   |   |   |-- module:interviewEngine.js
 |   |   |   |   |-- class:InterviewEngine extends BaseEngine [internal]
@@ -426,14 +467,17 @@
 |   |   |       |-- method: constructor()
 |   |   |       |-- method: initialize(config)
 |   |   |       |-- method: forEach(requiredId => {
-        if (!this.personas[requiredId])
+      if (!this.personas[requiredId])
 |   |   |       |-- method: setActivePersona(personaId)
+|   |   |       |-- method: setConciseMode(enabled)
 |   |   |       |-- method: getActivePersona()
 |   |   |       |-- method: getPersona(personaId)
 |   |   |       |-- method: getPageSuggestions(pageId)
 |   |   |       |-- method: getSystemPrompt(context = {})
 |   |   |       |-- method: formatResponse(patternKey, variables = {})
 |   |   |       |-- method: getAllPersonas()
+|   |   |-- evaluation
+|   |   |   +-- evaluationParser.js
 |   |   |-- knowledge
 |   |   |   |-- knowledgeService.js
 |   |   |   |   |-- module:knowledgeService.js
@@ -459,6 +503,7 @@
 |   |           |-- method: generateArchitectureDiagram(entities, title)
 |   |           |-- method: generateErDiagram(entities, title)
 |   |           |-- method: generateApiDiagram(entities, title)
+|   |-- utils
 |   |-- config.py
 |   |-- index.js
 |   |   |-- module:index.js
@@ -479,6 +524,7 @@
 |-- md_files.txt
 |-- project_overview.txt
 |-- README.md
+|-- sysdesignsummarydata.txt
 +-- tree_structure.txt
 
 
@@ -487,155 +533,115 @@
 # FILE: client\components\CoachAgentInterface.js
 # EXTENSION: .js
 ================================================================================
+// client/components/CoachAgentInterface.js
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, X, User, Bot } from 'lucide-react';
+// Import PersonaService – ensure you have a client-accessible copy or proxy if needed.
+import PersonaService from '../../server/services/engines/PersonaService';
 
 const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => {
   const [messages, setMessages] = useState([
-    { id: 1, role: 'assistant', content: 'Hi! I\'m your System Design Coach. What questions do you have about your design?', timestamp: new Date() }
+    {
+      id: 1,
+      role: 'assistant',
+      content: "Hi! I'm your System Design Coach. What questions do you have about your design?",
+      timestamp: new Date()
+    }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll on new messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
-  // Focus input field when opened
+  // Focus input when opened
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isOpen]);
 
-  // Sample coach prompts based on current page context
-  const getCoachContext = () => {
-    const contextByPage = {
-      'requirements': {
-        systemPrompt: `You are a System Design Coach helping with requirements gathering. 
-        Current user data: ${JSON.stringify(currentData)}.
-        Provide guidance on clarifying functional/non-functional requirements.`,
-        suggestions: [
-          "What user scenarios should I consider?",
-          "How do I estimate my scale requirements?",
-          "What availability requirements are typical for this type of system?"
-        ]
-      },
-      'api': {
-        systemPrompt: `You are a System Design Coach helping with API design.
-        Current API design data: ${JSON.stringify(currentData)}.
-        Provide guidance on RESTful design, parameters, and error handling.`,
-        suggestions: [
-          "How should I structure my API endpoints?",
-          "What status codes should I use?",
-          "How can I make my API more scalable?"
-        ]
-      },
-      'data': {
-        systemPrompt: `You are a System Design Coach helping with data modeling.
-        Current data model: ${JSON.stringify(currentData)}.
-        Provide guidance on schema design, relationships, and storage options.`,
-        suggestions: [
-          "Should I use SQL or NoSQL for this?",
-          "How should I handle relationships between entities?",
-          "What indexing strategy do you recommend?"
-        ]
-      },
-      'architecture': {
-        systemPrompt: `You are a System Design Coach helping with system architecture.
-        Current architecture diagram data: ${JSON.stringify(currentData)}.
-        Provide guidance on component design, interactions, and best practices.`,
-        suggestions: [
-          "How can I improve this architecture?",
-          "What components am I missing?",
-          "Is this design scalable enough?"
-        ]
-      },
-      'scaling': {
-        systemPrompt: `You are a System Design Coach helping with scaling strategies.
-        Current scaling plan: ${JSON.stringify(currentData)}.
-        Provide guidance on horizontal/vertical scaling, caching, and bottlenecks.`,
-        suggestions: [
-          "What are potential bottlenecks in my design?",
-          "How can I implement caching effectively?",
-          "What's the best database scaling approach?"
-        ]
-      },
-      'reliability': {
-        systemPrompt: `You are a System Design Coach helping with reliability and security.
-        Current reliability and security measures: ${JSON.stringify(currentData)}.
-        Provide guidance on fault tolerance, availability, security, and compliance.`,
-        suggestions: [
-          "What failure scenarios should I consider?",
-          "How can I improve the security of my system?",
-          "What are best practices for data protection?"
-        ]
-      }
+  // Build a combined context by merging page-specific details with the active persona's system prompt.
+  const getCoachContext = async () => {
+    // Base context for the page
+    const baseContext = {
+      systemPrompt:
+        currentPage === 'requirements'
+          ? `Current user data: ${JSON.stringify(currentData)}.
+Provide guidance on clarifying both functional and non-functional requirements.`
+          : `Provide general system design guidance.`,
+      suggestions:
+        currentPage === 'requirements'
+          ? [
+              'What user scenarios should I consider?',
+              'How do I estimate scale requirements?',
+              'What availability is typical for this system?'
+            ]
+          : ['How can I improve my design?', 'What should I focus on next?']
     };
 
-    return contextByPage[currentPage] || {
-      systemPrompt: "You are a System Design Coach. Provide general guidance.",
-      suggestions: ["How can I improve my design?", "What should I focus on next?"]
+    // Get the active persona’s system prompt from PersonaService.
+    const personaPrompt = PersonaService.getSystemPrompt({
+      currentPage,
+      designData: currentData
+    });
+
+    return {
+      systemPrompt: `${personaPrompt}\n${baseContext.systemPrompt}`,
+      suggestions: [
+        ...(PersonaService.getActivePersona().suggestions || []),
+        ...baseContext.suggestions
+      ]
     };
   };
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
-    
-    // Add user message
     const userMessage = {
       id: Date.now(),
       role: 'user',
       content: input,
       timestamp: new Date()
     };
-    
-    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
-    
-    // In a real implementation, this would call your AI backend
-    // For demo, simulate a response after delay
-    const context = getCoachContext();
-    
+
+    // Retrieve the combined context for building the AI prompt.
+    const context = await getCoachContext();
+
+    // In production, forward { message: input, systemPrompt: context.systemPrompt } to your backend.
+    // For demonstration, we simulate an AI response based on keywords.
     setTimeout(() => {
-      // Generate "thoughtful" response based on current page and question
       let response;
-      
       if (input.toLowerCase().includes('bottleneck') || input.toLowerCase().includes('scale')) {
-        response = "When identifying bottlenecks, focus on the components that handle the most traffic or have the strictest performance requirements. Based on your current design, I'd pay special attention to your database access patterns and consider implementing a caching layer. For scaling, remember that horizontal scaling (adding more machines) is generally more flexible than vertical scaling (adding more resources to existing machines).";
-      } else if (input.toLowerCase().includes('security') || input.toLowerCase().includes('auth')) {
-        response = "For authentication, JWT tokens are a good choice for stateless services. Make sure you implement proper token validation, use HTTPS everywhere, and consider rate limiting to prevent brute force attacks. You should also implement proper input validation on all endpoints to prevent injection attacks.";
-      } else if (input.toLowerCase().includes('database') || input.toLowerCase().includes('data')) {
-        response = "When choosing between SQL and NoSQL, consider your query patterns and consistency requirements. SQL databases are better for complex queries and strong consistency, while NoSQL databases often provide better scalability for simple read/write operations. Your current data model would work well with a relational database given the relationships between entities.";
+        response =
+          'Focus on your high-traffic components; consider caching and horizontal scaling.';
+      } else if (input.toLowerCase().includes('security')) {
+        response =
+          'Ensure you have proper authentication (e.g., JWT) and secure communications (HTTPS).';
       } else {
-        response = "Looking at your current design, I'd suggest focusing on clearly defining your service boundaries and communication patterns. Consider how services will discover each other and handle failures. It's also important to think about how you'll monitor and debug the system in production. Would you like more specific guidance on any particular aspect?";
+        response =
+          'I suggest refining your service boundaries and improving inter-component communication.';
       }
-      
       const coachMessage = {
         id: Date.now(),
         role: 'assistant',
         content: response,
         timestamp: new Date()
       };
-      
-      setMessages(prevMessages => [...prevMessages, coachMessage]);
+      setMessages((prev) => [...prev, coachMessage]);
       setLoading(false);
     }, 1500);
   };
 
-  const handleSuggestionClick = (suggestion) => {
-    setInput(suggestion);
-  };
-
   if (!isOpen) return null;
-
-  const context = getCoachContext();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -649,43 +655,39 @@ const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => {
               {currentPage?.charAt(0).toUpperCase() + currentPage?.slice(1)} Mode
             </span>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
           </button>
         </div>
-        
-        {/* Messages container */}
+
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map(message => (
-            <div 
-              key={message.id} 
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div 
+              <div
                 className={`px-4 py-3 rounded-lg max-w-3/4 flex items-start ${
-                  message.role === 'user' 
-                    ? 'bg-indigo-600 text-white' 
+                  msg.role === 'user'
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                {message.role === 'user' ? (
-                  <User className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                {msg.role === 'user' ? (
+                  <User className="h-5 w-5 mr-2" />
                 ) : (
-                  <Bot className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                  <Bot className="h-5 w-5 mr-2" />
                 )}
                 <div>
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   <span className="text-xs opacity-75 block mt-1">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               </div>
             </div>
           ))}
-          
           {loading && (
             <div className="flex justify-start">
               <div className="px-4 py-3 rounded-lg bg-gray-100 text-gray-800">
@@ -697,26 +699,20 @@ const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => {
               </div>
             </div>
           )}
-          
           <div ref={messagesEndRef} />
         </div>
-        
-        {/* Suggestions */}
+
+        {/* Suggestions (optional: you can render context.suggestions here) */}
         <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
           <p className="text-xs text-gray-500 mb-1">Suggested questions:</p>
           <div className="flex flex-wrap gap-2">
-            {context.suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300"
-              >
-                {suggestion}
-              </button>
-            ))}
+            {/*
+              If you want to display suggestions dynamically, you can call getCoachContext
+              and store the suggestions in state.
+            */}
           </div>
         </div>
-        
+
         {/* Input */}
         <div className="px-4 py-3 border-t border-gray-200">
           <div className="flex">
@@ -744,6 +740,7 @@ const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => {
 };
 
 export default CoachAgentInterface;
+
 
 
 ================================================================================
@@ -911,6 +908,43 @@ const TopicGuidedCoaching = ({ currentTopic, onSendMessage, onGetMaterials }) =>
 };
 
 export default TopicGuidedCoaching;
+
+
+================================================================================
+# FILE: client\components\ConciseModeToggle.js
+# EXTENSION: .js
+================================================================================
+// client/components/ConciseModeToggle.js
+import React from 'react';
+import { MessageSquare } from 'lucide-react';
+import PersonaService from '../../server/services/engines/PersonaService';
+
+const ConciseModeToggle = ({ isEnabled, onToggle }) => {
+  const handleToggle = (enabled) => {
+    // Update the concise mode flag in PersonaService
+    PersonaService.setConciseMode(enabled);
+    if (onToggle) onToggle(enabled);
+  };
+
+  return (
+    <div className="flex items-center">
+      <span className="mr-2 text-sm text-gray-600">Concise Mode</span>
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input
+          type="checkbox"
+          className="sr-only peer"
+          checked={isEnabled}
+          onChange={(e) => handleToggle(e.target.checked)}
+        />
+        <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 peer-focus:ring-4 peer-focus:ring-indigo-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+      </label>
+      <MessageSquare size={16} className="ml-2 text-gray-600" />
+    </div>
+  );
+};
+
+export default ConciseModeToggle;
+
 
 
 ================================================================================
@@ -2384,143 +2418,868 @@ export default ReactFlowDiagramWithProvider;
 # EXTENSION: .js
 ================================================================================
 // client/components/diagram/SequenceDiagram.js
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { memo } from 'react';
 import ReactFlow, { 
   ReactFlowProvider, 
   Background, 
   Controls,
   Handle, 
-  Position 
+  Position,
+  addEdge,
+  applyEdgeChanges, 
+  applyNodeChanges,
+  Panel
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowRight, Plus, Trash2, Edit } from 'lucide-react';
+import { User, Server, ArrowRight, Plus, Edit, Trash2 } from 'lucide-react';
 
 // Custom Node Types for Sequence Diagrams
-const ActorNode = ({ data }) => {
-  return (
-    <div className="sequence-actor-node">
-      <Handle type="source" position={Position.Bottom} id="bottom" />
-      <Handle type="target" position={Position.Top} id="top" />
-      <div className="p-2 rounded-lg bg-blue-100 border border-blue-300 text-center shadow-sm">
-        <div className="flex justify-center items-center mb-1">
-          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none">
-            <circle cx="12" cy="7" r="4" />
-            <path d="M12 11L12 22" />
-            <path d="M8 22L16 22" />
-          </svg>
-        </div>
-        <div className="text-sm font-medium">{data.label}</div>
-      </div>
+const ActorNode = memo(({ data, selected }) => (
+  <div 
+    className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-blue-700' : 'border-blue-500'}`}
+  >
+    <div className="flex flex-col items-center">
+      <User className="h-8 w-8 text-blue-500 mb-2" />
+      <div className="text-sm font-bold text-center">{data.label}</div>
     </div>
+    <Handle
+      type="source"
+      position={Position.Bottom}
+      id="bottom"
+      isConnectable={false}
+      className="w-3 h-3 bg-blue-500"
+    />
+  </div>
+));
+
+const ParticipantNode = memo(({ data, selected }) => (
+  <div 
+    className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${selected ? 'border-purple-700' : 'border-purple-500'}`}
+  >
+    <div className="flex flex-col items-center">
+      <Server className="h-8 w-8 text-purple-500 mb-2" />
+      <div className="text-sm font-bold text-center">{data.label}</div>
+    </div>
+    <Handle
+      type="source"
+      position={Position.Bottom}
+      id="bottom"
+      isConnectable={false}
+      className="w-3 h-3 bg-purple-500"
+    />
+  </div>
+));
+
+const LifelineNode = memo(({ data, selected }) => (
+  <div 
+    className={`sequence-lifeline-node ${selected ? 'border-l-2 border-gray-500' : ''}`} 
+    style={{ width: '2px', height: 400 }}
+  >
+    <div className="w-0.5 h-full bg-gray-300 mx-auto"></div>
+    <Handle
+      type="target"
+      position={Position.Top}
+      id="top"
+      isConnectable={false}
+      style={{ visibility: 'hidden' }}
+      className="w-3 h-3 bg-gray-500"
+    />
+    {data.activations && data.activations.map((activation, index) => (
+      <div 
+        key={index}
+        className="bg-gray-200 border border-gray-400"
+        style={{
+          position: 'absolute',
+          width: '10px',
+          height: `${activation.height}px`,
+          left: '-4px',
+          top: `${activation.top}px`,
+        }}
+      />
+    ))}
+    <Handle
+      type="source"
+      position={Position.Right}
+      id="right"
+      className="w-3 h-3 bg-gray-500"
+    />
+    <Handle
+      type="target"
+      position={Position.Left}
+      id="left"
+      className="w-3 h-3 bg-gray-500"
+    />
+  </div>
+));
+
+const MessageEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  style = {},
+}) => {
+  const edgePath = `M${sourceX},${sourceY} L${targetX},${targetY}`;
+  const messageText = data?.label || '';
+  const isReturn = data?.type === 'return';
+  const isAsync = data?.type === 'async';
+  
+  // Calculate text positioning
+  const textX = (sourceX + targetX) / 2;
+  const textY = sourceY - 10; // Position text above the line
+  
+  return (
+    <>
+      <path
+        id={id}
+        style={{ 
+          ...style, 
+          strokeDasharray: isReturn || isAsync ? '5,5' : 'none',
+          stroke: isReturn ? '#888' : '#333',
+          strokeWidth: 1.5
+        }}
+        className="react-flow__edge-path"
+        d={edgePath}
+      />
+      {messageText && (
+        <text
+          x={textX}
+          y={textY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="text-xs fill-gray-700"
+          style={{ fontSize: 10 }}
+        >
+          {messageText}
+        </text>
+      )}
+      {/* Arrow head */}
+      <path
+        d={`M${targetX - 5},${targetY - 5} L${targetX},${targetY} L${targetX - 5},${targetY + 5}`}
+        style={{
+          fill: 'none',
+          stroke: isReturn ? '#888' : '#333',
+          strokeWidth: 1.5
+        }}
+      />
+    </>
   );
 };
 
-const ObjectNode = ({ data }) => {
-  return (
-    <div className="sequence-object-node">
-      <Handle type="source" position={Position.Bottom} id="bottom" />
-      <Handle type="target" position={Position.Top} id="top" />
-      <div className="p-2 rounded-lg bg-purple-100 border border-purple-300 text-center shadow-sm">
-        <div className="text-sm font-medium">{data.label}</div>
-      </div>
-    </div>
+// Function to convert nodes and edges to mermaid syntax
+function generateMermaidCode(nodes, edges) {
+  if (!nodes || !edges) return '';
+  
+  const participants = nodes.filter(node => 
+    node.type === 'actor' || node.type === 'participant'
   );
-};
+  
+  // Start with sequence diagram declaration
+  let code = 'sequenceDiagram\n';
+  
+  // Declare participants
+  participants.forEach(participant => {
+    if (participant.type === 'actor') {
+      code += `    actor ${participant.data.label.replace(/\s+/g, '_')}\n`;
+    } else {
+      code += `    participant ${participant.data.label.replace(/\s+/g, '_')}\n`;
+    }
+  });
+  
+  // Sort edges by vertical position to maintain proper sequence
+  const sortedEdges = [...edges].sort((a, b) => {
+    const nodeA = nodes.find(n => n.id === a.source);
+    const nodeB = nodes.find(n => n.id === b.source);
+    if (!nodeA || !nodeB) return 0;
+    
+    return nodeA.position.y - nodeB.position.y;
+  });
+  
+  // Add messages
+  sortedEdges.forEach(edge => {
+    if (!edge.data?.label) return;
+    
+    // Find the lifelines
+    const sourceLifeline = nodes.find(n => n.id === edge.source);
+    const targetLifeline = nodes.find(n => n.id === edge.target);
+    
+    if (!sourceLifeline || !targetLifeline) return;
+    
+    // Find the parent participants of these lifelines
+    const sourceParticipant = nodes.find(n => 
+      (n.type === 'actor' || n.type === 'participant') && 
+      sourceLifeline.data?.participantId === n.id
+    );
+    
+    const targetParticipant = nodes.find(n => 
+      (n.type === 'actor' || n.type === 'participant') && 
+      targetLifeline.data?.participantId === n.id
+    );
+    
+    if (!sourceParticipant || !targetParticipant) return;
+    
+    const sourceLabel = sourceParticipant.data.label.replace(/\s+/g, '_');
+    const targetLabel = targetParticipant.data.label.replace(/\s+/g, '_');
+    const messageLabel = edge.data.label;
+    const messageType = edge.data.type || 'sync';
+    
+    if (messageType === 'sync') {
+      code += `    ${sourceLabel}->>+${targetLabel}: ${messageLabel}\n`;
+    } else if (messageType === 'async') {
+      code += `    ${sourceLabel}-->>+${targetLabel}: ${messageLabel}\n`;
+    } else if (messageType === 'return') {
+      code += `    ${sourceLabel}-->>-${targetLabel}: ${messageLabel}\n`;
+    }
+  });
+  
+  return code;
+}
 
-const LifelineNode = ({ data }) => {
-  return (
-    <div className="sequence-lifeline-node">
-      <Handle type="source" position={Position.Right} id="right" />
-      <Handle type="target" position={Position.Left} id="left" />
-      <div className="w-0.5 h-full bg-gray-300 mx-auto" />
-    </div>
-  );
-};
-
-const MessageNode = ({ data }) => {
-  return (
-    <div className="sequence-message-node">
-      <Handle type="source" position={Position.Left} id="left" />
-      <Handle type="target" position={Position.Right} id="right" />
-      <div className="flex items-center">
-        <div className="text-xs bg-white px-2 py-1 rounded shadow-sm border border-gray-200">
-          {data.label}
-        </div>
-        <ArrowRight className="text-gray-600" size={14} />
-      </div>
-    </div>
-  );
-};
-
-// Simple diagram component without complex state management
+// Main Sequence Diagram Component
 const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
-  // Default initial nodes
-  const defaultNodes = [
-    { id: 'actor1', type: 'actor', position: { x: 100, y: 50 }, data: { label: 'User' } },
-    { id: 'actor2', type: 'object', position: { x: 300, y: 50 }, data: { label: 'System' } }
-  ];
-  
-  const defaultEdges = [
-    { id: 'e1-2', source: 'actor1', target: 'actor2', type: 'default', animated: true, label: 'Request' }
-  ];
-  
-  // Use initial values or defaults
-  const [nodes, setNodes] = useState(defaultNodes);
-  const [edges, setEdges] = useState(defaultEdges);
-  
-  // Define node types
+  // Define node and edge types
   const nodeTypes = {
     actor: ActorNode,
-    object: ObjectNode,
-    lifeline: LifelineNode,
-    message: MessageNode
+    participant: ParticipantNode,
+    lifeline: LifelineNode
   };
   
-  // Simplified component with basic toolbar
+  const edgeTypes = {
+    message: MessageEdge
+  };
+  
+  // State initialization
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [messageType, setMessageType] = useState('sync');
+  const [editingLabel, setEditingLabel] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Use refs to prevent circular updates
+  const nodesRef = useRef([]);
+  const edgesRef = useRef([]);
+  const mermaidCodeRef = useRef('');
+  const isInitializedRef = useRef(false);
+  const isMountedRef = useRef(false);
+  const isUpdatingRef = useRef(false);
+  
+  // Initialize diagram only once
+  useEffect(() => {
+    // Set mounted flag
+    isMountedRef.current = true;
+    
+    if (isInitializedRef.current) return;
+    
+    let diagramNodes = [];
+    let diagramEdges = [];
+    
+    try {
+      if (initialDiagram && initialDiagram.nodes && initialDiagram.nodes.length > 0) {
+        // Use the provided diagram data
+        diagramNodes = [...initialDiagram.nodes];
+        diagramEdges = initialDiagram.edges ? [...initialDiagram.edges] : [];
+        
+        if (initialDiagram.mermaidCode) {
+          mermaidCodeRef.current = initialDiagram.mermaidCode;
+        } else {
+          mermaidCodeRef.current = generateMermaidCode(diagramNodes, diagramEdges);
+        }
+      } else {
+        // Create default sequence diagram with two participants
+        const timestamp = Date.now();
+        const actor1Id = `actor-${timestamp}`;
+        const actor2Id = `participant-${timestamp + 1}`;
+        const lifeline1Id = `lifeline-${timestamp + 2}`;
+        const lifeline2Id = `lifeline-${timestamp + 3}`;
+        
+        diagramNodes = [
+          // Participants at the top
+          { 
+            id: actor1Id, 
+            type: 'actor', 
+            position: { x: 150, y: 50 }, 
+            data: { 
+              label: 'User',
+              id: actor1Id
+            } 
+          },
+          { 
+            id: actor2Id, 
+            type: 'participant', 
+            position: { x: 350, y: 50 }, 
+            data: { 
+              label: 'System',
+              id: actor2Id
+            } 
+          },
+          // Lifelines below each participant
+          {
+            id: lifeline1Id,
+            type: 'lifeline',
+            position: { x: 175, y: 120 },
+            data: { 
+              label: '', 
+              participantId: actor1Id,
+              height: 400,
+              activations: [],
+              id: lifeline1Id
+            }
+          },
+          {
+            id: lifeline2Id,
+            type: 'lifeline',
+            position: { x: 375, y: 120 },
+            data: { 
+              label: '', 
+              participantId: actor2Id,
+              height: 400,
+              activations: [],
+              id: lifeline2Id
+            }
+          }
+        ];
+        
+        diagramEdges = [
+          {
+            id: `edge-${lifeline1Id}-${lifeline2Id}-${timestamp}`,
+            source: lifeline1Id,
+            target: lifeline2Id,
+            sourceHandle: 'right',
+            targetHandle: 'left',
+            data: { 
+              label: 'Request',
+              type: 'sync'
+            },
+            type: 'message',
+            animated: false
+          }
+        ];
+        
+        mermaidCodeRef.current = generateMermaidCode(diagramNodes, diagramEdges);
+      }
+      
+      // Set initial state
+      safeSetNodes(diagramNodes);
+      safeSetEdges(diagramEdges);
+      
+      // Update refs
+      nodesRef.current = diagramNodes;
+      edgesRef.current = diagramEdges;
+      
+      isInitializedRef.current = true;
+    } catch (error) {
+      console.error("Error initializing sequence diagram:", error);
+    }
+    
+    // Cleanup function
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [initialDiagram]);
+  
+  // Safe update functions to prevent infinite loops
+  const safeSetNodes = useCallback((newNodes) => {
+    if (isUpdatingRef.current) return;
+    
+    isUpdatingRef.current = true;
+    setNodes(newNodes);
+    nodesRef.current = newNodes;
+    
+    // Reset the flag after a small delay
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 0);
+  }, []);
+  
+  const safeSetEdges = useCallback((newEdges) => {
+    if (isUpdatingRef.current) return;
+    
+    isUpdatingRef.current = true;
+    setEdges(newEdges);
+    edgesRef.current = newEdges;
+    
+    // Reset the flag after a small delay
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 0);
+  }, []);
+  
+  // Update mermaid code whenever nodes or edges change
+  useEffect(() => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    // We've already updated refs in safeSet* functions
+    const newMermaidCode = generateMermaidCode(nodesRef.current, edgesRef.current);
+    
+    // Only update if code has changed
+    if (newMermaidCode !== mermaidCodeRef.current) {
+      mermaidCodeRef.current = newMermaidCode;
+      
+      // Notify parent if callback exists
+      if (onDiagramUpdate && isMountedRef.current) {
+        onDiagramUpdate({
+          nodes: nodesRef.current,
+          edges: edgesRef.current,
+          mermaidCode: newMermaidCode
+        });
+      }
+    }
+  }, [nodes, edges, onDiagramUpdate]);
+  
+  // Handle node changes - with strict rules for sequence diagrams
+  const onNodesChange = useCallback((changes) => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    const updatedNodes = applyNodeChanges(changes, nodesRef.current);
+    
+    // For position changes, enforce sequence diagram rules
+    const positionChanges = changes.filter(change => change.type === 'position');
+    if (positionChanges.length > 0) {
+      const finalNodes = updatedNodes.map(node => {
+        // Find if this node was moved
+        const change = positionChanges.find(c => c.id === node.id);
+        if (!change) return node;
+        
+        // For actors/participants, only allow horizontal movement
+        if (node.type === 'actor' || node.type === 'participant') {
+          const newY = 50; // Fix Y position at top
+          
+          // Update lifeline position to match
+          const correspondingLifeline = updatedNodes.find(
+            n => n.type === 'lifeline' && n.data?.participantId === node.id
+          );
+          
+          if (correspondingLifeline) {
+            // Update the lifeline's x position to match the participant
+            const lifelineIndex = updatedNodes.findIndex(n => n.id === correspondingLifeline.id);
+            if (lifelineIndex >= 0) {
+              updatedNodes[lifelineIndex] = {
+                ...updatedNodes[lifelineIndex],
+                position: {
+                  x: node.position.x + 25, // Center the lifeline under the participant
+                  y: updatedNodes[lifelineIndex].position.y
+                }
+              };
+            }
+          }
+          
+          return {
+            ...node,
+            position: {
+              x: node.position.x, // Allow X movement
+              y: newY // Fix Y position
+            }
+          };
+        }
+        
+        // For lifelines, only allow vertical position changes
+        if (node.type === 'lifeline') {
+          // Find the associated participant
+          const participant = updatedNodes.find(
+            n => (n.type === 'actor' || n.type === 'participant') && n.id === node.data?.participantId
+          );
+          
+          if (participant) {
+            return {
+              ...node,
+              position: {
+                x: participant.position.x + 25, // Keep aligned with participant
+                y: node.position.y // Allow vertical movement
+              }
+            };
+          }
+        }
+        
+        return node;
+      });
+      
+      safeSetNodes(finalNodes);
+    } else {
+      safeSetNodes(updatedNodes);
+    }
+  }, [safeSetNodes]);
+  
+  // Handle edge changes
+  const onEdgesChange = useCallback((changes) => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    const updatedEdges = applyEdgeChanges(changes, edgesRef.current);
+    safeSetEdges(updatedEdges);
+  }, [safeSetEdges]);
+  
+  // Handle connections - enforce sequence diagram rules
+  const onConnect = useCallback((params) => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    // Only allow connections between lifelines
+    if (params.sourceHandle === 'right' && params.targetHandle === 'left') {
+      const newEdge = {
+        id: `edge-${params.source}-${params.target}-${Date.now()}`,
+        source: params.source,
+        target: params.target,
+        sourceHandle: 'right',
+        targetHandle: 'left',
+        data: { 
+          label: 'New Message',
+          type: messageType
+        },
+        type: 'message',
+        animated: false
+      };
+      
+      const newEdges = addEdge(newEdge, edgesRef.current);
+      safeSetEdges(newEdges);
+      
+      // Select the new edge
+      setSelectedElement(newEdge);
+      setIsEditing(true);
+      setEditingLabel('New Message');
+    }
+  }, [messageType, safeSetEdges]);
+  
+  // Handle node selection
+  const onNodeClick = useCallback((_, node) => {
+    if (!isInitializedRef.current) return;
+    
+    if (node.type === 'actor' || node.type === 'participant') {
+      setSelectedElement(node);
+      setEditingLabel(node.data?.label || '');
+      setIsEditing(false);
+    }
+  }, []);
+  
+  // Handle edge selection
+  const onEdgeClick = useCallback((_, edge) => {
+    if (!isInitializedRef.current) return;
+    
+    setSelectedElement(edge);
+    setEditingLabel(edge.data?.label || '');
+    setIsEditing(false);
+  }, []);
+  
+  // Save edited label
+  const saveLabel = useCallback(() => {
+    if (!isInitializedRef.current || !selectedElement || !editingLabel.trim()) return;
+    
+    if (selectedElement.source) {
+      // It's an edge
+      const updatedEdges = edgesRef.current.map(e => 
+        e.id === selectedElement.id 
+          ? { ...e, data: { ...e.data, label: editingLabel } }
+          : e
+      );
+      safeSetEdges(updatedEdges);
+    } else {
+      // It's a node
+      const updatedNodes = nodesRef.current.map(n => 
+        n.id === selectedElement.id 
+          ? { ...n, data: { ...n.data, label: editingLabel } }
+          : n
+      );
+      safeSetNodes(updatedNodes);
+    }
+    
+    setIsEditing(false);
+  }, [selectedElement, editingLabel, safeSetEdges, safeSetNodes]);
+  
+  // Add a new actor
+  const addActor = useCallback(() => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    // Generate unique IDs for new nodes
+    const timestamp = Date.now();
+    const actorId = `actor-${timestamp}`;
+    const lifelineId = `lifeline-${timestamp + 1}`;
+    
+    // Determine position (place new actor to the right of existing ones)
+    const lastX = Math.max(
+      ...nodesRef.current
+        .filter(n => n.type === 'actor' || n.type === 'participant')
+        .map(n => n.position.x + 200),
+      100 // default starting position if no nodes exist
+    );
+    
+    const newActor = { 
+      id: actorId, 
+      type: 'actor', 
+      position: { x: lastX, y: 50 }, 
+      data: { 
+        label: 'New Actor',
+        id: actorId
+      } 
+    };
+    
+    const newLifeline = {
+      id: lifelineId,
+      type: 'lifeline',
+      position: { x: lastX + 25, y: 120 },
+      data: { 
+        label: '', 
+        participantId: actorId,
+        height: 400,
+        activations: [],
+        id: lifelineId
+      }
+    };
+    
+    const updatedNodes = [...nodesRef.current, newActor, newLifeline];
+    safeSetNodes(updatedNodes);
+    
+    // Select the new actor for immediate editing
+    setSelectedElement(newActor);
+    setEditingLabel('New Actor');
+    setIsEditing(true);
+  }, [safeSetNodes]);
+  
+  // Add a new participant (object)
+  const addParticipant = useCallback(() => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    // Generate unique IDs for new nodes
+    const timestamp = Date.now();
+    const participantId = `participant-${timestamp}`;
+    const lifelineId = `lifeline-${timestamp + 1}`;
+    
+    // Determine position (place new participant to the right of existing ones)
+    const lastX = Math.max(
+      ...nodesRef.current
+        .filter(n => n.type === 'actor' || n.type === 'participant')
+        .map(n => n.position.x + 200),
+      100 // default starting position if no nodes exist
+    );
+    
+    const newParticipant = { 
+      id: participantId, 
+      type: 'participant', 
+      position: { x: lastX, y: 50 }, 
+      data: { 
+        label: 'New Participant',
+        id: participantId
+      } 
+    };
+    
+    const newLifeline = {
+      id: lifelineId,
+      type: 'lifeline',
+      position: { x: lastX + 25, y: 120 },
+      data: { 
+        label: '', 
+        participantId: participantId,
+        height: 400,
+        activations: [],
+        id: lifelineId
+      }
+    };
+    
+    const updatedNodes = [...nodesRef.current, newParticipant, newLifeline];
+    safeSetNodes(updatedNodes);
+    
+    // Select the new participant for immediate editing
+    setSelectedElement(newParticipant);
+    setEditingLabel('New Participant');
+    setIsEditing(true);
+  }, [safeSetNodes]);
+  
+  // Delete selected element
+  const deleteSelected = useCallback(() => {
+    if (!isInitializedRef.current || !selectedElement) return;
+    
+    if (selectedElement.source) {
+      // It's an edge - simply remove it
+      const updatedEdges = edgesRef.current.filter(e => e.id !== selectedElement.id);
+      safeSetEdges(updatedEdges);
+    } else {
+      // It's a node
+      if (selectedElement.type === 'actor' || selectedElement.type === 'participant') {
+        // Remove participant and its lifeline
+        const updatedNodes = nodesRef.current.filter(n => 
+          n.id !== selectedElement.id && n.data?.participantId !== selectedElement.id
+        );
+        safeSetNodes(updatedNodes);
+        
+        // Remove any edges connected to the lifeline
+        const lifeline = nodesRef.current.find(n => n.data?.participantId === selectedElement.id);
+        if (lifeline) {
+          const updatedEdges = edgesRef.current.filter(e => 
+            e.source !== lifeline.id && e.target !== lifeline.id
+          );
+          safeSetEdges(updatedEdges);
+        }
+      }
+    }
+    
+    setSelectedElement(null);
+    setIsEditing(false);
+  }, [selectedElement, safeSetNodes, safeSetEdges]);
+  
+  // Add a new message between existing lifelines
+  const addMessage = useCallback(() => {
+    if (!isInitializedRef.current || isUpdatingRef.current) return;
+    
+    // Need at least two lifelines to add a message
+    const lifelines = nodesRef.current.filter(n => n.type === 'lifeline');
+    if (lifelines.length < 2) return;
+    
+    // Get first two lifelines
+    const [source, target] = lifelines.slice(0, 2);
+    
+    // Create a new message edge
+    const newEdge = {
+      id: `edge-${source.id}-${target.id}-${Date.now()}`,
+      source: source.id,
+      target: target.id,
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      data: { 
+        label: 'New Message',
+        type: messageType
+      },
+      type: 'message',
+      animated: false
+    };
+    
+    const updatedEdges = [...edgesRef.current, newEdge];
+    safeSetEdges(updatedEdges);
+    
+    // Select the new message for immediate editing
+    setSelectedElement(newEdge);
+    setEditingLabel('New Message');
+    setIsEditing(true);
+  }, [messageType, safeSetEdges]);
+  
+  // Enable editing mode for the selected element
+  const startEditing = useCallback(() => {
+    if (!selectedElement) return;
+    
+    // Set the label based on selected element type
+    if (selectedElement.source) {
+      // It's an edge
+      setEditingLabel(selectedElement.data?.label || '');
+    } else {
+      // It's a node
+      setEditingLabel(selectedElement.data?.label || '');
+    }
+    
+    setIsEditing(true);
+  }, [selectedElement]);
+  
   return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <div className="absolute top-4 left-4 z-10 space-y-2">
-        <button 
-          onClick={() => {
-            const newActor = { 
-              id: `actor${nodes.length + 1}`, 
-              type: 'actor', 
-              position: { x: 100 + (nodes.length * 50), y: 50 }, 
-              data: { label: 'New Actor' } 
-            };
-            setNodes([...nodes, newActor]);
-          }}
-          className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md shadow-sm hover:bg-blue-200"
-        >
-          <Plus size={16} className="mr-1" />
-          Actor
-        </button>
-        <button 
-          onClick={() => {
-            const newObject = { 
-              id: `object${nodes.length + 1}`, 
-              type: 'object', 
-              position: { x: 100 + (nodes.length * 50), y: 50 }, 
-              data: { label: 'New Object' } 
-            };
-            setNodes([...nodes, newObject]);
-          }}
-          className="flex items-center px-3 py-2 bg-purple-100 text-purple-700 rounded-md shadow-sm hover:bg-purple-200"
-        >
-          <Plus size={16} className="mr-1" />
-          Object
-        </button>
+    <div className="w-full h-full flex flex-col">
+      {/* Toolbar */}
+      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+        <div className="flex space-x-2 items-center">
+          <span className="text-sm font-semibold mr-2">Add:</span>
+          <button
+            onClick={addActor}
+            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center"
+          >
+            <Plus size={16} className="mr-1" />
+            Actor
+          </button>
+          <button
+            onClick={addParticipant}
+            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 flex items-center"
+          >
+            <Plus size={16} className="mr-1" />
+            Object
+          </button>
+          <span className="text-sm font-semibold mx-2">Message:</span>
+          <select
+            value={messageType}
+            onChange={(e) => setMessageType(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="sync">Synchronous</option>
+            <option value="async">Asynchronous</option>
+            <option value="return">Return</option>
+          </select>
+          <button
+            onClick={addMessage}
+            className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 flex items-center"
+          >
+            <ArrowRight size={16} className="mr-1" />
+            Add Message
+          </button>
+          {selectedElement && (
+            <button
+              onClick={deleteSelected}
+              className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 flex items-center"
+            >
+              <Trash2 size={16} className="mr-1" />
+              Delete
+            </button>
+          )}
+        </div>
+        
+        {selectedElement && (
+          <div className="flex items-center space-x-2">
+            {isEditing ? (
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  value={editingLabel}
+                  onChange={(e) => setEditingLabel(e.target.value)}
+                  className="border border-gray-300 rounded-l px-2 py-1 text-sm"
+                  autoFocus
+                />
+                <button
+                  onClick={saveLabel}
+                  className="px-3 py-1 bg-green-500 text-white rounded-r hover:bg-green-600 text-sm"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={startEditing}
+                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+              >
+                <Edit size={16} className="mr-1" />
+                Rename
+              </button>
+            )}
+          </div>
+        )}
       </div>
       
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+      {/* Diagram Area */}
+      <div className="flex-1 h-full relative" style={{ touchAction: 'none' }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          minZoom={0.3}
+          maxZoom={2}
+          defaultEdgeOptions={{
+            type: 'message'
+          }}
+        >
+          <Controls />
+          <Background variant="dots" size={1} gap={16} color="#f0f0f0" />
+          <Panel position="bottom-right" className="bg-white py-1 px-2 rounded shadow text-xs text-gray-500">
+            Time flows downward
+          </Panel>
+        </ReactFlow>
+        
+        {/* Simple instructions */}
+        <div className="absolute top-2 left-2 bg-white p-2 rounded shadow-md border border-gray-200 text-xs">
+          <p>• Click on elements to select them</p>
+          <p>• Use the Rename button to edit labels</p>
+          <p>• Connect lifelines (vertical lines) to create messages</p>
+          <p>• Drag actors/objects horizontally to arrange them</p>
+        </div>
+      </div>
     </div>
   );
 };
@@ -2940,6 +3699,180 @@ export const NODE_TYPES = {
       color: 'gray'
     }
   ];
+
+
+================================================================================
+# FILE: client\components\evaluation\EvaluationSummary.js
+# EXTENSION: .js
+================================================================================
+// client/components/evaluation/EvaluationSummary.js
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Award, AlertTriangle, Check } from 'lucide-react';
+
+const EvaluationSummary = ({ evaluation, scores }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  if (!evaluation) return null;
+  
+  // Extract overall score
+  const overallScore = scores?.overall?.score || 0;
+  
+  // Determine score color
+  const getScoreColor = (score) => {
+    if (score >= 90) return 'text-green-600';
+    if (score >= 75) return 'text-blue-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+  
+  // Extract priority improvements section if present
+  const priorityMatch = /Priority Improvements:[^\n]*\n((?:[\d\.\s]+[^\n]+\n)+)/i.exec(evaluation);
+  const priorities = priorityMatch ? priorityMatch[1].trim() : '';
+  
+  // Extract strengths section if present
+  const strengthsMatch = /Strengths:[^\n]*\n((?:\*\s+[^\n]+\n)+)/i.exec(evaluation);
+  const strengths = strengthsMatch ? strengthsMatch[1].trim() : '';
+  
+  return (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center">
+          <Award size={20} className="text-indigo-600 mr-2" />
+          <h2 className="text-xl font-bold text-gray-900">Evaluation Summary</h2>
+        </div>
+        <div className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
+          {overallScore}/100
+        </div>
+      </div>
+      
+      {/* Extract and display the summary paragraph */}
+      <div className="mb-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Overall Assessment</h3>
+        <p className="text-gray-700">
+          {evaluation.split(/\n\n/)[0].replace(/^.*Overall Score:.*\n/, '').trim()}
+        </p>
+      </div>
+      
+      {/* Display strengths if available */}
+      {strengths && (
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-2 flex items-center">
+            <Check size={16} className="text-green-500 mr-2" />
+            Strengths
+          </h3>
+          <div className="pl-4 border-l-4 border-green-500">
+            {strengths.split('\n').map((item, index) => (
+              <p key={index} className="mb-2 text-gray-700">{item}</p>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Display priority improvements if available */}
+      {priorities && (
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-2 flex items-center">
+            <AlertTriangle size={16} className="text-amber-500 mr-2" />
+            Priority Improvements
+          </h3>
+          <div className="pl-4 border-l-4 border-amber-500">
+            {priorities.split('\n').map((item, index) => (
+              <p key={index} className="mb-2 text-gray-700">{item}</p>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Expand/collapse full evaluation */}
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp size={18} className="mr-1" />
+              Hide Full Evaluation
+            </>
+          ) : (
+            <>
+              <ChevronDown size={18} className="mr-1" />
+              View Full Evaluation
+            </>
+          )}
+        </button>
+        
+        {isExpanded && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-md">
+            <pre className="whitespace-pre-wrap text-sm text-gray-700">
+              {evaluation}
+            </pre>
+          </div>
+        )}
+      </div>
+      
+      {/* Dimension scores if expanded */}
+      {isExpanded && scores && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Dimension Scores</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(scores)
+              .filter(([key]) => key !== 'overall')
+              .map(([dimension, { score, maxScore }]) => (
+                <div key={dimension} className="bg-gray-100 p-3 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-gray-800">{dimension}</span>
+                    <span className={`font-bold ${getScoreColor(score)}`}>{score}/{maxScore}</span>
+                  </div>
+                  <div className="w-full bg-gray-300 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full ${getScoreColor(score).replace('text-', 'bg-')}`}
+                      style={{ width: `${(score / maxScore) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EvaluationSummary;
+
+
+================================================================================
+# FILE: client\components\ExperienceLevelSelector.js
+# EXTENSION: .js
+================================================================================
+// client/components/ExperienceLevelSelector.js
+import React from 'react';
+import { User } from 'lucide-react';
+
+const ExperienceLevelSelector = ({ currentLevel, onLevelChange }) => {
+  return (
+    <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Experience Level</h3>
+      <div className="flex items-center space-x-2 mb-2">
+        <User size={18} className="text-gray-500" />
+        <span className="text-sm text-gray-600">Select your experience level</span>
+      </div>
+      <select 
+        value={currentLevel} 
+        onChange={(e) => onLevelChange(e.target.value)}
+        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+      >
+        <option value="junior">Junior Engineer</option>
+        <option value="mid-level">Mid-Level Engineer</option>
+        <option value="senior">Senior Engineer</option>
+        <option value="staff+">Staff+ Engineer</option>
+      </select>
+    </div>
+  );
+};
+
+export default ExperienceLevelSelector;
 
 
 ================================================================================
@@ -6904,7 +7837,10 @@ export default function TestPage() {
 ================================================================================
 // pages/WorkbookLayout.js
 import React, { useState } from 'react';
-import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X } from 'lucide-react';
+import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X, User } from 'lucide-react';
+import ExperienceLevelSelector from '../components/ExperienceLevelSelector';
+import ConciseModeToggle from '../components/ConciseModeToggle';
+import { getEvaluation } from '../utils/api';
 
 // Placeholder components - replace these with your actual components when ready
 const RequirementsPage = () => <div>Requirements Page</div>;
@@ -6917,10 +7853,12 @@ const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => (
   isOpen ? <div>Coach Interface for {currentPage}</div> : null
 );
 
-const WorkbookLayout = ({ onBack }) => {
+const WorkbookLayout = ({ onBack, sessionId }) => {
   const [activeTab, setActiveTab] = useState('requirements');
   const [showCoach, setShowCoach] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userLevel, setUserLevel] = useState('mid-level');
+  const [conciseMode, setConciseMode] = useState(true);
   
   const [formData, setFormData] = useState({
     requirements: {},
@@ -6969,7 +7907,34 @@ const WorkbookLayout = ({ onBack }) => {
   };
   
   // Handler for "Ask Coach" button clicks from any page
-  const handleAskCoach = () => {
+  const handleAskCoach = async () => {
+    const currentData = {
+      ...formData[activeTab],
+      userLevel,
+      conciseMode,
+      currentPage: activeTab
+    };
+    
+    try {
+      // Get all workbook content for evaluation
+      if (sessionId) {
+        const allWorkbookData = {
+          requirements: formData.requirements,
+          api: formData.api,
+          data: formData.data,
+          architecture: formData.architecture,
+          scaling: formData.scaling,
+          reliability: formData.reliability
+        };
+        
+        // Get evaluation in background (don't await to keep UI responsive)
+        getEvaluation(sessionId, allWorkbookData, userLevel, conciseMode)
+          .catch(err => console.error('Background evaluation error:', err));
+      }
+    } catch (error) {
+      console.error('Error in handleAskCoach:', error);
+    }
+    
     setShowCoach(true);
   };
   
@@ -6999,11 +7964,35 @@ const WorkbookLayout = ({ onBack }) => {
               <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                 History
               </button>
+              
+              {/* Add settings panel with concise mode toggle and experience level */}
+              <div className="ml-4 flex items-center space-x-4">
+                <ConciseModeToggle 
+                  isEnabled={conciseMode}
+                  onToggle={setConciseMode}
+                />
+                
+                <div className="border-l border-gray-300 h-6"></div>
+                
+                <div className="flex items-center">
+                  <User size={16} className="text-gray-500 mr-2" />
+                  <select 
+                    value={userLevel} 
+                    onChange={(e) => setUserLevel(e.target.value)}
+                    className="text-sm border-none bg-transparent focus:ring-0 text-gray-600 p-0"
+                  >
+                    <option value="junior">Junior</option>
+                    <option value="mid-level">Mid-Level</option>
+                    <option value="senior">Senior</option>
+                    <option value="staff+">Staff+</option>
+                  </select>
+                </div>
+              </div>
             </div>
             
             <div className="flex items-center">
               <button 
-                onClick={() => setShowCoach(true)}
+                onClick={handleAskCoach}
                 className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
               >
                 <MessageSquare size={18} className="mr-2" />
@@ -7079,6 +8068,42 @@ const WorkbookLayout = ({ onBack }) => {
               </button>
             ))}
           </div>
+          
+          {/* Mobile Settings */}
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="flex items-center px-4">
+              <div className="flex-shrink-0">
+                <User className="h-10 w-10 text-gray-400" />
+              </div>
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800">Settings</div>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1">
+              <div className="px-4 py-2 flex justify-between items-center">
+                <span className="text-base font-medium text-gray-800">Concise Mode</span>
+                <ConciseModeToggle 
+                  isEnabled={conciseMode}
+                  onToggle={setConciseMode}
+                />
+              </div>
+              <div className="px-4 py-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-base font-medium text-gray-800">Experience Level</span>
+                  <select 
+                    value={userLevel} 
+                    onChange={(e) => setUserLevel(e.target.value)}
+                    className="mt-1 block w-1/2 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  >
+                    <option value="junior">Junior</option>
+                    <option value="mid-level">Mid-Level</option>
+                    <option value="senior">Senior</option>
+                    <option value="staff+">Staff+</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       
@@ -7095,7 +8120,11 @@ const WorkbookLayout = ({ onBack }) => {
           isOpen={showCoach}
           onClose={() => setShowCoach(false)}
           currentPage={activeTab}
-          currentData={formData[activeTab]}
+          currentData={{
+            ...formData[activeTab],
+            userLevel,
+            conciseMode
+          }}
         />
       )}
     </div>
@@ -7247,9 +8276,15 @@ export const logoutUser = async () => {
 };
 
 // === Interview APIs ===
-export const sendInterviewMessage = async (interviewId, message) => {
+export const sendInterviewMessage = async (interviewId, message, options = {}) => {
   try {
-    const response = await api.post(`/api/interviews/${interviewId}/message`, { message });
+    const payload = { message };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/interviews/${interviewId}/message`, payload);
     return response.data;
   } catch (error) {
     console.error('Error sending interview message:', error);
@@ -7287,9 +8322,15 @@ export const getInterviewProblems = async () => {
   }
 };
 
-export const startInterview = async (problemId) => {
+export const startInterview = async (problemId, options = {}) => {
   try {
-    const response = await api.post('/api/interviews/start', { problemId });
+    const payload = { problemId };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post('/api/interviews/start', payload);
     return response.data;
   } catch (error) {
     console.error('Error starting interview:', error);
@@ -7307,9 +8348,15 @@ export const completeInterview = async (interviewId) => {
   }
 };
 
-export const sendMessage = async (interviewId, message) => {
+export const sendMessage = async (interviewId, message, options = {}) => {
   try {
-    const response = await api.post(`/api/interviews/${interviewId}/message`, { message });
+    const payload = { message };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/interviews/${interviewId}/message`, payload);
     return response.data;
   } catch (error) {
     console.error('Error sending message:', error);
@@ -7358,10 +8405,17 @@ export const getCoachingProblems = async () => {
   }
 };
 
-export const startCoachingSession = async (problemId) => {
+export const startCoachingSession = async (problemId, options = {}) => {
   try {
     console.log('API: Starting coaching session for:', problemId);
-    const response = await api.post(`/api/coaching/start/${problemId}`);
+    
+    const payload = { };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/coaching/start/${problemId}`, payload);
     console.log('API: Session start response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
@@ -7428,7 +8482,7 @@ export const sendCoachingMessage = async (sessionId, message, contextInfo = null
     // Use api instance instead of axios directly
     const response = await api.post(`/api/coaching/${sessionId}/message`, { 
       message,
-      contextInfo // Add contextInfo parameter to include diagram data
+      contextInfo // Include contextInfo which may contain userLevel and conciseMode
     });
     
     return response.data;
@@ -7438,7 +8492,7 @@ export const sendCoachingMessage = async (sessionId, message, contextInfo = null
   }
 };
 
-export const getCoachingMaterials = async (sessionId, topic) => {
+export const getCoachingMaterials = async (sessionId, topic, options = {}) => {
   // Handle missing sessionId
   if (!sessionId || sessionId === 'undefined' || sessionId === 'null') {
     console.warn('No valid sessionId provided to getCoachingMaterials');
@@ -7450,7 +8504,13 @@ export const getCoachingMaterials = async (sessionId, topic) => {
   }
 
   try {
-    const response = await api.post(`/api/coaching/${sessionId}/materials`, { topic });
+    const payload = { topic };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/coaching/${sessionId}/materials`, payload);
     
     // If no materials found, return a default
     if (!response.data) {
@@ -7576,8 +8636,333 @@ export const getProblem = async (id) => {
   }
 };
 
+// === Grader APIs (NEW) ===
+export const getEvaluation = async (sessionId, workbookContent, userLevel = 'mid-level', conciseMode = true) => {
+  try {
+    if (!sessionId) {
+      console.error("No sessionId provided to getEvaluation");
+      throw new Error("No sessionId provided");
+    }
+    
+    const response = await api.post(`/api/grader/evaluate/${sessionId}`, {
+      workbookContent,
+      userLevel,
+      conciseMode
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error getting evaluation:', error);
+    throw error;
+  }
+};
+
+export const getFinalAssessment = async (interviewId, userLevel = 'mid-level', conciseMode = true) => {
+  try {
+    if (!interviewId) {
+      console.error("No interviewId provided to getFinalAssessment");
+      throw new Error("No interviewId provided");
+    }
+    
+    const response = await api.post(`/api/grader/assessment/${interviewId}`, {
+      userLevel,
+      conciseMode
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error getting final assessment:', error);
+    throw error;
+  }
+};
+
+export const getEvaluationHistory = async (sessionId) => {
+  try {
+    if (!sessionId) {
+      console.error("No sessionId provided to getEvaluationHistory");
+      throw new Error("No sessionId provided");
+    }
+    
+    const response = await api.get(`/api/grader/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting evaluation history:', error);
+    throw error;
+  }
+};
+
+export const getLatestEvaluation = async (sessionId) => {
+  try {
+    if (!sessionId) {
+      console.error("No sessionId provided to getLatestEvaluation");
+      throw new Error("No sessionId provided");
+    }
+    
+    const response = await api.get(`/api/grader/latest/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting latest evaluation:', error);
+    throw error;
+  }
+};
+
 export default api;
 
+
+================================================================================
+# FILE: data\persona\coachPersona.js
+# EXTENSION: .js
+================================================================================
+// server/data/persona/coachPersona.js
+
+module.exports = {
+  id: "coach",
+  name: "Design Coach",
+  role: "coach",
+  description:
+    "A supportive system design coach that guides users through system design interviews and helps them refine their ideas using focused questioning and clear examples.",
+  systemPrompt: `
+You are a System Design Coach specializing in helping users learn and apply system design concepts. Your purpose is to guide users through the learning process without directly solving their problems. Adapt your teaching style based on the user's demonstrated knowledge level while remaining supportive and educational.
+
+COACHING APPROACH:
+- Use a blend of Socratic questioning, examples, and explanations.
+- **Ask only one clear, focused question at a time and wait for the user's response before proceeding.**
+- Provide narrative, context-rich feedback without relying solely on bullet lists.
+- Always refer to the project context and any workbook content provided.
+- Balance theory with practical implementation advice.
+
+WORKBOOK AWARENESS:
+- Reference specific workbook sections when relevant.
+- Use workbook data to tailor your explanations and question depth.
+
+When responding, be concise yet narrative. Keep paragraphs short (3-4 sentences) and conclude with a thoughtful question to promote further discussion.
+  `,
+  suggestions: [
+    "What are the key trade-offs in your design?",
+    "How does your approach address scalability?",
+    "What alternatives did you consider and why?"
+  ],
+  pageSuggestions: {
+    requirements: [
+      "What are the core functional and non-functional requirements?",
+      "Have you considered all stakeholder inputs for this section?"
+    ],
+    api: [
+      "How should the API be structured?",
+      "What security measures should be in place for your endpoints?"
+    ],
+    architecture: [
+      "What are the key components of your architecture?",
+      "How do these components interact in your design?"
+    ]
+  },
+  responsePatterns: {
+    default:
+      "Provide a detailed, narrative explanation that references the project context and workbook data.",
+    concise:
+      "Provide a brief, context-aware explanation with clear, direct points."
+  }
+};
+
+
+
+================================================================================
+# FILE: data\persona\graderPersona.js
+# EXTENSION: .js
+================================================================================
+// server/data/personas/graderPersona.js
+
+module.exports = {
+   id: "grader",
+   name: "Design Grader",
+   role: "grader",
+   description:
+     "An objective system design grader that evaluates designs based on a structured rubric. Provide both numerical scores and qualitative feedback without being overly critical.",
+   systemPrompt: `
+ You are a System Design Grader responsible for evaluating system design solutions.
+ Use a consistent, objective evaluation framework that covers requirements analysis, architecture, data modeling, scalability, and reliability.
+ Provide a brief summary assessment with numerical scores and actionable feedback for improvement.
+ Your tone is neutral and analytical, focusing on substance rather than presentation style.
+ 
+ EVALUATION FRAMEWORK:
+ - Requirements Analysis: Assess clarity and completeness.
+ - System Interface: Evaluate API design and consistency.
+ - Capacity Estimation: Review assumptions and calculations.
+ - Data Modeling: Examine schema design and relationships.
+ - High-Level Architecture: Consider component interactions.
+ - Scalability & Performance: Check for bottlenecks and optimization.
+ - Reliability & Fault Tolerance: Evaluate redundancy and failure recovery.
+ 
+ Provide your feedback with both scores and specific suggestions for improvement.
+ `,
+   suggestions: [
+     "What are the most critical gaps in this design?",
+     "How could the scalability be improved?",
+     "What trade-offs should be considered to optimize performance?"
+   ],
+   responsePatterns: {
+     default:
+       "Provide a structured evaluation with a summary, dimensional breakdown, and prioritized improvements.",
+     concise:
+       "Give a brief summary of strengths and weaknesses along with key improvement suggestions."
+   }
+ };
+ 
+
+
+================================================================================
+# FILE: data\persona\interviewerPersona.js
+# EXTENSION: .js
+================================================================================
+// server/data/personas/interviewerPersona.js
+
+module.exports = {
+    id: "interviewer",
+    name: "Design Interviewer",
+    role: "interviewer",
+    description:
+      "A professional system design interviewer who simulates a FAANG-level technical interview. You assess system design skills by asking challenging questions and probing the candidate’s reasoning.",
+    systemPrompt: `
+  You are a System Design Interviewer simulating a realistic FAANG-level technical interview.
+  Your role is to challenge the candidate with probing questions while maintaining a neutral, professional tone.
+  Ask clear, focused questions and request trade-off justifications without giving direct solutions.
+  
+  INTERVIEW STRUCTURE:
+  1. Clarify the problem statement.
+  2. Ask about functional and non-functional requirements.
+  3. Probe the high-level architecture and component interactions.
+  4. Challenge the candidate on scalability, performance, and reliability aspects.
+  5. Wrap up by summarizing strengths and weaknesses.
+  
+  Keep your responses concise and use a Socratic approach. Do not provide direct solutions.
+  `,
+    suggestions: [
+      "Can you explain how your design handles a sudden traffic spike?",
+      "What are the trade-offs of your chosen architecture?",
+      "How do you plan to monitor and scale this system?"
+    ],
+    pageSuggestions: {
+      general: [
+        "Could you clarify your assumptions?",
+        "What alternative approaches did you consider?"
+      ]
+    },
+    responsePatterns: {
+      default:
+        "Ask follow-up questions to probe deeper into the candidate's design decisions.",
+      concise:
+        "Pose a clear, focused question that challenges the candidate to justify their choices."
+    }
+  };
+  
+
+
+================================================================================
+# FILE: data\problems.js
+# EXTENSION: .js
+================================================================================
+// server/data/problems.js
+// This file exports an array of detailed problem contexts for your system design challenges.
+// Each problem includes extensive details such as constraints, scale requirements, architecture notes,
+// business requirements, user stories, performance metrics, and additional considerations.
+
+module.exports = [
+    {
+      id: "urlShortener",
+      title: "URL Shortener Service",
+      description: "Design a scalable URL shortener service similar to TinyURL or bit.ly. The service must generate unique short URLs that redirect to the original long URLs.",
+      additionalInfo: "The service should support high-frequency URL creation and redirection, include URL analytics, abuse prevention, custom aliases, and expiration policies.",
+      constraints: {
+        shortCodeLength: 7,
+        redirectionLatency: "Target <50ms under peak load",
+        availability: "99.99% uptime with multi-region support",
+        security: "Validate URLs to prevent injection; enforce rate limiting and anti-abuse measures",
+        dataConsistency: "Eventual consistency for URL mappings; strong consistency for analytics data"
+      },
+      scaleRequirements: {
+        estimatedQPS: "Approximately 1000 QPS during peak hours",
+        expectedDataVolume: "Billions of URL mappings over time",
+        storage: "In-memory caches (e.g., Redis) for fast lookups plus persistent storage (e.g., NoSQL) for durability",
+        cachingStrategy: "Aggressive caching for redirection paths with periodic persistence updates"
+      },
+      architectureNotes: "Consider a distributed microservice architecture with components for URL generation, redirection, and analytics. Use a distributed hash table for mappings and plan for collision resolution, custom aliases, and URL expiration.",
+      businessRequirements: "Monetization via premium custom URLs and analytics dashboards; integration with third-party platforms via a robust API.",
+      userStories: [
+        "As a user, I want to quickly shorten a long URL for easy sharing.",
+        "As an admin, I need to monitor URL usage and detect abuse.",
+        "As a developer, I want a reliable API for URL shortening integration."
+      ],
+      performanceMetrics: {
+        averageResponseTime: "<50ms for redirects",
+        throughput: "Support at least 1 million redirections per day",
+        errorRate: "<0.1% failed redirections"
+      },
+      additionalConsiderations: "Handle duplicate requests, custom alias conflicts, and periodic cleanup of expired URLs."
+    },
+    {
+      id: "socialMediaFeed",
+      title: "Social Media Feed",
+      description: "Design a system to provide a personalized, real-time feed for a social media platform that aggregates posts, images, videos, and trending topics.",
+      additionalInfo: "The feed must support both algorithmic and chronological ordering and enable user interactions (likes, comments, shares) with continuous updates.",
+      constraints: {
+        personalization: "Tailor feed ranking based on user behavior and interests",
+        refreshLatency: "Feed updates within 200ms for active users",
+        availability: "99.9% uptime during peak usage",
+        consistency: "Eventual consistency for feed data; strong consistency for critical interactions"
+      },
+      scaleRequirements: {
+        estimatedQPS: "Tens of thousands of QPS during peak periods",
+        expectedDataVolume: "Billions of posts, comments, and media references",
+        storage: "Distributed storage for posts/media, with CDNs for media delivery",
+        caching: "In-memory caching for frequently accessed timelines and trending topics"
+      },
+      architectureNotes: "Adopt a hybrid approach using both push and pull for feed updates. Employ message queues for notifications and microservices for separation of concerns across post management, user interactions, and trending analytics.",
+      businessRequirements: "Integration with advertising platforms, monetization through sponsored posts, and developer APIs for third-party integrations.",
+      userStories: [
+        "As a user, I want a feed that updates to reflect my interests.",
+        "As a content creator, I need analytics on engagement.",
+        "As a marketer, I want targeted advertising based on trends."
+      ],
+      performanceMetrics: {
+        refreshTime: "Under 200ms for timeline updates",
+        dailyActiveUsers: "Support up to 100 million users",
+        errorRate: "<0.5% feed failures during peak load"
+      },
+      additionalConsiderations: "Address content moderation, spam filtering, and bot content; balance algorithmic recommendations with user control."
+    },
+    {
+      id: "rideSharing",
+      title: "Ride Sharing Application",
+      description: "Design a ride-sharing system that efficiently matches drivers with riders in real-time, handling dynamic pricing and high availability.",
+      additionalInfo: "The application must process real-time location data, perform rapid driver-rider matching, and support surge pricing along with robust notifications and in-app payments.",
+      constraints: {
+        realTimeProcessing: "Process location updates and matching within 100ms",
+        dynamicPricing: "Implement a transparent, near real-time surge pricing algorithm",
+        availability: "High fault tolerance with multi-region redundancy",
+        security: "Secure user data (location, payment) with encryption and strong authentication"
+      },
+      scaleRequirements: {
+        estimatedQPS: "Support thousands of concurrent ride requests during peak events",
+        dataVolume: "Continuous streams of geolocation data from many users",
+        storage: "Geospatial databases for tracking and scalable messaging systems (e.g., Kafka) for real-time data",
+        caching: "Caching for high-frequency lookups of driver availability and nearby requests"
+      },
+      architectureNotes: "Use a microservices architecture with dedicated services for matching, pricing, notifications, and payments. Employ event-driven communication for real-time updates and design regional clusters to minimize latency.",
+      businessRequirements: "Include driver and rider ratings, in-app payments, and support for scheduled/on-demand rides; integrate with mapping/navigation APIs.",
+      userStories: [
+        "As a rider, I want to request a ride quickly and see my pickup time.",
+        "As a driver, I need clear ride requests with pickup/drop-off details.",
+        "As an operator, I want to monitor ride activity and adjust surge pricing dynamically."
+      ],
+      performanceMetrics: {
+        matchingLatency: "<100ms for pairing",
+        systemUptime: "99.95% uptime",
+        successRate: "Over 99% ride completion success"
+      },
+      additionalConsiderations: "Plan for cancellations, no-shows, and traffic variations; consider integration with public transit data and robust peak-load handling."
+    }
+  ];
+  
 
 
 ================================================================================
@@ -7634,22 +9019,34 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const path = require('path');
-const fs = require('fs');
-const jwt = require('jsonwebtoken');
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`${timestamp} - ${req.method} ${req.originalUrl} - Body:`, req.body);
-  next();
-});
-app.use(cors());
+// ------------------------------
+// Initialize PersonaService
+// ------------------------------
+const coachPersona = require('../data/persona/coachPersona');
+const interviewerPersona = require('../data/persona/interviewerPersona');
+const graderPersona = require('../data/persona/graderPersona');
+
+const personaConfig = {
+  personas: [coachPersona, interviewerPersona, graderPersona]
+};
+
+const PersonaService = require('./services/engines/PersonaService');
+PersonaService.initialize(personaConfig);
+console.log("Initialized personas:", PersonaService.getAllPersonas().map(p => p.id).join(", "));
+
+// ------------------------------
+// Middleware Setup
+// ------------------------------
 app.use(express.json());
+app.use(cors());
 app.use(morgan('dev'));
 
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
     status: "healthy",
@@ -7658,26 +9055,29 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-const sessions = {};
-
-let authRoutes, coachingRoutes, interviewRoutes, problemRoutes, usersRoutes;
-try { authRoutes = require('./routes/auth'); console.log("Auth routes loaded successfully"); } catch (err) { console.log("Auth routes not available"); }
-try { coachingRoutes = require('./routes/coaching'); console.log("Coaching routes loaded successfully"); } catch (err) { console.log("Coaching routes not available"); }
-try { interviewRoutes = require('./routes/interviews'); console.log("Interview routes loaded successfully"); } catch (err) { console.log("Interview routes not available"); }
-try { problemRoutes = require('./routes/problems'); console.log("Problem routes loaded successfully"); } catch (err) { console.log("Problem routes not available"); }
-try { usersRoutes = require('./routes/users'); console.log("User routes loaded successfully"); } catch (err) { console.log("User routes not available"); }
-
-app.use('/api/auth', authRoutes || ((req, res, next) => next()));
-app.use('/api/coaching', coachingRoutes || ((req, res, next) => next()));
-app.use('/api/interviews', interviewRoutes || ((req, res) => res.json({ message: "Mock interview response" })));
-app.use('/api/problems', problemRoutes || ((req, res) => {
+// ------------------------------
+// Load Routes
+// ------------------------------
+const authRoutes = require('./routes/auth') || ((req, res, next) => next());
+const coachingRoutes = require('./routes/coaching') || ((req, res, next) => next());
+const interviewRoutes = require('./routes/interviews') || ((req, res) => res.json({ message: "Mock interview response" }));
+const problemRoutes = require('./routes/problems') || ((req, res) => {
   res.json([
     { id: 1, title: "Design a URL Shortener", difficulty: "medium" },
     { id: 2, title: "Design Twitter", difficulty: "hard" }
   ]);
-}));
-app.use('/api/users', usersRoutes || ((req, res) => res.json({ id: 1, name: "Test User", email: "test@example.com" })));
+});
+const usersRoutes = require('./routes/users') || ((req, res) => res.json({ id: 1, name: "Test User", email: "test@example.com" }));
 
+app.use('/api/auth', authRoutes);
+app.use('/api/coaching', coachingRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/problems', problemRoutes);
+app.use('/api/users', usersRoutes);
+
+// ------------------------------
+// Serve Client in Production
+// ------------------------------
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
   app.get('*', (req, res) => {
@@ -7685,6 +9085,9 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// ------------------------------
+// MongoDB Connection
+// ------------------------------
 if (process.env.MONGO_URI) {
   mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected successfully"))
@@ -7696,12 +9099,80 @@ if (process.env.MONGO_URI) {
   console.log("No MongoDB URI provided, skipping database connection");
 }
 
+// ------------------------------
+// Start Server
+// ------------------------------
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
 
+
+
+================================================================================
+# FILE: server\models\Evaluation.js
+# EXTENSION: .js
+================================================================================
+// server/models/Evaluation.js
+const mongoose = require('mongoose');
+
+const scoreSchema = new mongoose.Schema({
+  score: Number,
+  maxScore: Number
+}, { _id: false });
+
+const evaluationSchema = new mongoose.Schema({
+  sessionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Interview',
+    required: true
+  },
+  evaluationType: {
+    type: String,
+    enum: ['coaching', 'interview'],
+    required: true
+  },
+  userLevel: {
+    type: String,
+    enum: ['junior', 'mid-level', 'senior', 'staff+'],
+    default: 'mid-level'
+  },
+  problemId: {
+    type: String
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  scores: {
+    overall: scoreSchema,
+    'Requirements Analysis': scoreSchema,
+    'System Interface Design': scoreSchema,
+    'Capacity Estimation': scoreSchema,
+    'Data Modeling': scoreSchema,
+    'High-Level Architecture': scoreSchema,
+    'Detailed Component Design': scoreSchema,
+    'Scalability & Performance': scoreSchema,
+    'Reliability & Fault Tolerance': scoreSchema
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  },
+  isFinal: {
+    type: Boolean,
+    default: false
+  }
+});
+
+// Add indexes for efficient queries
+evaluationSchema.index({ sessionId: 1 });
+evaluationSchema.index({ sessionId: 1, timestamp: -1 });
+
+const Evaluation = mongoose.model('Evaluation', evaluationSchema);
+
+module.exports = Evaluation;
 
 
 ================================================================================
@@ -8472,20 +9943,14 @@ router.post('/:sessionId/message', async (req, res) => {
     const uniqueClaude = new ClaudeService({ timestamp: Date.now(), maxRetries: 5 });
     const recentMessages = [{ role: 'user', content: message }];
     
-    let systemPrompt;
-    if (message.toLowerCase().includes('performance') ||
-        message.toLowerCase().includes('security') ||
-        message.toLowerCase().includes('compliance')) {
-      systemPrompt = `You are an expert system design coach.
-Please provide a detailed answer covering performance requirements (QPS, latency, throughput, availability), security considerations, and compliance requirements if applicable.
-Focus on this question: "${message}"
-Timestamp: ${Date.now()}`;
-    } else {
-      systemPrompt = `You are an expert system design coach.
-Please provide a detailed answer to:
-"${message}"
-Timestamp: ${Date.now()}`;
-    }
+    // Instead of constructing a static systemPrompt, pass the message to coachEngine:
+    const response = await coachEngine.processMessage(sessionId, message, {
+      currentPage, // or other dynamic context
+      currentSection,
+      workbookContent,
+      userLevel,
+    });
+
     
     console.log("System Prompt (first 50 chars):", systemPrompt.substring(0, 50) + '...');
     const aiResponse = await uniqueClaude.sendMessage(recentMessages, {
@@ -8521,6 +9986,105 @@ module.exports = router;
 
 
 ================================================================================
+# FILE: server\routes\grader.js
+# EXTENSION: .js
+================================================================================
+// server/routes/grader.js
+const express = require('express');
+const router = express.Router();
+const graderEngine = require('../services/engines/graderEngine');
+const Evaluation = require('../models/Evaluation');
+const auth = require('../middleware/auth');
+
+// Route to evaluate current workbook
+router.post('/evaluate/:sessionId', auth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { workbookContent, userLevel, conciseMode = true } = req.body;
+    
+    const result = await graderEngine.evaluateWorkbook(
+      sessionId,
+      workbookContent,
+      { userLevel, conciseMode }
+    );
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Grader evaluation error:', error);
+    res.status(500).json({ 
+      message: 'Error evaluating workbook', 
+      error: error.message 
+    });
+  }
+});
+
+// Route to provide final assessment for an interview
+router.post('/assessment/:interviewId', auth, async (req, res) => {
+  try {
+    const { interviewId } = req.params;
+    const { userLevel, conciseMode = true } = req.body;
+    
+    const result = await graderEngine.provideFinalAssessment(
+      interviewId,
+      { userLevel, conciseMode }
+    );
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Final assessment error:', error);
+    res.status(500).json({ 
+      message: 'Error generating final assessment', 
+      error: error.message 
+    });
+  }
+});
+
+// Route to get saved evaluations for a session
+router.get('/:sessionId', auth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    // Find all evaluations for this session, sorted by timestamp
+    const evaluations = await Evaluation.find({ sessionId })
+      .sort({ timestamp: -1 });
+    
+    res.json({ evaluations });
+  } catch (error) {
+    console.error('Error retrieving evaluations:', error);
+    res.status(500).json({ 
+      message: 'Error retrieving evaluations', 
+      error: error.message 
+    });
+  }
+});
+
+// Route to get the latest evaluation for a session
+router.get('/latest/:sessionId', auth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    // Find the latest evaluation for this session
+    const evaluation = await Evaluation.findOne({ sessionId })
+      .sort({ timestamp: -1 });
+    
+    if (!evaluation) {
+      return res.status(404).json({ message: 'No evaluations found' });
+    }
+    
+    res.json({ evaluation });
+  } catch (error) {
+    console.error('Error retrieving latest evaluation:', error);
+    res.status(500).json({ 
+      message: 'Error retrieving evaluation', 
+      error: error.message 
+    });
+  }
+});
+
+module.exports = router;
+
+
+================================================================================
 # FILE: server\routes\interviews.js
 # EXTENSION: .js
 ================================================================================
@@ -8529,7 +10093,7 @@ const express = require('express');
 const router = express.Router();
 const Interview = require('../models/Interview');
 const Problem = require('../models/Problem'); 
-const interviewEngine = require('../services/interview/interviewEngine');
+const InterviewEngine = require('../services/engines/interviewEngine');
 const diagramService = require('../services/diagram/diagramService');
 
 // Centralized error handling middleware
@@ -9630,7 +11194,22 @@ class ClaudeService extends AIService {
           role: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
-        const systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+        
+        // Apply concise mode to system prompt if not explicitly disabled
+        let systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+        if (options.conciseMode !== false) {
+          // Only add concise instructions if they're not already in the prompt
+          if (!systemPrompt.includes("CONCISE communication style")) {
+            systemPrompt += `\n\nUse a CONCISE communication style:
+- Keep paragraphs short (2-3 sentences maximum)
+- Use bullet points for lists
+- Be direct and focused
+- Eliminate filler words and redundant phrases
+- Get to the point quickly
+- Avoid unnecessary explanations`;
+          }
+        }
+        
         const response = await this.anthropic.messages.create({
           model: options.model || this.defaultModel,
           system: systemPrompt,
@@ -9655,7 +11234,22 @@ class ClaudeService extends AIService {
   async generateContent(prompt, options = {}) {
     try {
       const messages = [{ role: "user", content: prompt }];
-      const systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+      
+      // Apply concise mode to system prompt if not explicitly disabled
+      let systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
+      if (options.conciseMode !== false) {
+        // Only add concise instructions if they're not already in the prompt
+        if (!systemPrompt.includes("CONCISE communication style")) {
+          systemPrompt += `\n\nUse a CONCISE communication style:
+- Keep paragraphs short (2-3 sentences maximum)
+- Use bullet points for lists
+- Be direct and focused
+- Eliminate filler words and redundant phrases
+- Get to the point quickly
+- Avoid unnecessary explanations`;
+        }
+      }
+      
       const response = await this.anthropic.messages.create({
         model: options.model || this.defaultModel,
         system: systemPrompt,
@@ -9673,7 +11267,6 @@ class ClaudeService extends AIService {
 }
 
 module.exports = ClaudeService;
-
 
 
 ================================================================================
@@ -9710,6 +11303,70 @@ module.exports = {
   interviewEngine
 };
 
+
+
+================================================================================
+# FILE: server\services\ai\prompts\grader.js
+# EXTENSION: .js
+================================================================================
+// server/services/ai/prompts/grader.js
+module.exports = (context = {}) => {
+    const { userLevel = 'mid-level', problemId = null, evaluationType = 'coaching' } = context;
+    
+    return `# SYSTEM DESIGN GRADER PERSONA
+  
+  ## ROLE DEFINITION
+  You are a System Design Grader responsible for objectively evaluating system design solutions. You provide structured, comprehensive feedback based on established criteria while maintaining a neutral, analytical tone.
+  
+  ## USER EXPERIENCE LEVEL ASSESSMENT
+  The user has identified themselves as: ${userLevel}
+  Tailor your expectations and feedback depth according to this level.
+  
+  ## CONCISE COMMUNICATION STYLE
+  Be direct and focused in your feedback:
+  - Use short paragraphs (2-3 sentences maximum)
+  - Prefer bullet points for lists
+  - Avoid unnecessary explanations of basic concepts
+  - Focus on actionable insights rather than theory
+  - Eliminate filler words and phrases
+  
+  ## EVALUATION FRAMEWORK
+  Assess designs across these key dimensions (100 points total):
+  1. Requirements Analysis (0-15 points)
+  2. System Interface Design (0-10 points)
+  3. Capacity Estimation (0-10 points)
+  4. Data Modeling (0-15 points)
+  5. High-Level Architecture (0-15 points)
+  6. Detailed Component Design (0-15 points)
+  7. Scalability & Performance (0-10 points)
+  8. Reliability & Fault Tolerance (0-10 points)
+  
+  ## FEEDBACK FORMAT
+  1. Summary Assessment
+     - User's experience level
+     - Overall score
+     - 1-2 sentence summary of strongest and weakest areas
+  
+  2. Dimensional Breakdown
+     - Score for each dimension
+     - 1-2 bullet points for strengths
+     - 1-2 bullet points for improvements
+  
+  3. Prioritized Improvement Plan
+     - 3 highest priority improvements ranked by importance
+     - One-sentence explanation for each
+  
+  ## SCORING GUIDELINES BY LEVEL
+  ${userLevel === 'junior' ? 
+    '- Junior Level: 60-70 points meets expectations\n- Focus on functional correctness and basic components' : 
+    userLevel === 'mid-level' ? 
+    '- Mid-Level: 70-80 points meets expectations\n- Focus on scalability and component interactions' : 
+    userLevel === 'senior' ? 
+    '- Senior Level: 80-90 points meets expectations\n- Focus on comprehensive design and fault tolerance' : 
+    '- Staff+: 90-100 points meets expectations\n- Focus on system-wide optimization and elegant patterns'}
+  
+  Remember to maintain a concise communication style throughout your evaluation.`;
+  };
 
 
 ================================================================================
@@ -10046,74 +11703,90 @@ const BaseEngine = require('./baseEngine');
 const Interview = require('../../models/Interview');
 const Problem = require('../../models/Problem');
 const knowledgeService = require('../knowledge/knowledgeService');
-const diagramUtils = require('../utils/diagramUtils');
+const PersonaService = require('./PersonaService'); // Ensure PersonaService is initialized
 
 const sessions = {};
 
 class CoachEngine extends BaseEngine {
   constructor(config = {}) {
     super(config);
-    this.stages = config.stages || [
-      'introduction',
-      'requirements',
-      'architecture',
-      'data-modeling',
-      'scaling',
-      'evaluation'
-    ];
+    // Stages can be passed dynamically or left empty
+    this.stages = config.stages || [];
   }
   
   async processMessage(sessionId, message, options = {}) {
-    console.log('⭐ CoachEngine processing message:', { sessionId, message });
     try {
-      let session = null;
-      try {
-        session = await Interview.findOne({ id: sessionId });
-      } catch (err) {
-        console.log('DB error, falling back to in-memory session');
-      }
+      // Retrieve or create session
+      let session = await Interview.findOne({ id: sessionId });
       if (!session) {
-        session = sessions[sessionId];
-        if (!session) {
-          console.log('Creating new in-memory session');
-          session = { id: sessionId, conversation: [] };
-          sessions[sessionId] = session;
-        }
+        session = sessions[sessionId] || { id: sessionId, conversation: [] };
+        sessions[sessionId] = session;
       }
+      
+      // Append user message to conversation history
       session.conversation.push({
         role: 'user',
         content: message,
         timestamp: new Date().toISOString()
       });
+      
+      // Retrieve dynamic data from options
+      const workbookContent = options.workbookContent || {};
+      const currentSection = options.currentSection || '';
+      const userLevel = options.userLevel || '';
+      
+      // Get problem context dynamically from the database
+      const problem = await Problem.findOne({ id: session.problemId });
+      const problemContext = problem
+        ? `Project: ${problem.title}\nDescription: ${problem.description || ''}\nAdditional Info: ${problem.additionalInfo || ''}`
+        : '';
+      
+      // Merge dynamic parts from Persona, problem, workbook, etc.
+      const dynamicParts = [
+        PersonaService.getSystemPrompt({
+          currentPage: options.currentPage,
+          designData: { workbookContent, currentSection }
+        }),
+        problemContext,
+        currentSection ? `Current Section: ${currentSection}` : '',
+        Object.keys(workbookContent).length ? `Workbook Data: ${JSON.stringify(workbookContent)}` : '',
+        userLevel ? `User Level: ${userLevel}` : ''
+      ];
+      const systemPrompt = dynamicParts.filter(Boolean).join("\n\n");
+      
+      // Debug: Log the final system prompt
+      console.log("Final system prompt for processMessage:", systemPrompt);
+      
+      // Prepare conversation history for AI call
       const messagesForAI = session.conversation.map(msg => ({
         role: msg.role === 'coach' ? 'assistant' : msg.role,
         content: msg.content
       }));
-      const systemPrompt = options.systemPrompt || `You are a system design coach helping the user with their design problem.
-Provide clear, educational guidance about system design concepts.
-Do not just ask questions—provide specific knowledge and recommendations.
-Explain concepts thoroughly with examples when appropriate.
-Structure your responses to be easy to follow.`;
+      
+      // Call the AI service with dynamic prompt and full conversation history
       const aiResponse = await this.aiService.sendMessage(messagesForAI, {
         system: systemPrompt,
         systemPrompt: systemPrompt,
         temperature: options.temperature || 0.7
       });
+      
       const responseMsg = {
         role: 'coach',
         content: aiResponse,
         timestamp: new Date().toISOString()
       };
       session.conversation.push(responseMsg);
+      
       if (session.save) {
         await session.save();
       }
+      
       return responseMsg;
     } catch (error) {
       console.error('Error processing coaching message:', error);
       return {
         role: 'coach',
-        content: "I'm having trouble processing your request. Please try again in a moment.",
+        content: "Error processing message. Please try again.",
         timestamp: new Date().toISOString(),
         error: true
       };
@@ -10124,27 +11797,43 @@ Structure your responses to be easy to follow.`;
     try {
       const problem = await Problem.findOne({ id: problemId });
       if (!problem) throw new Error('Problem not found');
-      const context = await knowledgeService.queryKnowledge(`System design concepts for ${problem.title}`, options.knowledgeSource || 'facebook');
-      const systemPrompt = options.systemPrompt || `You are a supportive system design coach helping a student learn how to design ${problem.title}.
-        
-Use this context:
-${context}
-
-Your role is to:
-1. Guide the student step by step.
-2. Explain key concepts with examples.
-3. Provide educational feedback.
-4. Be supportive and technically accurate.
-
-Start with an introduction to the problem, explaining why it's interesting and offering initial guidance.`;
-      const initialResponse = await this.aiService.sendMessage([{
-        role: "user",
-        content: `I'd like to learn how to design ${problem.title}. Can you guide me through the process?`
-      }], {
-        system: systemPrompt,
-        systemPrompt: systemPrompt,
-        temperature: options.temperature || 0.7
-      });
+      
+      // Build dynamic problem context
+      const problemContext = [
+        `Project: ${problem.title}`,
+        `Description: ${problem.description || ''}`,
+        `Additional Info: ${problem.additionalInfo || ''}`
+      ].filter(Boolean).join("\n");
+      
+      // Retrieve extra background info dynamically (if available)
+      const contextInfo = await knowledgeService.queryKnowledge(
+        `System design concepts for ${problem.title}`,
+        options.knowledgeSource || ''
+      );
+      
+      const dynamicParts = [
+        PersonaService.getSystemPrompt({ currentPage: 'coach', designData: { project: problem.title } }),
+        problemContext,
+        contextInfo,
+        options.userLevel ? `User Level: ${options.userLevel}` : ''
+      ];
+      let systemPrompt = dynamicParts.filter(Boolean).join("\n\n");
+      
+      // Append an instruction to begin the session
+      systemPrompt += `\n\nBegin with an introduction to the project and initial guidance.`;
+      
+      console.log("Final system prompt for startSession:", systemPrompt);
+      
+      // Call the AI service for an initial response
+      const initialResponse = await this.aiService.sendMessage(
+        [{ role: 'user', content: `I need help designing a system for: ${problem.title}.` }],
+        {
+          system: systemPrompt,
+          systemPrompt: systemPrompt,
+          temperature: options.temperature || 0.7
+        }
+      );
+      
       const session = new Interview({
         userId,
         problemId,
@@ -10157,6 +11846,7 @@ Start with an introduction to the problem, explaining why it's interesting and o
           timestamp: new Date().toISOString()
         }]
       });
+      
       await session.save();
       return session;
     } catch (error) {
@@ -10170,38 +11860,31 @@ Start with an introduction to the problem, explaining why it's interesting and o
       const session = await Interview.findOne({ id: sessionId });
       if (!session) throw new Error('Coaching session not found');
       const problem = await Problem.findOne({ id: session.problemId });
-      switch (options.contentType || 'learning') {
-        case 'learning':
-          return this._generateLearningMaterials(session, topic, options);
-        case 'diagram':
-          return this._generateDiagramDescription(session, topic, options);
-        default:
-          throw new Error(`Unknown content type: ${options.contentType}`);
+      
+      const topicKnowledge = await knowledgeService.queryKnowledge(
+        `${topic} ${session.problemId}`,
+        options.knowledgeSource || ''
+      );
+      
+      const dynamicParts = [
+        `You are an educational content creator specializing in system design.`,
+        `Generate detailed learning materials about "${topic}" related to project ${problem ? problem.title : ''}.`,
+        `Reference: ${topicKnowledge}`
+      ];
+      
+      let systemPrompt = dynamicParts.filter(Boolean).join("\n\n");
+      
+      if (options.conciseMode !== false) {
+        systemPrompt += `\n\nProvide a concise narrative that includes project context.`;
       }
-    } catch (error) {
-      console.error('Generate content error:', error);
-      throw error;
-    }
-  }
-  
-  async _generateLearningMaterials(session, topic, options = {}) {
-    try {
-      const topicKnowledge = await knowledgeService.queryKnowledge(`${topic} ${session.problemId}`, options.knowledgeSource || 'facebook');
-      const systemPrompt = `You are an educational content creator specializing in system design.
-        
-Generate detailed learning materials about "${topic}" as it relates to ${session.problemId}.
-
-Reference:
-${topicKnowledge}
-
-Include clear explanations, examples, best practices, and common pitfalls.
-Format as an educational guide with sections and key takeaways.`;
+      
       const prompt = `I'd like to learn more about ${topic} for my system design project.`;
       const content = await this.aiService.generateContent(prompt, { 
         system: systemPrompt,
         systemPrompt: systemPrompt,
         temperature: options.temperature || 0.5
       });
+      
       return { topic, content };
     } catch (error) {
       console.error('Generate learning materials error:', error);
@@ -10209,63 +11892,335 @@ Format as an educational guide with sections and key takeaways.`;
     }
   }
   
-  async _generateDiagramDescription(session, diagramType, options = {}) {
-    try {
-      const problem = await Problem.findOne({ id: session.problemId });
-      const systemPrompt = `You are a system design visualization expert.
-      
-Generate a detailed description of a ${diagramType} diagram for ${problem.title}.
-      
-Describe each component, their relationships, and include visual cues.
-This description will be used to generate an actual diagram.`;
-      const prompt = `Please describe a ${diagramType} diagram for ${problem.title} that I could create.`;
-      const description = await this.aiService.generateContent(prompt, { 
-        system: systemPrompt,
-        systemPrompt: systemPrompt,
-        temperature: options.temperature || 0.5
-      });
-      return { diagramType, description };
-    } catch (error) {
-      console.error('Generate diagram description error:', error);
-      throw error;
-    }
-  }
-  
-  _extractEntities(messages, currentStage) {
-    const userMessages = messages.filter(msg => msg.role === 'user').map(msg => msg.content).join('\n');
-    const componentKeywords = ['server', 'database', 'cache', 'load balancer', 'api', 'client', 'service', 'queue', 'storage', 'frontend', 'backend', 'microservice'];
-    const entities = { components: [], relationships: [], databases: [], clients: [], services: [] };
-    componentKeywords.forEach(keyword => {
-      if (userMessages.toLowerCase().includes(keyword)) {
-        const type = keyword.includes('database') ? 'databases'
-          : (keyword.includes('client') || keyword.includes('frontend')) ? 'clients'
-          : (keyword.includes('service') || keyword.includes('api') || keyword.includes('backend')) ? 'services'
-          : 'components';
-        entities[type].push({
-          name: keyword.charAt(0).toUpperCase() + keyword.slice(1),
-          type: keyword
-        });
-      }
-    });
-    if (entities.components.length === 0 && entities.databases.length === 0 && entities.services.length === 0) {
-      if (currentStage >= 2) {
-        entities.clients.push({ name: 'Client', type: 'client' });
-        entities.services.push({ name: 'API Service', type: 'service' });
-      }
-      if (currentStage >= 3) {
-        entities.databases.push({ name: 'Database', type: 'database' });
-      }
-    }
-    return entities;
-  }
-  
-  _getCurrentStageIndex(stageName) {
-    return this.stages.indexOf(stageName) !== -1 ? this.stages.indexOf(stageName) : 0;
-  }
+  // Additional methods (_generateDiagramDescription, _getGraderInsights, etc.) should use a similar dynamic merging approach.
 }
 
 module.exports = CoachEngine;
 
+
+
+================================================================================
+# FILE: server\services\engines\graderEngine.js
+# EXTENSION: .js
+================================================================================
+// server/services/engines/graderEngine.js
+const BaseEngine = require('./baseEngine');
+const Interview = require('../../models/Interview');
+const Problem = require('../../models/Problem');
+const Evaluation = require('../../models/Evaluation');
+const fs = require('fs');
+const path = require('path');
+
+class GraderEngine extends BaseEngine {
+  constructor(config = {}) {
+    super(config);
+    this.name = 'grader';
+    
+    // Try to load grader prompt from file
+    try {
+      const graderPromptPath = path.join(__dirname, '../../data/persona/grader.js');
+      if (fs.existsSync(graderPromptPath)) {
+        this.graderPrompt = require(graderPromptPath);
+      } else {
+        console.log('Grader prompt file not found, using default prompt');
+        this.graderPrompt = this._getDefaultGraderPrompt;
+      }
+    } catch (error) {
+      console.error('Error loading grader prompt:', error);
+      this.graderPrompt = this._getDefaultGraderPrompt;
+    }
+  }
+  
+  /**
+   * Evaluate a workbook submission
+   * @param {string} sessionId - The session ID
+   * @param {object} workbookContent - The content of the workbook
+   * @param {object} options - Additional options
+   * @returns {object} Evaluation results
+   */
+  async evaluateWorkbook(sessionId, workbookContent, options = {}) {
+    try {
+      // Find the session
+      const session = await Interview.findById(sessionId).populate('problemId');
+      
+      if (!session) {
+        throw new Error(`Session not found: ${sessionId}`);
+      }
+      
+      // Extract problem and user information
+      const problem = session.problemId;
+      const userLevel = options.userLevel || 'mid-level';
+      
+      // Get system prompt for grader
+      const systemPrompt = this._buildGraderPrompt({
+        userLevel,
+        problemId: problem?.id,
+        evaluationType: session.type || 'coaching',
+        conciseMode: options.conciseMode !== false // Default to concise mode
+      });
+
+      // Create prompt for evaluation
+      const prompt = `Evaluate this system design for ${problem?.title || 'the given problem'}:
+
+${JSON.stringify(workbookContent, null, 2)}
+
+Provide a concise, focused evaluation following the framework in your instructions.`;
+
+      // Generate evaluation using AI service
+      const evaluationContent = await this.aiService.sendMessage([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ], { 
+        temperature: 0.3 // Lower temperature for more consistent evaluations
+      });
+
+      // Parse scores and create evaluation record
+      const scores = this._extractScores(evaluationContent);
+      
+      // Create or update evaluation record
+      let evaluation = await Evaluation.findOne({ sessionId });
+      
+      if (!evaluation) {
+        evaluation = new Evaluation({
+          sessionId,
+          evaluationType: session.type === 'interview' ? 'interview' : 'coaching',
+          userLevel,
+          problemId: problem?.id,
+          content: evaluationContent,
+          scores,
+          timestamp: new Date()
+        });
+      } else {
+        evaluation.content = evaluationContent;
+        evaluation.scores = scores;
+        evaluation.userLevel = userLevel;
+        evaluation.timestamp = new Date();
+      }
+      
+      await evaluation.save();
+      
+      return {
+        evaluation: evaluationContent,
+        scores
+      };
+    } catch (error) {
+      console.error('Error in evaluateWorkbook:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract numerical scores from evaluation text
+   * @private
+   * @param {string} evaluationText - The evaluation text to parse
+   * @returns {object} Extracted scores
+   */
+  _extractScores(evaluationText) {
+    const scores = {};
+    const scorePattern = /([A-Za-z\s&]+)\s*\((\d+)\/(\d+)\)/g;
+    let match;
+    
+    while ((match = scorePattern.exec(evaluationText)) !== null) {
+      const category = match[1].trim();
+      const score = parseInt(match[2], 10);
+      const maxScore = parseInt(match[3], 10);
+      scores[category] = { score, maxScore };
+    }
+    
+    // Extract overall score if present
+    const overallMatch = /Overall Score:\s*(\d+)\/(\d+)/i.exec(evaluationText);
+    if (overallMatch) {
+      scores.overall = { 
+        score: parseInt(overallMatch[1], 10), 
+        maxScore: parseInt(overallMatch[2], 10) 
+      };
+    }
+    
+    return scores;
+  }
+  
+  /**
+   * Provide final assessment for an interview
+   * @param {string} interviewId - The interview ID
+   * @param {object} options - Additional options
+   * @returns {object} Assessment results
+   */
+  async provideFinalAssessment(interviewId, options = {}) {
+    try {
+      const interview = await Interview.findById(interviewId).populate('problemId');
+      
+      if (!interview) {
+        throw new Error(`Interview not found: ${interviewId}`);
+      }
+      
+      // Extract necessary information
+      const userLevel = options.userLevel || 'mid-level';
+      const conversationText = interview.conversation
+        .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
+        .join('\n\n');
+      
+      // Build grader system prompt
+      const systemPrompt = this._buildGraderPrompt({
+        userLevel,
+        problemId: interview.problemId?.id,
+        evaluationType: 'interview',
+        isFinal: true,
+        conciseMode: options.conciseMode !== false // Default to concise mode
+      });
+      
+      const prompt = `Provide a comprehensive assessment of this completed system design interview for ${interview.problemId?.title || 'a system design problem'}.
+
+Interview conversation:
+${conversationText}
+
+Focus on evaluating their system design skills based on this interview.`;
+      
+      const assessment = await this.aiService.sendMessage([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.3 });
+      
+      // Parse and store evaluation
+      const scores = this._extractScores(assessment);
+      
+      // Create evaluation record
+      const evaluation = new Evaluation({
+        sessionId: interviewId,
+        evaluationType: 'interview',
+        userLevel,
+        problemId: interview.problemId?.id,
+        content: assessment,
+        scores,
+        timestamp: new Date(),
+        isFinal: true
+      });
+      
+      await evaluation.save();
+      
+      return {
+        assessment,
+        scores
+      };
+    } catch (error) {
+      console.error('Error in provideFinalAssessment:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Build the grader prompt with the appropriate context
+   * @private
+   * @param {object} context - Context for the prompt
+   * @returns {string} The formatted grader prompt
+   */
+  _buildGraderPrompt(context) {
+    // If we have a grader prompt function, use it
+    if (typeof this.graderPrompt === 'function') {
+      return this.graderPrompt(context);
+    }
+    
+    // Otherwise use the default
+    return this._getDefaultGraderPrompt(context);
+  }
+  
+  /**
+   * Get the default grader prompt
+   * @private
+   * @param {object} context - Context for the prompt
+   * @returns {string} Default grader prompt
+   */
+  _getDefaultGraderPrompt(context = {}) {
+    const { userLevel = 'mid-level', evaluationType = 'coaching', isFinal = false, conciseMode = true } = context;
+    
+    let prompt = `# SYSTEM DESIGN GRADER PERSONA
+
+## ROLE DEFINITION
+You are a System Design Grader responsible for objectively evaluating system design solutions. You provide structured, comprehensive feedback based on established criteria while maintaining a neutral, analytical tone.
+
+## USER EXPERIENCE LEVEL ASSESSMENT
+The user has identified themselves as: ${userLevel}
+Tailor your expectations and feedback depth according to this level.
+
+## EVALUATION FRAMEWORK
+Assess designs across these key dimensions (100 points total):
+1. Requirements Analysis (0-15 points)
+2. System Interface Design (0-10 points)
+3. Capacity Estimation (0-10 points)
+4. Data Modeling (0-15 points)
+5. High-Level Architecture (0-15 points)
+6. Detailed Component Design (0-15 points)
+7. Scalability & Performance (0-10 points)
+8. Reliability & Fault Tolerance (0-10 points)
+
+## FEEDBACK FORMAT
+1. Summary Assessment
+   - User's experience level
+   - Overall score
+   - 1-2 sentence summary of strongest and weakest areas
+
+2. Dimensional Breakdown
+   - Score for each dimension
+   - 1-2 bullet points for strengths
+   - 1-2 bullet points for improvements
+
+3. Prioritized Improvement Plan
+   - 3 highest priority improvements ranked by importance
+   - One-sentence explanation for each
+
+## SCORING GUIDELINES BY LEVEL`;
+
+    // Add level-specific guidelines
+    if (userLevel === 'junior') {
+      prompt += `
+- Junior Level: 60-70 points meets expectations
+- Key focus: Functional correctness, basic component understanding`;
+    } else if (userLevel === 'mid-level') {
+      prompt += `
+- Mid-Level: 70-80 points meets expectations
+- Key focus: Scalability, component interactions, basic trade-offs`;
+    } else if (userLevel === 'senior') {
+      prompt += `
+- Senior Level: 80-90 points meets expectations
+- Key focus: Comprehensive design, performance optimization, fault tolerance`;
+    } else {
+      prompt += `
+- Staff+: 90-100 points meets expectations
+- Key focus: System-wide optimization, elegant design patterns, forward-thinking architecture`;
+    }
+
+    // Add concise mode instructions
+    if (conciseMode) {
+      prompt += `
+
+## COMMUNICATION STYLE
+Be direct and focused in your evaluation:
+- Use short paragraphs (2-3 sentences maximum)
+- Prefer bullet points for feedback items
+- Avoid explaining basic concepts
+- Focus on actionable insights rather than theory
+- Eliminate filler words and redundant phrases
+- Format scores consistently and clearly
+- Make improvement suggestions specific and concrete`;
+    }
+
+    // Add any evaluation-type specific instructions
+    if (evaluationType === 'interview' && isFinal) {
+      prompt += `
+
+## INTERVIEW ASSESSMENT FOCUS
+When evaluating an interview:
+- Consider the candidate's thought process
+- Assess how they handled probing questions
+- Evaluate their communication clarity
+- Consider their ability to defend design choices
+- Note how they handled feedback during the interview`;
+    }
+    
+    return prompt;
+  }
+}
+
+module.exports = new GraderEngine();
 
 
 ================================================================================
@@ -10297,11 +12252,22 @@ class InterviewEngine extends BaseEngine {
       
       const context = await knowledgeService.queryKnowledge(`System design interview for ${problem.title}`, options.knowledgeSource || 'facebook');
       
-      const systemPrompt = options.systemPrompt || `You are an expert system design interviewer.
+      let systemPrompt = options.systemPrompt || `You are an expert system design interviewer.
 Use the following context:
 ${context}
-Guide the candidate through designing ${problem.title}. Ask probing questions and challenge assumptions.
-Begin with a brief introduction.`;
+Guide the candidate through designing ${problem.title}. Ask probing questions and challenge assumptions.`;
+
+      // Add concise mode instructions if enabled
+      if (options.conciseMode !== false) { // Default to concise mode
+        systemPrompt += `\n\nUse a CONCISE communication style:
+- Ask focused questions with clear intent
+- Keep follow-ups brief and targeted
+- Use short paragraphs (2-3 sentences maximum)
+- Prioritize probing questions over explanations
+- Eliminate unnecessary preambles`;
+      }
+
+      systemPrompt += `\n\nBegin with a brief introduction.`;
 
       const initialResponse = await this.aiService.sendMessage([], {
         system: systemPrompt,
@@ -10341,8 +12307,19 @@ Begin with a brief introduction.`;
       const problem = await Problem.findOne({ id: interview.problemId });
       const prompt = `Provide detailed feedback for the interview on ${problem.title}.`;
       
+      let systemPrompt = "You are an experienced interviewer providing detailed feedback.";
+      
+      // Add concise mode if enabled
+      if (options.conciseMode !== false) {
+        systemPrompt += `\n\nUse a CONCISE communication style:
+- Focus on key observations
+- Use bullet points for strengths and weaknesses
+- Keep paragraphs short (2-3 sentences)
+- Prioritize actionable feedback over general advice`;
+      }
+      
       const content = await this.aiService.generateContent(prompt, {
-        system: "You are an experienced interviewer providing detailed feedback.",
+        system: systemPrompt,
         temperature: options.temperature || 0.6
       });
       
@@ -10406,8 +12383,11 @@ Begin with a brief introduction.`;
         console.warn(`Problem not found for interview ${interviewId}`);
       }
       
+      // User experience level
+      const userLevel = options.userLevel || 'mid-level';
+      
       // Add system message with interview context
-      const systemMessage = {
+      let systemMessage = {
         role: 'system',
         content: `You are conducting a system design interview for ${problem?.title || 'a system design problem'}. 
 The current stage is: ${interview.currentStage}.
@@ -10415,6 +12395,19 @@ Respond to the candidate's last message with thoughtful questions that probe the
 Be conversational and react to what they've said, don't give generic responses.
 If they ask about requirements, explore them thoroughly before moving to architecture.`
       };
+      
+      // Add concise mode instructions if enabled
+      if (options.conciseMode !== false) { // Default to concise mode
+        systemMessage.content += `\n\nUse a CONCISE communication style:
+- Ask focused questions with clear intent
+- Keep follow-ups brief and targeted
+- Use short paragraphs (2-3 sentences maximum)
+- Prioritize probing questions over explanations
+- Eliminate unnecessary preambles`;
+      }
+      
+      // Add user level information
+      systemMessage.content += `\n\nThe candidate has identified as a ${userLevel} engineer. Adjust your expectations accordingly.`;
       
       // Generate AI response
       console.log('Generating interviewer response...');
@@ -10495,14 +12488,41 @@ If they ask about requirements, explore them thoroughly before moving to archite
       
       // Prepare evaluation if not already done
       if (!interview.evaluation) {
-        const problem = await Problem.findOne({ id: interview.problemId });
+        // Get grader assessment if available
+        let graderAssessment = null;
+        try {
+          const graderEngine = require('./graderEngine');
+          const userLevel = interview.userLevel || 'mid-level';
+          
+          // Get assessment from grader
+          const assessment = await graderEngine.provideFinalAssessment(interview._id, { userLevel });
+          if (assessment) {
+            graderAssessment = assessment;
+          }
+        } catch (graderError) {
+          console.error('Error getting grader assessment:', graderError);
+          // Continue with regular evaluation if grader fails
+        }
         
-        // Extract the conversation for evaluation
-        const conversationText = interview.conversation
-          .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
-          .join('\n\n');
-        
-        const systemPrompt = `You are an expert system design interviewer evaluating a candidate.
+        // If we got grader assessment, use it
+        if (graderAssessment) {
+          interview.evaluation = {
+            score: graderAssessment.scores.overall?.score || 70,
+            feedback: graderAssessment.assessment,
+            strengths: [],
+            weaknesses: [],
+            areas_to_improve: []
+          };
+        } else {
+          // Fall back to original evaluation logic
+          const problem = await Problem.findOne({ id: interview.problemId });
+          
+          // Extract the conversation for evaluation
+          const conversationText = interview.conversation
+            .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
+            .join('\n\n');
+          
+          let systemPrompt = `You are an expert system design interviewer evaluating a candidate.
 The problem was: ${problem?.title || 'a system design problem'}.
 Provide a detailed evaluation with:
 1. Overall score (0-100)
@@ -10510,38 +12530,48 @@ Provide a detailed evaluation with:
 3. Key strengths (3-5 bullet points)
 4. Areas for improvement (3-5 bullet points)
 5. Specific advice for next steps`;
-        
-        // Generate evaluation
-        const evaluationPrompt = `Based on this interview conversation, provide a detailed evaluation:\n\n${conversationText}`;
-        
-        const evaluationResponse = await this.aiService.sendMessage(
-          [{role: 'system', content: systemPrompt}, {role: 'user', content: evaluationPrompt}],
-          { temperature: 0.4, max_tokens: 1500 }
-        );
-        
-        // Parse the evaluation
-        try {
-          // Extract score with regex (looking for a number from 0-100)
-          const scoreMatch = evaluationResponse.match(/score:?\s*(\d{1,3})/i);
-          const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 70;
           
-          // Basic structure for evaluation
-          interview.evaluation = {
-            score: Math.min(100, Math.max(0, score)), // Ensure score is between 0-100
-            feedback: evaluationResponse,
-            strengths: [],
-            weaknesses: [],
-            areas_to_improve: []
-          };
-        } catch (parseError) {
-          console.error('Error parsing evaluation:', parseError);
-          interview.evaluation = {
-            score: 70,
-            feedback: evaluationResponse || "Evaluation could not be generated.",
-            strengths: [],
-            weaknesses: [], 
-            areas_to_improve: []
-          };
+          // Add concise mode if enabled
+          if (interview.conciseMode !== false) {
+            systemPrompt += `\n\nUse a CONCISE communication style:
+- Keep paragraphs short (2-3 sentences)
+- Use bullet points for lists
+- Be direct and focused
+- Eliminate filler phrases and redundancy`;
+          }
+          
+          // Generate evaluation
+          const evaluationPrompt = `Based on this interview conversation, provide a detailed evaluation:\n\n${conversationText}`;
+          
+          const evaluationResponse = await this.aiService.sendMessage(
+            [{role: 'system', content: systemPrompt}, {role: 'user', content: evaluationPrompt}],
+            { temperature: 0.4, max_tokens: 1500 }
+          );
+          
+          // Parse the evaluation
+          try {
+            // Extract score with regex (looking for a number from 0-100)
+            const scoreMatch = evaluationResponse.match(/score:?\s*(\d{1,3})/i);
+            const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 70;
+            
+            // Basic structure for evaluation
+            interview.evaluation = {
+              score: Math.min(100, Math.max(0, score)), // Ensure score is between 0-100
+              feedback: evaluationResponse,
+              strengths: [],
+              weaknesses: [],
+              areas_to_improve: []
+            };
+          } catch (parseError) {
+            console.error('Error parsing evaluation:', parseError);
+            interview.evaluation = {
+              score: 70,
+              feedback: evaluationResponse || "Evaluation could not be generated.",
+              strengths: [],
+              weaknesses: [], 
+              areas_to_improve: []
+            };
+          }
         }
       }
       
@@ -10659,145 +12689,120 @@ module.exports = InterviewEngine;
 # FILE: server\services\engines\PersonaService.js
 # EXTENSION: .js
 ================================================================================
-// PersonaService.js
-// Manages loading, retrieving, and switching between agent personas
-
+// server/services/engines/PersonaService.js
 class PersonaService {
-    constructor() {
-      this.personas = {};
-      this.activePersonaId = 'coach'; // Default persona
-    }
-  
-    /**
-     * Initialize service by loading personas from configuration
-     * @param {Object} config - Persona configuration object
-     */
-    initialize(config) {
-      if (!config || !config.personas || !Array.isArray(config.personas)) {
-        throw new Error('Invalid persona configuration');
-      }
-  
-      // Index personas by ID for easy access
-      config.personas.forEach(persona => {
-        this.personas[persona.id] = persona;
-      });
-  
-      // Validate that required personas exist
-      ['coach', 'interviewer', 'grader'].forEach(requiredId => {
-        if (!this.personas[requiredId]) {
-          console.warn(`Required persona '${requiredId}' not found in configuration`);
-        }
-      });
-  
-      console.log(`Initialized ${Object.keys(this.personas).length} personas`);
-      return this;
-    }
-  
-    /**
-     * Set the active persona
-     * @param {string} personaId - ID of the persona to activate
-     */
-    setActivePersona(personaId) {
-      if (!this.personas[personaId]) {
-        throw new Error(`Persona '${personaId}' not found`);
-      }
-      this.activePersonaId = personaId;
-      return this.personas[personaId];
-    }
-  
-    /**
-     * Get the active persona
-     * @returns {Object} Current active persona
-     */
-    getActivePersona() {
-      return this.personas[this.activePersonaId];
-    }
-  
-    /**
-     * Get a specific persona by ID
-     * @param {string} personaId - ID of the persona to retrieve
-     * @returns {Object} Requested persona
-     */
-    getPersona(personaId) {
-      const persona = this.personas[personaId];
-      if (!persona) {
-        throw new Error(`Persona '${personaId}' not found`);
-      }
-      return persona;
-    }
-  
-    /**
-     * Get suggestions for the current page from active persona
-     * @param {string} pageId - ID of the current page
-     * @returns {Array} List of suggested questions for this page
-     */
-    getPageSuggestions(pageId) {
-      const persona = this.getActivePersona();
-      if (persona.pageSuggestions && persona.pageSuggestions[pageId]) {
-        return persona.pageSuggestions[pageId];
-      }
-      return [];
-    }
-  
-    /**
-     * Get the system prompt for the active persona
-     * @param {Object} context - Additional context to include in prompt
-     * @returns {string} Formatted system prompt
-     */
-    getSystemPrompt(context = {}) {
-      const persona = this.getActivePersona();
-      let prompt = persona.systemPrompt || '';
-  
-      // Add page-specific context if available
-      if (context.currentPage && persona.pageSuggestions) {
-        prompt += `\nThe user is currently working on the ${context.currentPage} section.`;
-      }
-  
-      // Add design-specific context if available
-      if (context.designData) {
-        prompt += `\nCurrent design information: ${JSON.stringify(context.designData)}`;
-      }
-  
-      return prompt;
-    }
-  
-    /**
-     * Format a response using persona patterns
-     * @param {string} patternKey - Which response pattern to use
-     * @param {Object} variables - Variables to inject into template 
-     * @returns {string} Formatted response
-     */
-    formatResponse(patternKey, variables = {}) {
-      const persona = this.getActivePersona();
-      if (!persona.responsePatterns || !persona.responsePatterns[patternKey]) {
-        return null;
-      }
-  
-      let response = persona.responsePatterns[patternKey];
-      
-      // Replace template variables
-      Object.entries(variables).forEach(([key, value]) => {
-        response = response.replace(`{${key}}`, value);
-      });
-  
-      return response;
-    }
-  
-    /**
-     * Get all available personas
-     * @returns {Array} List of personas with basic info
-     */
-    getAllPersonas() {
-      return Object.values(this.personas).map(persona => ({
-        id: persona.id,
-        name: persona.name,
-        role: persona.role,
-        description: persona.description
-      }));
-    }
+  constructor() {
+    this.personas = {};
+    this.activePersonaId = 'coach'; // default active persona
+    this.conciseMode = true; // default mode
   }
   
-  export default new PersonaService();
+  initialize(config) {
+    if (!config || !config.personas || !Array.isArray(config.personas)) {
+      throw new Error('Invalid persona configuration');
+    }
+    
+    config.personas.forEach(persona => {
+      this.personas[persona.id] = persona;
+    });
+    
+    // Validate that required personas exist
+    ['coach', 'interviewer', 'grader'].forEach(requiredId => {
+      if (!this.personas[requiredId]) {
+        console.warn(`Required persona '${requiredId}' not found in configuration`);
+      }
+    });
+    
+    console.log(`Initialized ${Object.keys(this.personas).length} personas`);
+    return this;
+  }
+  
+  setActivePersona(personaId) {
+    if (!this.personas[personaId]) {
+      throw new Error(`Persona '${personaId}' not found`);
+    }
+    this.activePersonaId = personaId;
+    return this.personas[personaId];
+  }
+  
+  setConciseMode(enabled) {
+    this.conciseMode = enabled;
+    return this.conciseMode;
+  }
+  
+  getActivePersona() {
+    return this.personas[this.activePersonaId];
+  }
+  
+  getPersona(personaId) {
+    const persona = this.personas[personaId];
+    if (!persona) {
+      throw new Error(`Persona '${personaId}' not found`);
+    }
+    return persona;
+  }
+  
+  getPageSuggestions(pageId) {
+    const persona = this.getActivePersona();
+    if (persona.pageSuggestions && persona.pageSuggestions[pageId]) {
+      return persona.pageSuggestions[pageId];
+    }
+    return [];
+  }
+  
+  getSystemPrompt(context = {}) {
+    const persona = this.getActivePersona();
+    let prompt = persona.systemPrompt || '';
+    
+    if (this.conciseMode) {
+      prompt += `\n\nPlease provide a concise, narrative explanation that includes detailed project context when available. Avoid rigid bullet lists.`;
+    } else {
+      prompt += `\n\nPlease provide a detailed narrative explanation that covers all technical and project-specific details.`;
+    }
+    
+    if (context.currentPage) {
+      prompt += `\nSection: ${context.currentPage}`;
+    }
+    
+    if (context.designData) {
+      prompt += `\nProject Details: ${JSON.stringify(context.designData)}`;
+    }
+    
+    return prompt;
+  }
+  
+  formatResponse(patternKey, variables = {}) {
+    const persona = this.getActivePersona();
+    if (!persona.responsePatterns || !persona.responsePatterns[patternKey]) {
+      return null;
+    }
+    
+    let response = persona.responsePatterns[patternKey];
+    Object.entries(variables).forEach(([key, value]) => {
+      response = response.replace(`{${key}}`, value);
+    });
+    return response;
+  }
+  
+  getAllPersonas() {
+    return Object.values(this.personas).map(persona => ({
+      id: persona.id,
+      name: persona.name,
+      role: persona.role,
+      description: persona.description
+    }));
+  }
+}
+
+module.exports = new PersonaService();
+
+
+
+================================================================================
+# FILE: server\services\evaluation\evaluationParser.js
+# EXTENSION: .js
+================================================================================
+
 
 
 ================================================================================
@@ -11465,6 +13470,6 @@ testAnthropic();
 
 ================================================================================
 # SUMMARY
-# Total files processed: 74
-# Extraction completed: 2025-03-11 13:27:50
+# Total files processed: 86
+# Extraction completed: 2025-03-12 00:13:57
 ================================================================================

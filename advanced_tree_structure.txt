@@ -86,9 +86,9 @@
 |   |   |   |   |-- fn: MermaidRenderer({ code, onError }) [internal]
 |   |   |   |   |-- fn: cleanup() [internal]
 |   |   |   |   |-- component:MermaidRenderer [internal]
-|   |   |   +-- ReactFlowDiagram.js
-|   |   |       |-- module:ReactFlowDiagram.js
-|   |   |       |-- fn: Flow({ 
+|   |   |   |-- ReactFlowDiagram.js
+|   |   |   |   |-- module:ReactFlowDiagram.js
+|   |   |   |   |-- fn: Flow({ 
   initialNodes, 
   initialEdges, 
   onNodesChange, 
@@ -96,17 +96,55 @@
   onConnect,
   onDiagramUpdate 
 }) [internal]
-|   |   |       |-- fn: ReactFlowDiagramWithProvider(props) [internal]
-|   |   |       |-- method: map(n => {
+|   |   |   |   |-- fn: ReactFlowDiagramWithProvider(props) [internal]
+|   |   |   |   |-- method: map(n => {
       if (n.id === selectedNode.id)
-|   |   |       |-- component:Flow [internal]
-|   |   |       |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |   |-- component:Flow [internal]
+|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   +-- SequenceDiagram.js
+|   |   |       |-- module:SequenceDiagram.js
+|   |   |       |-- fn: generateMermaidCode(nodes, edges) [internal]
+|   |   |       |-- fn: return() [internal]
+|   |   |       |-- fn: MessageEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  style = {},
+}) [internal]
+|   |   |       |-- fn: SequenceDiagram({ initialDiagram, onDiagramUpdate }) [internal]
+|   |   |       |-- fn: SequenceDiagramWrapped(props) [internal]
+|   |   |       |-- method: generateMermaidCode(nodes, edges)
+|   |   |       |-- method: forEach(participant => {
+    if (participant.type === 'actor')
+|   |   |       |-- component:ActorNode [internal]
+|   |   |       |-- component:ParticipantNode [internal]
+|   |   |       |-- component:LifelineNode [internal]
+|   |   |       |-- component:MessageEdge [internal]
+|   |   |       |-- component:SequenceDiagram [internal]
+|   |   |       |-- component:SequenceDiagramWrapped [internal]
+|   |   |-- evaluation
+|   |   |   +-- EvaluationSummary.js
+|   |   |       |-- module:EvaluationSummary.js
+|   |   |       |-- fn: EvaluationSummary({ evaluation, scores }) [internal]
+|   |   |       |-- fn: getScoreColor(score) [internal]
+|   |   |       |-- component:EvaluationSummary [internal]
 |   |   |-- CoachAgentInterface.js
 |   |   |   |-- module:CoachAgentInterface.js
 |   |   |   |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
 |   |   |   |-- fn: getCoachContext() [internal]
 |   |   |   |-- fn: handleSuggestionClick(suggestion) [internal]
 |   |   |   |-- component:CoachAgentInterface [internal]
+|   |   |-- ConciseModeToggle.js
+|   |   |   |-- module:ConciseModeToggle.js
+|   |   |   |-- fn: ConciseModeToggle({ isEnabled, onToggle }) [internal]
+|   |   |   |-- component:ConciseModeToggle [internal]
+|   |   |-- ExperienceLevelSelector.js
+|   |   |   |-- module:ExperienceLevelSelector.js
+|   |   |   |-- fn: ExperienceLevelSelector({ currentLevel, onLevelChange }) [internal]
+|   |   |   |-- component:ExperienceLevelSelector [internal]
 |   |   |-- MermaidToolbar.js
 |   |   |   |-- module:MermaidToolbar.js
 |   |   |   |-- fn: ComponentButton({ icon, label, snippet, onInsert }) [internal]
@@ -175,95 +213,43 @@
 |   |   |   |-- method: MyApp({ Component, pageProps })
 |   |   |-- APIDesignPage.js
 |   |   |   |-- module:APIDesignPage.js
-|   |   |   |-- fn: APIDesignPage() [internal]
-|   |   |   |-- fn: addAPI() [internal]
-|   |   |   |-- fn: removeAPI(id) [internal]
-|   |   |   |-- fn: updateAPI(id, field, value) [internal]
-|   |   |   |-- fn: toggleExpand(id) [internal]
-|   |   |   |-- fn: addRequestParam(apiId) [internal]
-|   |   |   |-- fn: removeRequestParam(apiId, paramId) [internal]
-|   |   |   |-- fn: updateRequestParam(apiId, paramId, field, value) [internal]
+|   |   |   |-- fn: APIDesignPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:APIDesignPage [internal]
 |   |   |-- dashboard.js
 |   |   |   |-- module:dashboard.js
-|   |   |   |-- fn: Dashboard() [internal]
-|   |   |   |-- method: Dashboard()
+|   |   |   |-- fn: Dashboard({ onSelectWorkbook }) [internal]
+|   |   |   |-- method: Dashboard({ onSelectWorkbook })
+|   |   |   |-- component:Dashboard [exported]
 |   |   |-- DataModelPage.js
 |   |   |   |-- module:DataModelPage.js
-|   |   |   |-- fn: DataModelPage() [internal]
-|   |   |   |-- fn: addTable() [internal]
-|   |   |   |-- fn: removeTable(id) [internal]
-|   |   |   |-- fn: updateTable(id, field, value) [internal]
-|   |   |   |-- fn: addField(tableId) [internal]
-|   |   |   |-- fn: removeField(tableId, fieldId) [internal]
-|   |   |   |-- fn: updateField(tableId, fieldId, field, value) [internal]
-|   |   |   |-- fn: addRelationship(tableId) [internal]
-|   |   |   |-- fn: removeRelationship(tableId, relationshipId) [internal]
-|   |   |   |-- fn: updateRelationship(tableId, relationshipId, field, value) [internal]
+|   |   |   |-- fn: DataModelPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:DataModelPage [internal]
 |   |   |-- index.js
 |   |   |   |-- module:index.js
 |   |   |   |-- fn: Home() [internal]
 |   |   |   |-- method: Home()
+|   |   |   |-- component:Home [exported]
 |   |   |-- ReliabilitySecurityPage.js
 |   |   |   |-- module:ReliabilitySecurityPage.js
-|   |   |   |-- fn: ReliabilitySecurityPage() [internal]
-|   |   |   |-- fn: addReliabilityTarget() [internal]
-|   |   |   |-- fn: updateReliabilityTarget(id, field, value) [internal]
-|   |   |   |-- fn: removeReliabilityTarget(id) [internal]
-|   |   |   |-- fn: addFailureScenario() [internal]
-|   |   |   |-- fn: updateFailureScenario(id, field, value) [internal]
-|   |   |   |-- fn: removeFailureScenario(id) [internal]
-|   |   |   |-- fn: updateAuthMethod(method, value) [internal]
-|   |   |   |-- fn: updateDataProtection(category, field, value) [internal]
-|   |   |   |-- fn: addSecurityMeasure() [internal]
-|   |   |   |-- fn: updateSecurityMeasure(id, field, value) [internal]
-|   |   |   |-- fn: removeSecurityMeasure(id) [internal]
-|   |   |   |-- fn: addComplianceRequirement() [internal]
-|   |   |   |-- fn: updateComplianceRequirement(id, field, value) [internal]
-|   |   |   |-- fn: removeComplianceRequirement(id) [internal]
-|   |   |   |-- fn: toggleSection(section) [internal]
+|   |   |   |-- fn: ReliabilitySecurityPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:ReliabilitySecurityPage [internal]
 |   |   |-- RequirementsPage.js
 |   |   |   |-- module:RequirementsPage.js
-|   |   |   |-- fn: RequirementsPage() [internal]
-|   |   |   |-- fn: addFunctionalReq() [internal]
-|   |   |   |-- fn: removeFunctionalReq(id) [internal]
-|   |   |   |-- fn: updateFunctionalReq(id, text) [internal]
-|   |   |   |-- fn: toggleFunctionalReq(id) [internal]
-|   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
+|   |   |   |-- fn: RequirementsPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:RequirementsPage [internal]
 |   |   |-- ScalingStrategyPage.js
 |   |   |   |-- module:ScalingStrategyPage.js
-|   |   |   |-- fn: ScalingStrategyPage() [internal]
-|   |   |   |-- fn: toggleSection(sectionId) [internal]
-|   |   |   |-- fn: updateFieldValue(sectionId, fieldId, value) [internal]
-|   |   |   |-- fn: toggleStrategy(strategyId) [internal]
-|   |   |   |-- fn: updateStrategyDescription(strategyId, description) [internal]
-|   |   |   |-- fn: addStrategyComponent(strategyId) [internal]
-|   |   |   |-- fn: updateStrategyComponent(strategyId, componentId, field, value) [internal]
-|   |   |   |-- fn: removeStrategyComponent(strategyId, componentId) [internal]
-|   |   |   |-- fn: addBottleneck() [internal]
-|   |   |   |-- fn: updateBottleneck(bottleneckId, field, value) [internal]
-|   |   |   |-- fn: removeBottleneck(bottleneckId) [internal]
-|   |   |   |-- method: setStrategies(strategies.map(strategy => {
-      if (strategy.id === strategyId)
+|   |   |   |-- fn: ScalingStrategyPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:ScalingStrategyPage [internal]
 |   |   |-- SystemArchitecturePage.js
 |   |   |   |-- module:SystemArchitecturePage.js
-|   |   |   |-- fn: SystemArchitecturePage() [internal]
-|   |   |   |-- fn: generateMermaidCode() [internal]
-|   |   |   |-- fn: handleNodeClick(nodeId, event) [internal]
-|   |   |   |-- fn: handleStartEditing() [internal]
-|   |   |   |-- fn: handleCancelEditing() [internal]
-|   |   |   |-- fn: handleSaveEdit() [internal]
-|   |   |   |-- fn: handleDeleteNode() [internal]
-|   |   |   |-- fn: handleAddNode(type) [internal]
-|   |   |   |-- fn: handleStartConnection(sourceId) [internal]
-|   |   |   |-- fn: handleFinishConnection(targetId) [internal]
-|   |   |   |-- fn: handleCanvasClick() [internal]
-|   |   |   |-- method: setNodes(nodes.map(node => {
-      if (node.id === selectedNode.id)
+|   |   |   |-- fn: SystemArchitecturePage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:SystemArchitecturePage [internal]
 |   |   |-- test-flow.js
 |   |   |   |-- module:test-flow.js
@@ -280,10 +266,9 @@
 |   |       |-- fn: ScalingStrategyPage() [internal]
 |   |       |-- fn: ReliabilitySecurityPage() [internal]
 |   |       |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
-|   |       |-- fn: WorkbookLayout() [internal]
+|   |       |-- fn: WorkbookLayout({ onBack, sessionId }) [internal]
 |   |       |-- fn: updateFormData(section, data) [internal]
 |   |       |-- fn: getActivePageComponent() [internal]
-|   |       |-- fn: handleAskCoach() [internal]
 |   |       |-- component:RequirementsPage [internal]
 |   |       |-- component:APIDesignPage [internal]
 |   |       |-- component:DataModelPage [internal]
@@ -318,6 +303,8 @@
 |   |       +-- interview_format
 |   |           +-- standard_progression.md
 |   |-- persona
+|   |   +-- grader.js
+|   |       |-- module:grader.js
 |   |-- problems
 |   +-- tempresults
 |       +-- 1
@@ -327,6 +314,8 @@
 |   |   +-- aiConfig.js
 |   |       |-- module:aiConfig.js
 |   |-- models
+|   |   |-- Evaluation.js
+|   |   |   |-- module:Evaluation.js
 |   |   |-- Interview.js
 |   |   |   |-- module:Interview.js
 |   |   |-- Problem.js
@@ -345,6 +334,8 @@
 |   |   |   |-- module:auth.js
 |   |   |-- coaching.js
 |   |   |   |-- module:coaching.js
+|   |   |-- grader.js
+|   |   |   |-- module:grader.js
 |   |   |-- interviews.js
 |   |   |   |-- module:interviews.js
 |   |   |   |-- fn: handleError(res, error, defaultMessage = 'An unexpected error occurred') [internal]
@@ -372,6 +363,9 @@
 |   |   |   |       |-- method: sendMessage(messages, options = {})
 |   |   |   |       |-- method: generateResponse(messages, context, options = {})
 |   |   |   |       |-- method: generateContent(prompt, options = {})
+|   |   |   |-- prompts
+|   |   |   |   +-- grader.js
+|   |   |   |       |-- module:grader.js
 |   |   |   |-- aiFactory.js
 |   |   |   |   |-- module:aiFactory.js
 |   |   |   |   |-- class:AIFactory [internal]
@@ -408,8 +402,19 @@
 |   |   |   |   |-- method: generateContent(sessionId, topic, options = {})
 |   |   |   |   |-- method: _generateLearningMaterials(session, topic, options = {})
 |   |   |   |   |-- method: _generateDiagramDescription(session, diagramType, options = {})
+|   |   |   |   |-- method: _getGraderInsights(sessionId, workbookContent, userLevel)
+|   |   |   |   |-- method: _extractKeyInsights(evaluation, scores)
 |   |   |   |   |-- method: _extractEntities(messages, currentStage)
 |   |   |   |   |-- method: _getCurrentStageIndex(stageName)
+|   |   |   |-- graderEngine.js
+|   |   |   |   |-- module:graderEngine.js
+|   |   |   |   |-- class:GraderEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: evaluateWorkbook(sessionId, workbookContent, options = {})
+|   |   |   |   |-- method: _extractScores(evaluationText)
+|   |   |   |   |-- method: provideFinalAssessment(interviewId, options = {})
+|   |   |   |   |-- method: _buildGraderPrompt(context)
+|   |   |   |   |-- method: _getDefaultGraderPrompt(context = {})
 |   |   |   |-- interviewEngine.js
 |   |   |   |   |-- module:interviewEngine.js
 |   |   |   |   |-- class:InterviewEngine extends BaseEngine [internal]
@@ -439,6 +444,8 @@
 |   |   |       |-- method: getSystemPrompt(context = {})
 |   |   |       |-- method: formatResponse(patternKey, variables = {})
 |   |   |       |-- method: getAllPersonas()
+|   |   |-- evaluation
+|   |   |   +-- evaluationParser.js
 |   |   |-- knowledge
 |   |   |   |-- knowledgeService.js
 |   |   |   |   |-- module:knowledgeService.js
@@ -464,6 +471,7 @@
 |   |           |-- method: generateArchitectureDiagram(entities, title)
 |   |           |-- method: generateErDiagram(entities, title)
 |   |           |-- method: generateApiDiagram(entities, title)
+|   |-- utils
 |   |-- config.py
 |   |-- index.js
 |   |   |-- module:index.js
@@ -484,4 +492,5 @@
 |-- md_files.txt
 |-- project_overview.txt
 |-- README.md
+|-- sysdesignsummarydata.txt
 +-- tree_structure.txt

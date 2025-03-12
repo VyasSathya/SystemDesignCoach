@@ -1,4 +1,4 @@
-// client/utils/api.js
+// client/utils/api.js (with fixed createDefaultSession)
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
@@ -7,31 +7,31 @@ const API_URL = typeof window !== 'undefined' ?
   (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000') : 
   'http://localhost:5000';
 
-  const api = axios.create({
-    baseURL: API_URL,
-    timeout: 60000, // Increase timeout to 60 seconds
-    retries: 3,
-    retryDelay: 1000,
-  });
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 60000, // Increase timeout to 60 seconds
+  retries: 3,
+  retryDelay: 1000,
+});
+
+// Add retry logic to axios
+api.interceptors.response.use(null, async (error) => {
+  const { config } = error;
+  if (!config || !config.retries) return Promise.reject(error);
   
-  // Add retry logic to axios
-  api.interceptors.response.use(null, async (error) => {
-    const { config } = error;
-    if (!config || !config.retries) return Promise.reject(error);
-    
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount >= config.retries) {
-      return Promise.reject(error);
-    }
-    
-    config.retryCount += 1;
-    console.log(`Retrying request (${config.retryCount}/${config.retries})`);
-    
-    // Wait before retrying
-    await new Promise(resolve => setTimeout(resolve, config.retryDelay));
-    return api(config);
-  });
+  config.retryCount = config.retryCount || 0;
+  
+  if (config.retryCount >= config.retries) {
+    return Promise.reject(error);
+  }
+  
+  config.retryCount += 1;
+  console.log(`Retrying request (${config.retryCount}/${config.retries})`);
+  
+  // Wait before retrying
+  await new Promise(resolve => setTimeout(resolve, config.retryDelay));
+  return api(config);
+});
 
 // Attach the auth token to every request if present
 api.interceptors.request.use(
@@ -64,6 +64,25 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Helper to create a default session for development/fallback
+function createDefaultSession(id = 'default') {
+  return {
+    id,
+    problem: { 
+      id: 'mock-problem',
+      title: 'System Design Coaching Session'
+    },
+    conversation: [{
+      role: 'assistant',
+      content: "Welcome to your system design coaching session! I'm here to help you work through design challenges and improve your system architecture skills. What would you like to focus on today?",
+      timestamp: new Date().toISOString()
+    }],
+    currentStage: 'introduction',
+    status: 'in_progress',
+    startedAt: new Date().toISOString()
+  };
+}
 
 // === Authentication APIs ===
 export const loginUser = async (email, password) => {
@@ -107,9 +126,15 @@ export const logoutUser = async () => {
 };
 
 // === Interview APIs ===
-export const sendInterviewMessage = async (interviewId, message) => {
+export const sendInterviewMessage = async (interviewId, message, options = {}) => {
   try {
-    const response = await api.post(`/api/interviews/${interviewId}/message`, { message });
+    const payload = { message };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/interviews/${interviewId}/message`, payload);
     return response.data;
   } catch (error) {
     console.error('Error sending interview message:', error);
@@ -147,9 +172,15 @@ export const getInterviewProblems = async () => {
   }
 };
 
-export const startInterview = async (problemId) => {
+export const startInterview = async (problemId, options = {}) => {
   try {
-    const response = await api.post('/api/interviews/start', { problemId });
+    const payload = { problemId };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post('/api/interviews/start', payload);
     return response.data;
   } catch (error) {
     console.error('Error starting interview:', error);
@@ -167,9 +198,15 @@ export const completeInterview = async (interviewId) => {
   }
 };
 
-export const sendMessage = async (interviewId, message) => {
+export const sendMessage = async (interviewId, message, options = {}) => {
   try {
-    const response = await api.post(`/api/interviews/${interviewId}/message`, { message });
+    const payload = { message };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/interviews/${interviewId}/message`, payload);
     return response.data;
   } catch (error) {
     console.error('Error sending message:', error);
@@ -218,10 +255,17 @@ export const getCoachingProblems = async () => {
   }
 };
 
-export const startCoachingSession = async (problemId) => {
+export const startCoachingSession = async (problemId, options = {}) => {
   try {
     console.log('API: Starting coaching session for:', problemId);
-    const response = await api.post(`/api/coaching/start/${problemId}`);
+    
+    const payload = { };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/coaching/start/${problemId}`, payload);
     console.log('API: Session start response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
@@ -232,44 +276,32 @@ export const startCoachingSession = async (problemId) => {
 
 export const getCoachingSession = async (id) => {
   if (!id) {
-    return {
-      id: 'default',
-      conversation: [{
-        role: 'assistant',
-        content: "Welcome to your system design coaching session. Let's get started!",
-        timestamp: new Date().toISOString()
-      }],
-      problem: { title: 'System Design Coaching' }
-    };
+    console.log("No session ID provided, returning default session");
+    return createDefaultSession();
   }
   
   try {
+    console.log(`Attempting to fetch coaching session with ID: ${id}`);
     const response = await api.get(`/api/coaching/${id}`);
+    console.log("Coaching session response:", response.data);
     
-    // Ensure conversation exists with at least one message
-    const conversation = response.data.conversation && response.data.conversation.length > 0 
-      ? response.data.conversation 
-      : [{
-          role: 'assistant',
-          content: `Welcome to your ${response.data.problem?.title || 'system design'} coaching session!`,
-          timestamp: new Date().toISOString()
-        }];
-    
+    // Ensure the response has the necessary structure
     return {
       ...response.data,
-      conversation
+      conversation: response.data.conversation && response.data.conversation.length > 0 
+        ? response.data.conversation 
+        : [{
+            role: 'assistant',
+            content: `Welcome to your ${response.data.problem?.title || 'system design'} coaching session!`,
+            timestamp: new Date().toISOString()
+          }]
     };
   } catch (error) {
     console.error(`Error fetching coaching session ${id}:`, error);
-    return {
-      id,
-      conversation: [{
-        role: 'assistant',
-        content: "Welcome to your system design coaching session. Let's get started!",
-        timestamp: new Date().toISOString()
-      }],
-      problem: { title: 'System Design Coaching' }
-    };
+    
+    // Create a mock session that will work for demo purposes
+    console.log("Creating mock session for demonstration");
+    return createDefaultSession(id);
   }
 };
 
@@ -285,20 +317,45 @@ export const sendCoachingMessage = async (sessionId, message, contextInfo = null
       throw new Error("Invalid message format");
     }
     
-    // Use api instance instead of axios directly
-    const response = await api.post(`/api/coaching/${sessionId}/message`, { 
-      message,
-      contextInfo // Add contextInfo parameter to include diagram data
-    });
-    
-    return response.data;
+    // Make API call with error handling
+    try {
+      console.log(`Sending message for session ${sessionId}:`, message);
+      const response = await api.post(`/api/coaching/${sessionId}/message`, { 
+        message,
+        contextInfo // Include contextInfo which may contain userLevel and conciseMode
+      });
+      
+      console.log("Message response:", response.data);
+      return response.data;
+    } catch (apiError) {
+      console.error("API error in sendCoachingMessage:", apiError.response?.data || apiError.message);
+      
+      // Return a formatted error response instead of throwing
+      return {
+        message: {
+          role: 'coach',
+          content: "I'm having trouble connecting to the server. Please try again in a moment.",
+          timestamp: new Date().toISOString(),
+          error: true
+        }
+      };
+    }
   } catch (error) {
-    console.error("Error sending coaching message:", error);
-    throw error;
+    console.error("Error in sendCoachingMessage:", error);
+    
+    // Return a formatted error that matches the expected response structure
+    return {
+      message: {
+        role: 'coach',
+        content: "Error processing message. Please try again with a different question.",
+        timestamp: new Date().toISOString(),
+        error: true
+      }
+    };
   }
 };
 
-export const getCoachingMaterials = async (sessionId, topic) => {
+export const getCoachingMaterials = async (sessionId, topic, options = {}) => {
   // Handle missing sessionId
   if (!sessionId || sessionId === 'undefined' || sessionId === 'null') {
     console.warn('No valid sessionId provided to getCoachingMaterials');
@@ -310,7 +367,13 @@ export const getCoachingMaterials = async (sessionId, topic) => {
   }
 
   try {
-    const response = await api.post(`/api/coaching/${sessionId}/materials`, { topic });
+    const payload = { topic };
+    
+    // Add optional parameters if provided
+    if (options.userLevel) payload.userLevel = options.userLevel;
+    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
+    
+    const response = await api.post(`/api/coaching/${sessionId}/materials`, payload);
     
     // If no materials found, return a default
     if (!response.data) {
@@ -432,6 +495,76 @@ export const getProblem = async (id) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching problem:', error);
+    throw error;
+  }
+};
+
+// === Grader APIs ===
+export const getEvaluation = async (sessionId, workbookContent, userLevel = 'mid-level', conciseMode = true) => {
+  try {
+    if (!sessionId) {
+      console.error("No sessionId provided to getEvaluation");
+      throw new Error("No sessionId provided");
+    }
+    
+    const response = await api.post(`/api/grader/evaluate/${sessionId}`, {
+      workbookContent,
+      userLevel,
+      conciseMode
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error getting evaluation:', error);
+    throw error;
+  }
+};
+
+export const getFinalAssessment = async (interviewId, userLevel = 'mid-level', conciseMode = true) => {
+  try {
+    if (!interviewId) {
+      console.error("No interviewId provided to getFinalAssessment");
+      throw new Error("No interviewId provided");
+    }
+    
+    const response = await api.post(`/api/grader/assessment/${interviewId}`, {
+      userLevel,
+      conciseMode
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error getting final assessment:', error);
+    throw error;
+  }
+};
+
+export const getEvaluationHistory = async (sessionId) => {
+  try {
+    if (!sessionId) {
+      console.error("No sessionId provided to getEvaluationHistory");
+      throw new Error("No sessionId provided");
+    }
+    
+    const response = await api.get(`/api/grader/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting evaluation history:', error);
+    throw error;
+  }
+};
+
+export const getLatestEvaluation = async (sessionId) => {
+  try {
+    if (!sessionId) {
+      console.error("No sessionId provided to getLatestEvaluation");
+      throw new Error("No sessionId provided");
+    }
+    
+    const response = await api.get(`/api/grader/latest/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting latest evaluation:', error);
     throw error;
   }
 };

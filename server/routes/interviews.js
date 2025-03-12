@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Interview = require('../models/Interview');
 const Problem = require('../models/Problem'); 
-const interviewEngine = require('../services/interview/interviewEngine');
+const InterviewEngine = require('../services/engines/interviewEngine');
 const diagramService = require('../services/diagram/diagramService');
 
 // Centralized error handling middleware
