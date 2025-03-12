@@ -133,7 +133,9 @@
 |   |   |       |-- component:EvaluationSummary [internal]
 |   |   |-- CoachAgentInterface.js
 |   |   |   |-- module:CoachAgentInterface.js
+|   |   |   |-- fn: getDefaultSuggestions(currentPage) [internal]
 |   |   |   |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
+|   |   |   |-- fn: getCoachContext() [internal]
 |   |   |   |-- component:CoachAgentInterface [internal]
 |   |   |-- ConciseModeToggle.js
 |   |   |   |-- module:ConciseModeToggle.js
@@ -177,6 +179,17 @@
 |   |       |-- component:AuthContext [internal]
 |   |       |-- component:AuthProvider [exported]
 |   |-- pages
+|   |   |-- api
+|   |   |   +-- mock
+|   |   |       +-- coaching
+|   |   |           |-- [id].js
+|   |   |           |   |-- module:[id].js
+|   |   |           |   |-- fn: handler(req, res) [internal]
+|   |   |           |   |-- method: handler(req, res)
+|   |   |           +-- message.js
+|   |   |               |-- module:message.js
+|   |   |               |-- fn: handler(req, res) [internal]
+|   |   |               |-- method: handler(req, res)
 |   |   |-- auth
 |   |   |   |-- login.js
 |   |   |   |   |-- module:login.js
@@ -242,9 +255,16 @@
 |   |   |   |-- method: MyApp({ Component, pageProps })
 |   |   |-- APIDesignPage.js
 |   |   |   |-- module:APIDesignPage.js
-|   |   |   |-- fn: APIDesignPage({ data = {}, updateData }) [internal]
-|   |   |   |-- fn: handleChange(e) [internal]
-|   |   |   |-- component:APIDesignPage [internal]
+|   |   |   |-- fn: EnhancedAPIDesignPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: addAPI() [internal]
+|   |   |   |-- fn: removeAPI(id) [internal]
+|   |   |   |-- fn: updateAPI(id, field, value) [internal]
+|   |   |   |-- fn: toggleExpand(id) [internal]
+|   |   |   |-- fn: addRequestParam(apiId) [internal]
+|   |   |   |-- fn: removeRequestParam(apiId, paramId) [internal]
+|   |   |   |-- fn: updateRequestParam(apiId, paramId, field, value) [internal]
+|   |   |   |-- fn: updateApiType(type) [internal]
+|   |   |   |-- component:EnhancedAPIDesignPage [internal]
 |   |   |-- dashboard.js
 |   |   |   |-- module:dashboard.js
 |   |   |   |-- fn: Dashboard({ onSelectWorkbook }) [internal]
@@ -252,9 +272,9 @@
 |   |   |   |-- component:Dashboard [exported]
 |   |   |-- DataModelPage.js
 |   |   |   |-- module:DataModelPage.js
-|   |   |   |-- fn: DataModelPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: EnhancedDataModelPage({ data = {}, updateData }) [internal]
 |   |   |   |-- fn: handleChange(e) [internal]
-|   |   |   |-- component:DataModelPage [internal]
+|   |   |   |-- component:EnhancedDataModelPage [internal]
 |   |   |-- index.js
 |   |   |   |-- module:index.js
 |   |   |   |-- fn: Home() [internal]
@@ -263,23 +283,54 @@
 |   |   |-- ReliabilitySecurityPage.js
 |   |   |   |-- module:ReliabilitySecurityPage.js
 |   |   |   |-- fn: ReliabilitySecurityPage({ data = {}, updateData }) [internal]
-|   |   |   |-- fn: handleChange(e) [internal]
+|   |   |   |-- fn: addReliabilityTarget() [internal]
+|   |   |   |-- fn: updateReliabilityTarget(id, field, value) [internal]
+|   |   |   |-- fn: removeReliabilityTarget(id) [internal]
+|   |   |   |-- fn: addFailureScenario() [internal]
+|   |   |   |-- fn: updateFailureScenario(id, field, value) [internal]
+|   |   |   |-- fn: removeFailureScenario(id) [internal]
+|   |   |   |-- fn: updateAuthMethod(method, value) [internal]
+|   |   |   |-- fn: updateDataProtection(category, field, value) [internal]
+|   |   |   |-- fn: addSecurityMeasure() [internal]
+|   |   |   |-- fn: updateSecurityMeasure(id, field, value) [internal]
+|   |   |   |-- fn: removeSecurityMeasure(id) [internal]
+|   |   |   |-- fn: addComplianceRequirement() [internal]
+|   |   |   |-- fn: updateComplianceRequirement(id, field, value) [internal]
+|   |   |   |-- fn: removeComplianceRequirement(id) [internal]
+|   |   |   |-- fn: toggleSection(section) [internal]
 |   |   |   |-- component:ReliabilitySecurityPage [internal]
 |   |   |-- RequirementsPage.js
 |   |   |   |-- module:RequirementsPage.js
-|   |   |   |-- fn: RequirementsPage({ data = {}, updateData }) [internal]
-|   |   |   |-- fn: handleChange(e) [internal]
-|   |   |   |-- component:RequirementsPage [internal]
+|   |   |   |-- fn: EnhancedRequirementsPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: addFunctionalReq() [internal]
+|   |   |   |-- fn: removeFunctionalReq(id) [internal]
+|   |   |   |-- fn: updateFunctionalReq(id, text) [internal]
+|   |   |   |-- fn: toggleFunctionalReq(id) [internal]
+|   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
+|   |   |   |-- fn: updateConstraints(value) [internal]
+|   |   |   |-- fn: updateAssumptions(value) [internal]
+|   |   |   |-- component:EnhancedRequirementsPage [internal]
 |   |   |-- ScalingStrategyPage.js
 |   |   |   |-- module:ScalingStrategyPage.js
-|   |   |   |-- fn: ScalingStrategyPage({ data = {}, updateData }) [internal]
-|   |   |   |-- fn: handleChange(e) [internal]
-|   |   |   |-- component:ScalingStrategyPage [internal]
+|   |   |   |-- fn: EnhancedScalingStrategyPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: toggleSection(sectionId) [internal]
+|   |   |   |-- fn: updateFieldValue(sectionId, fieldId, value) [internal]
+|   |   |   |-- fn: toggleStrategy(strategyId) [internal]
+|   |   |   |-- fn: updateStrategyDescription(strategyId, description) [internal]
+|   |   |   |-- fn: addStrategyComponent(strategyId) [internal]
+|   |   |   |-- fn: updateStrategyComponent(strategyId, componentId, field, value) [internal]
+|   |   |   |-- fn: removeStrategyComponent(strategyId, componentId) [internal]
+|   |   |   |-- fn: addBottleneck() [internal]
+|   |   |   |-- fn: updateBottleneck(bottleneckId, field, value) [internal]
+|   |   |   |-- fn: removeBottleneck(bottleneckId) [internal]
+|   |   |   |-- method: map(strategy => {
+      if (strategy.id === strategyId)
+|   |   |   |-- component:EnhancedScalingStrategyPage [internal]
 |   |   |-- SystemArchitecturePage.js
 |   |   |   |-- module:SystemArchitecturePage.js
-|   |   |   |-- fn: SystemArchitecturePage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: EnhancedSystemArchitecturePage({ data = {}, updateData }) [internal]
 |   |   |   |-- fn: handleChange(e) [internal]
-|   |   |   |-- component:SystemArchitecturePage [internal]
+|   |   |   |-- component:EnhancedSystemArchitecturePage [internal]
 |   |   |-- test-flow.js
 |   |   |   |-- module:test-flow.js
 |   |   |   |-- fn: TestPage() [internal]
@@ -311,6 +362,8 @@
 |   |-- utils
 |   |   +-- api.js
 |   |       |-- module:api.js
+|   |       |-- fn: createDefaultSession(id = 'default') [internal]
+|   |       |-- method: createDefaultSession(id = 'default')
 |   |-- next.config.js
 |   |   |-- module:next.config.js
 |   |   |-- method: rewrites()
@@ -368,6 +421,10 @@
 |   |   |   |-- module:auth.js
 |   |   |-- coaching.js
 |   |   |   |-- module:coaching.js
+|   |   |   |-- component:Problem [internal]
+|   |   |   |-- component:Interview [internal]
+|   |   |   |-- component:ClaudeService [internal]
+|   |   |   |-- component:PersonaService [internal]
 |   |   |-- grader.js
 |   |   |   |-- module:grader.js
 |   |   |-- interviews.js
@@ -434,6 +491,9 @@
 |   |   |   |   |-- method: processMessage(sessionId, message, options = {})
 |   |   |   |   |-- method: startSession(userId, problemId, options = {})
 |   |   |   |   |-- method: generateContent(sessionId, topic, options = {})
+|   |   |   |   |-- method: generateDiagram(sessionId, diagramType, options = {})
+|   |   |   |   |-- method: _getFallbackDiagram(type)
+|   |   |   |   |-- method: evaluateDesign(sessionId, options = {})
 |   |   |   |-- graderEngine.js
 |   |   |   |   |-- module:graderEngine.js
 |   |   |   |   |-- class:GraderEngine extends BaseEngine [internal]

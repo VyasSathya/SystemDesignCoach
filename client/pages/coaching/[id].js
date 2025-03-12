@@ -859,13 +859,22 @@ const CoachingSessionPage = () => {
               }}
               className="flex"
             >
-              <input
-                type="text"
+              <textarea
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (messageInput.trim()) {
+                      handleSendMessage(messageInput);
+                      setMessageInput('');
+                    }
+                  }
+                }}
+                placeholder="Type your message... (Shift+Enter for new line)"
+                className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px] overflow-y-auto"
                 disabled={isSending}
+                rows={1}
               />
               <button
                 type="submit"
