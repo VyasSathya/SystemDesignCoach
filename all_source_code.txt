@@ -1,4 +1,4 @@
-# CODE EXTRACTION - 2025-03-11 05:05:08
+# CODE EXTRACTION - 2025-03-11 13:27:44
 
 # PROJECT STRUCTURE
 |-- client
@@ -89,9 +89,9 @@
 |   |   |   |   |-- fn: MermaidRenderer({ code, onError }) [internal]
 |   |   |   |   |-- fn: cleanup() [internal]
 |   |   |   |   |-- component:MermaidRenderer [internal]
-|   |   |   +-- ReactFlowDiagram.js
-|   |   |       |-- module:ReactFlowDiagram.js
-|   |   |       |-- fn: Flow({ 
+|   |   |   |-- ReactFlowDiagram.js
+|   |   |   |   |-- module:ReactFlowDiagram.js
+|   |   |   |   |-- fn: Flow({ 
   initialNodes, 
   initialEdges, 
   onNodesChange, 
@@ -99,11 +99,25 @@
   onConnect,
   onDiagramUpdate 
 }) [internal]
-|   |   |       |-- fn: ReactFlowDiagramWithProvider(props) [internal]
-|   |   |       |-- method: map(n => {
+|   |   |   |   |-- fn: ReactFlowDiagramWithProvider(props) [internal]
+|   |   |   |   |-- method: map(n => {
       if (n.id === selectedNode.id)
-|   |   |       |-- component:Flow [internal]
-|   |   |       |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |   |-- component:Flow [internal]
+|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   +-- SequenceDiagram.js
+|   |   |       |-- module:SequenceDiagram.js
+|   |   |       |-- fn: ActorNode({ data }) [internal]
+|   |   |       |-- fn: ObjectNode({ data }) [internal]
+|   |   |       |-- fn: LifelineNode({ data }) [internal]
+|   |   |       |-- fn: MessageNode({ data }) [internal]
+|   |   |       |-- fn: SequenceDiagram({ initialDiagram, onDiagramUpdate }) [internal]
+|   |   |       |-- fn: SequenceDiagramWrapped(props) [internal]
+|   |   |       |-- component:ActorNode [internal]
+|   |   |       |-- component:ObjectNode [internal]
+|   |   |       |-- component:LifelineNode [internal]
+|   |   |       |-- component:MessageNode [internal]
+|   |   |       |-- component:SequenceDiagram [internal]
+|   |   |       |-- component:SequenceDiagramWrapped [internal]
 |   |   |-- CoachAgentInterface.js
 |   |   |   |-- module:CoachAgentInterface.js
 |   |   |   |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
@@ -157,17 +171,22 @@
 |   |   |-- coaching
 |   |   |   |-- [id].js
 |   |   |   |   |-- module:[id].js
-|   |   |   |   |-- fn: useEffect(() [internal]
+|   |   |   |   |-- fn: handleClickOutside(event) [internal]
 |   |   |   |   |-- fn: CoachingSessionPage() [internal]
+|   |   |   |   |-- fn: setActiveDiagramTab(tabId) [internal]
+|   |   |   |   |-- fn: updateFormData(section, data) [internal]
 |   |   |   |   |-- fn: detectCurrentTopic(conversation) [internal]
 |   |   |   |   |-- fn: handleDiagramSuggestions(suggestions) [internal]
 |   |   |   |   |-- fn: handleAcceptSuggestions() [internal]
 |   |   |   |   |-- fn: handleDiscardSuggestions() [internal]
 |   |   |   |   |-- fn: handleDiagramUpdate(diagramData) [internal]
 |   |   |   |   |-- fn: renderDiagramEditor() [internal]
+|   |   |   |   |-- fn: getActiveWorkbookComponent() [internal]
+|   |   |   |   |-- method: handleClickOutside(event)
 |   |   |   |   |-- method: code({ node, inline, className, children, ...props })
 |   |   |   |   |-- component:MermaidRenderer [internal]
 |   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |   |-- component:SequenceDiagram [internal]
 |   |   |   |   |-- component:CoachingSessionPage [internal]
 |   |   |   +-- index.js
 |   |   |       |-- module:index.js
@@ -203,95 +222,43 @@
 |   |   |   |-- method: MyApp({ Component, pageProps })
 |   |   |-- APIDesignPage.js
 |   |   |   |-- module:APIDesignPage.js
-|   |   |   |-- fn: APIDesignPage() [internal]
-|   |   |   |-- fn: addAPI() [internal]
-|   |   |   |-- fn: removeAPI(id) [internal]
-|   |   |   |-- fn: updateAPI(id, field, value) [internal]
-|   |   |   |-- fn: toggleExpand(id) [internal]
-|   |   |   |-- fn: addRequestParam(apiId) [internal]
-|   |   |   |-- fn: removeRequestParam(apiId, paramId) [internal]
-|   |   |   |-- fn: updateRequestParam(apiId, paramId, field, value) [internal]
+|   |   |   |-- fn: APIDesignPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:APIDesignPage [internal]
 |   |   |-- dashboard.js
 |   |   |   |-- module:dashboard.js
-|   |   |   |-- fn: Dashboard() [internal]
-|   |   |   |-- method: Dashboard()
+|   |   |   |-- fn: Dashboard({ onSelectWorkbook }) [internal]
+|   |   |   |-- method: Dashboard({ onSelectWorkbook })
+|   |   |   |-- component:Dashboard [exported]
 |   |   |-- DataModelPage.js
 |   |   |   |-- module:DataModelPage.js
-|   |   |   |-- fn: DataModelPage() [internal]
-|   |   |   |-- fn: addTable() [internal]
-|   |   |   |-- fn: removeTable(id) [internal]
-|   |   |   |-- fn: updateTable(id, field, value) [internal]
-|   |   |   |-- fn: addField(tableId) [internal]
-|   |   |   |-- fn: removeField(tableId, fieldId) [internal]
-|   |   |   |-- fn: updateField(tableId, fieldId, field, value) [internal]
-|   |   |   |-- fn: addRelationship(tableId) [internal]
-|   |   |   |-- fn: removeRelationship(tableId, relationshipId) [internal]
-|   |   |   |-- fn: updateRelationship(tableId, relationshipId, field, value) [internal]
+|   |   |   |-- fn: DataModelPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:DataModelPage [internal]
 |   |   |-- index.js
 |   |   |   |-- module:index.js
 |   |   |   |-- fn: Home() [internal]
 |   |   |   |-- method: Home()
+|   |   |   |-- component:Home [exported]
 |   |   |-- ReliabilitySecurityPage.js
 |   |   |   |-- module:ReliabilitySecurityPage.js
-|   |   |   |-- fn: ReliabilitySecurityPage() [internal]
-|   |   |   |-- fn: addReliabilityTarget() [internal]
-|   |   |   |-- fn: updateReliabilityTarget(id, field, value) [internal]
-|   |   |   |-- fn: removeReliabilityTarget(id) [internal]
-|   |   |   |-- fn: addFailureScenario() [internal]
-|   |   |   |-- fn: updateFailureScenario(id, field, value) [internal]
-|   |   |   |-- fn: removeFailureScenario(id) [internal]
-|   |   |   |-- fn: updateAuthMethod(method, value) [internal]
-|   |   |   |-- fn: updateDataProtection(category, field, value) [internal]
-|   |   |   |-- fn: addSecurityMeasure() [internal]
-|   |   |   |-- fn: updateSecurityMeasure(id, field, value) [internal]
-|   |   |   |-- fn: removeSecurityMeasure(id) [internal]
-|   |   |   |-- fn: addComplianceRequirement() [internal]
-|   |   |   |-- fn: updateComplianceRequirement(id, field, value) [internal]
-|   |   |   |-- fn: removeComplianceRequirement(id) [internal]
-|   |   |   |-- fn: toggleSection(section) [internal]
+|   |   |   |-- fn: ReliabilitySecurityPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:ReliabilitySecurityPage [internal]
 |   |   |-- RequirementsPage.js
 |   |   |   |-- module:RequirementsPage.js
-|   |   |   |-- fn: RequirementsPage() [internal]
-|   |   |   |-- fn: addFunctionalReq() [internal]
-|   |   |   |-- fn: removeFunctionalReq(id) [internal]
-|   |   |   |-- fn: updateFunctionalReq(id, text) [internal]
-|   |   |   |-- fn: toggleFunctionalReq(id) [internal]
-|   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
+|   |   |   |-- fn: RequirementsPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:RequirementsPage [internal]
 |   |   |-- ScalingStrategyPage.js
 |   |   |   |-- module:ScalingStrategyPage.js
-|   |   |   |-- fn: ScalingStrategyPage() [internal]
-|   |   |   |-- fn: toggleSection(sectionId) [internal]
-|   |   |   |-- fn: updateFieldValue(sectionId, fieldId, value) [internal]
-|   |   |   |-- fn: toggleStrategy(strategyId) [internal]
-|   |   |   |-- fn: updateStrategyDescription(strategyId, description) [internal]
-|   |   |   |-- fn: addStrategyComponent(strategyId) [internal]
-|   |   |   |-- fn: updateStrategyComponent(strategyId, componentId, field, value) [internal]
-|   |   |   |-- fn: removeStrategyComponent(strategyId, componentId) [internal]
-|   |   |   |-- fn: addBottleneck() [internal]
-|   |   |   |-- fn: updateBottleneck(bottleneckId, field, value) [internal]
-|   |   |   |-- fn: removeBottleneck(bottleneckId) [internal]
-|   |   |   |-- method: setStrategies(strategies.map(strategy => {
-      if (strategy.id === strategyId)
+|   |   |   |-- fn: ScalingStrategyPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:ScalingStrategyPage [internal]
 |   |   |-- SystemArchitecturePage.js
 |   |   |   |-- module:SystemArchitecturePage.js
-|   |   |   |-- fn: SystemArchitecturePage() [internal]
-|   |   |   |-- fn: generateMermaidCode() [internal]
-|   |   |   |-- fn: handleNodeClick(nodeId, event) [internal]
-|   |   |   |-- fn: handleStartEditing() [internal]
-|   |   |   |-- fn: handleCancelEditing() [internal]
-|   |   |   |-- fn: handleSaveEdit() [internal]
-|   |   |   |-- fn: handleDeleteNode() [internal]
-|   |   |   |-- fn: handleAddNode(type) [internal]
-|   |   |   |-- fn: handleStartConnection(sourceId) [internal]
-|   |   |   |-- fn: handleFinishConnection(targetId) [internal]
-|   |   |   |-- fn: handleCanvasClick() [internal]
-|   |   |   |-- method: setNodes(nodes.map(node => {
-      if (node.id === selectedNode.id)
+|   |   |   |-- fn: SystemArchitecturePage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:SystemArchitecturePage [internal]
 |   |   |-- test-flow.js
 |   |   |   |-- module:test-flow.js
@@ -308,7 +275,7 @@
 |   |       |-- fn: ScalingStrategyPage() [internal]
 |   |       |-- fn: ReliabilitySecurityPage() [internal]
 |   |       |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
-|   |       |-- fn: WorkbookLayout() [internal]
+|   |       |-- fn: WorkbookLayout({ onBack }) [internal]
 |   |       |-- fn: updateFormData(section, data) [internal]
 |   |       |-- fn: getActivePageComponent() [internal]
 |   |       |-- fn: handleAskCoach() [internal]
@@ -2413,6 +2380,162 @@ export default ReactFlowDiagramWithProvider;
 
 
 ================================================================================
+# FILE: client\components\diagram\SequenceDiagram.js
+# EXTENSION: .js
+================================================================================
+// client/components/diagram/SequenceDiagram.js
+import React, { useState } from 'react';
+import ReactFlow, { 
+  ReactFlowProvider, 
+  Background, 
+  Controls,
+  Handle, 
+  Position 
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { ArrowRight, Plus, Trash2, Edit } from 'lucide-react';
+
+// Custom Node Types for Sequence Diagrams
+const ActorNode = ({ data }) => {
+  return (
+    <div className="sequence-actor-node">
+      <Handle type="source" position={Position.Bottom} id="bottom" />
+      <Handle type="target" position={Position.Top} id="top" />
+      <div className="p-2 rounded-lg bg-blue-100 border border-blue-300 text-center shadow-sm">
+        <div className="flex justify-center items-center mb-1">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none">
+            <circle cx="12" cy="7" r="4" />
+            <path d="M12 11L12 22" />
+            <path d="M8 22L16 22" />
+          </svg>
+        </div>
+        <div className="text-sm font-medium">{data.label}</div>
+      </div>
+    </div>
+  );
+};
+
+const ObjectNode = ({ data }) => {
+  return (
+    <div className="sequence-object-node">
+      <Handle type="source" position={Position.Bottom} id="bottom" />
+      <Handle type="target" position={Position.Top} id="top" />
+      <div className="p-2 rounded-lg bg-purple-100 border border-purple-300 text-center shadow-sm">
+        <div className="text-sm font-medium">{data.label}</div>
+      </div>
+    </div>
+  );
+};
+
+const LifelineNode = ({ data }) => {
+  return (
+    <div className="sequence-lifeline-node">
+      <Handle type="source" position={Position.Right} id="right" />
+      <Handle type="target" position={Position.Left} id="left" />
+      <div className="w-0.5 h-full bg-gray-300 mx-auto" />
+    </div>
+  );
+};
+
+const MessageNode = ({ data }) => {
+  return (
+    <div className="sequence-message-node">
+      <Handle type="source" position={Position.Left} id="left" />
+      <Handle type="target" position={Position.Right} id="right" />
+      <div className="flex items-center">
+        <div className="text-xs bg-white px-2 py-1 rounded shadow-sm border border-gray-200">
+          {data.label}
+        </div>
+        <ArrowRight className="text-gray-600" size={14} />
+      </div>
+    </div>
+  );
+};
+
+// Simple diagram component without complex state management
+const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
+  // Default initial nodes
+  const defaultNodes = [
+    { id: 'actor1', type: 'actor', position: { x: 100, y: 50 }, data: { label: 'User' } },
+    { id: 'actor2', type: 'object', position: { x: 300, y: 50 }, data: { label: 'System' } }
+  ];
+  
+  const defaultEdges = [
+    { id: 'e1-2', source: 'actor1', target: 'actor2', type: 'default', animated: true, label: 'Request' }
+  ];
+  
+  // Use initial values or defaults
+  const [nodes, setNodes] = useState(defaultNodes);
+  const [edges, setEdges] = useState(defaultEdges);
+  
+  // Define node types
+  const nodeTypes = {
+    actor: ActorNode,
+    object: ObjectNode,
+    lifeline: LifelineNode,
+    message: MessageNode
+  };
+  
+  // Simplified component with basic toolbar
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+      <div className="absolute top-4 left-4 z-10 space-y-2">
+        <button 
+          onClick={() => {
+            const newActor = { 
+              id: `actor${nodes.length + 1}`, 
+              type: 'actor', 
+              position: { x: 100 + (nodes.length * 50), y: 50 }, 
+              data: { label: 'New Actor' } 
+            };
+            setNodes([...nodes, newActor]);
+          }}
+          className="flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md shadow-sm hover:bg-blue-200"
+        >
+          <Plus size={16} className="mr-1" />
+          Actor
+        </button>
+        <button 
+          onClick={() => {
+            const newObject = { 
+              id: `object${nodes.length + 1}`, 
+              type: 'object', 
+              position: { x: 100 + (nodes.length * 50), y: 50 }, 
+              data: { label: 'New Object' } 
+            };
+            setNodes([...nodes, newObject]);
+          }}
+          className="flex items-center px-3 py-2 bg-purple-100 text-purple-700 rounded-md shadow-sm hover:bg-purple-200"
+        >
+          <Plus size={16} className="mr-1" />
+          Object
+        </button>
+      </div>
+      
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        fitView
+      >
+        <Background />
+        <Controls />
+      </ReactFlow>
+    </div>
+  );
+};
+
+// Wrap with provider at the export level
+const SequenceDiagramWrapped = (props) => (
+  <ReactFlowProvider>
+    <SequenceDiagram {...props} />
+  </ReactFlowProvider>
+);
+
+export default SequenceDiagramWrapped;
+
+
+================================================================================
 # FILE: client\components\diagram\utils\conversion.js
 # EXTENSION: .js
 ================================================================================
@@ -3463,296 +3586,86 @@ export default MyApp;
 # FILE: client\pages\APIDesignPage.js
 # EXTENSION: .js
 ================================================================================
+// client/components/APIDesignPage.js
 import React, { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp, Copy, MessageSquare, Save } from 'lucide-react';
 
-const APIDesignPage = () => {
-  const [apis, setApis] = useState([
-    {
-      id: 1,
-      endpoint: '/api/resource',
-      method: 'GET',
-      description: 'Get all resources',
-      requestParams: [{ id: 1, name: 'limit', type: 'number', required: false, description: 'Maximum results to return' }],
-      responseFormat: '[\n  {\n    "id": "string",\n    "name": "string"\n  }\n]',
-      expanded: true
+const APIDesignPage = ({ data = {}, updateData }) => {
+  const [formState, setFormState] = useState({
+    apiEndpoints: data.apiEndpoints || '',
+    authMethod: data.authMethod || '',
+    rateLimit: data.rateLimit || '',
+    requestResponse: data.requestResponse || ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formState, [name]: value };
+    setFormState(newState);
+    if (updateData) {
+      updateData(newState);
     }
-  ]);
-  
-  const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-  
-  const addAPI = () => {
-    const newId = apis.length > 0 ? Math.max(...apis.map(api => api.id)) + 1 : 1;
-    setApis([...apis, {
-      id: newId,
-      endpoint: '',
-      method: 'GET',
-      description: '',
-      requestParams: [],
-      responseFormat: '{}',
-      expanded: true
-    }]);
   };
-  
-  const removeAPI = (id) => {
-    setApis(apis.filter(api => api.id !== id));
-  };
-  
-  const updateAPI = (id, field, value) => {
-    setApis(apis.map(api => 
-      api.id === id ? { ...api, [field]: value } : api
-    ));
-  };
-  
-  const toggleExpand = (id) => {
-    setApis(apis.map(api => 
-      api.id === id ? { ...api, expanded: !api.expanded } : api
-    ));
-  };
-  
-  const addRequestParam = (apiId) => {
-    const api = apis.find(a => a.id === apiId);
-    if (!api) return;
-    
-    const newParamId = api.requestParams.length > 0 
-      ? Math.max(...api.requestParams.map(p => p.id)) + 1 
-      : 1;
-      
-    const newParams = [...api.requestParams, {
-      id: newParamId,
-      name: '',
-      type: 'string',
-      required: false,
-      description: ''
-    }];
-    
-    updateAPI(apiId, 'requestParams', newParams);
-  };
-  
-  const removeRequestParam = (apiId, paramId) => {
-    const api = apis.find(a => a.id === apiId);
-    if (!api) return;
-    
-    const newParams = api.requestParams.filter(p => p.id !== paramId);
-    updateAPI(apiId, 'requestParams', newParams);
-  };
-  
-  const updateRequestParam = (apiId, paramId, field, value) => {
-    const api = apis.find(a => a.id === apiId);
-    if (!api) return;
-    
-    const newParams = api.requestParams.map(p => 
-      p.id === paramId ? { ...p, [field]: value } : p
-    );
-    
-    updateAPI(apiId, 'requestParams', newParams);
-  };
-  
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="bg-green-700 p-4 text-white">
-        <h1 className="text-xl font-bold">API Design</h1>
-        <p className="text-sm text-green-200">Define system interfaces and endpoints</p>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">API Design</h2>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          API Endpoints
+        </label>
+        <textarea
+          name="apiEndpoints"
+          value={formState.apiEndpoints}
+          onChange={handleChange}
+          rows={6}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="List key API endpoints with HTTP methods and purposes..."
+        />
       </div>
       
-      <div className="flex-1 overflow-auto p-6 space-y-6">
-        {/* API Type Selection */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">API Type</h2>
-          <div className="flex space-x-4">
-            <label className="flex items-center">
-              <input type="radio" name="apiType" defaultChecked className="mr-2" />
-              <span>REST</span>
-            </label>
-            <label className="flex items-center">
-              <input type="radio" name="apiType" className="mr-2" />
-              <span>GraphQL</span>
-            </label>
-            <label className="flex items-center">
-              <input type="radio" name="apiType" className="mr-2" />
-              <span>gRPC</span>
-            </label>
-          </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Authentication & Authorization
+        </label>
+        <textarea
+          name="authMethod"
+          value={formState.authMethod}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Auth methods, token handling, permissions..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Rate Limiting & Quotas
+          </label>
+          <textarea
+            name="rateLimit"
+            value={formState.rateLimit}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="API rate limits, quotas, throttling policies..."
+          />
         </div>
         
-        {/* API Endpoints */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">API Endpoints</h2>
-          <p className="text-sm text-gray-600 mb-4">Define the endpoints your system exposes</p>
-          
-          <div className="space-y-4">
-            {apis.map(api => (
-              <div key={api.id} className="border border-gray-300 rounded-md overflow-hidden">
-                {/* API Header */}
-                <div className="flex items-center justify-between p-3 bg-gray-100 border-b border-gray-300">
-                  <div className="flex items-center space-x-3">
-                    <select
-                      value={api.method}
-                      onChange={(e) => updateAPI(api.id, 'method', e.target.value)}
-                      className="px-2 py-1 text-sm font-medium rounded border border-gray-300"
-                    >
-                      {methods.map(method => (
-                        <option key={method} value={method}>{method}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      value={api.endpoint}
-                      onChange={(e) => updateAPI(api.id, 'endpoint', e.target.value)}
-                      placeholder="Endpoint path (e.g., /api/users)"
-                      className="px-2 py-1 text-sm border border-gray-300 rounded w-64"
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      onClick={() => toggleExpand(api.id)}
-                      className="p-1 text-gray-500 hover:text-gray-700"
-                    >
-                      {api.expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </button>
-                    <button 
-                      onClick={() => removeAPI(api.id)}
-                      className="p-1 text-gray-500 hover:text-red-500 ml-2"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-                
-                {/* API Details */}
-                {api.expanded && (
-                  <div className="p-4 space-y-4">
-                    {/* Description */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                      <input
-                        type="text"
-                        value={api.description}
-                        onChange={(e) => updateAPI(api.id, 'description', e.target.value)}
-                        placeholder="What does this endpoint do?"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
-                      />
-                    </div>
-                    
-                    {/* Request Parameters */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Request Parameters</label>
-                      <div className="border border-gray-300 rounded overflow-hidden">
-                        {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-2 bg-gray-100 p-2 text-xs font-medium text-gray-700">
-                          <div className="col-span-3">Name</div>
-                          <div className="col-span-2">Type</div>
-                          <div className="col-span-2">Required</div>
-                          <div className="col-span-4">Description</div>
-                          <div className="col-span-1"></div>
-                        </div>
-                        
-                        {/* Parameters */}
-                        {api.requestParams.map(param => (
-                          <div key={param.id} className="grid grid-cols-12 gap-2 p-2 border-t border-gray-300">
-                            <div className="col-span-3">
-                              <input
-                                type="text"
-                                value={param.name}
-                                onChange={(e) => updateRequestParam(api.id, param.id, 'name', e.target.value)}
-                                placeholder="Parameter name"
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <select
-                                value={param.type}
-                                onChange={(e) => updateRequestParam(api.id, param.id, 'type', e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                              >
-                                <option value="string">string</option>
-                                <option value="number">number</option>
-                                <option value="boolean">boolean</option>
-                                <option value="object">object</option>
-                                <option value="array">array</option>
-                              </select>
-                            </div>
-                            <div className="col-span-2 flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={param.required}
-                                onChange={(e) => updateRequestParam(api.id, param.id, 'required', e.target.checked)}
-                                className="mr-2"
-                              />
-                              <span className="text-sm">Required</span>
-                            </div>
-                            <div className="col-span-4">
-                              <input
-                                type="text"
-                                value={param.description}
-                                onChange={(e) => updateRequestParam(api.id, param.id, 'description', e.target.value)}
-                                placeholder="Parameter description"
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                              />
-                            </div>
-                            <div className="col-span-1 flex justify-end">
-                              <button 
-                                onClick={() => removeRequestParam(api.id, param.id)}
-                                className="p-1 text-gray-500 hover:text-red-500"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        {/* Add Parameter Button */}
-                        <div className="p-2 border-t border-gray-300">
-                          <button
-                            onClick={() => addRequestParam(api.id)}
-                            className="flex items-center text-xs text-green-600 hover:text-green-800"
-                          >
-                            <Plus size={14} className="mr-1" />
-                            Add Parameter
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Response Format */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Response Format</label>
-                      <div className="flex">
-                        <textarea
-                          value={api.responseFormat}
-                          onChange={(e) => updateAPI(api.id, 'responseFormat', e.target.value)}
-                          placeholder="JSON response schema"
-                          className="flex-1 h-32 px-3 py-2 text-sm border border-gray-300 rounded font-mono"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          <button 
-            onClick={addAPI}
-            className="mt-4 flex items-center text-sm text-green-600 hover:text-green-800"
-          >
-            <Plus size={16} className="mr-1" />
-            Add Endpoint
-          </button>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Request/Response Format
+          </label>
+          <textarea
+            name="requestResponse"
+            value={formState.requestResponse}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="JSON structure, pagination, error handling..."
+          />
         </div>
-      </div>
-      
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-green-50 text-green-700 rounded-md hover:bg-green-100">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
       </div>
     </div>
   );
@@ -4019,36 +3932,47 @@ export default function Register() {
 # FILE: client\pages\coaching\[id].js
 # EXTENSION: .js
 ================================================================================
+// client/pages/coaching/[id].js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
 import {
-  ArrowLeft,
-  Save,
-  Send,
-  RefreshCw,
-  MessageSquare,
-  CheckCircle,
-  XCircle
+  ArrowLeft, Save, Send, RefreshCw, MessageSquare, CheckCircle, XCircle, Eye, Edit, 
+  ClipboardList, Database, Code, Layout, BarChart, Shield, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  getCoachingSession,
-  sendCoachingMessage,
-  getCoachingMaterials,
-  getCoachingDiagram,
-  saveDiagram
+  getCoachingSession, sendCoachingMessage, getCoachingMaterials,
+  getCoachingDiagram, saveDiagram
 } from '../../utils/api';
 import { mermaidToReactFlow, reactFlowToMermaid } from '../../components/diagram/utils/conversion';
 import TopicGuidedCoaching from '../../components/coaching/TopicGuidedCoaching';
+
+// Import workbook components directly
+import RequirementsPage from '../RequirementsPage';
+import APIDesignPage from '../APIDesignPage';
+import DataModelPage from '../DataModelPage';
+import SystemArchitecturePage from '../SystemArchitecturePage';
+import ScalingStrategyPage from '../ScalingStrategyPage';
+import ReliabilitySecurityPage from '../ReliabilitySecurityPage';
 
 const MermaidRenderer = dynamic(() => import('../../components/diagram/MermaidRenderer'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-gray-100 h-full w-full"></div>
 });
+
 const ReactFlowDiagramWithProvider = dynamic(() => import('../../components/diagram/ReactFlowDiagram'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center bg-gray-50">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+    </div>
+  )
+});
+
+const SequenceDiagram = dynamic(() => import('../../components/diagram/SequenceDiagram'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-50">
@@ -4059,9 +3983,11 @@ const ReactFlowDiagramWithProvider = dynamic(() => import('../../components/diag
 
 const CoachingSessionPage = () => {
   const router = useRouter();
-  const { sessionId } = router.query;
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
+  
+  // Safely extract session ID from router query
+  const sessionId = router.query?.id;
 
   // Session state
   const [session, setSession] = useState(null);
@@ -4075,6 +4001,13 @@ const CoachingSessionPage = () => {
   const [currentTopic, setCurrentTopic] = useState('REQUIREMENTS');
   const [includeDiagram, setIncludeDiagram] = useState(false);
   const [requestDiagramSuggestions, setRequestDiagramSuggestions] = useState(false);
+  
+  // Add state for TopicGuidedCoaching collapsible section
+  const [topicGuidedOpen, setTopicGuidedOpen] = useState(false);
+  
+  // Add dropdown reference
+  const workbookDropdownRef = useRef(null);
+  const [showWorkbookDropdown, setShowWorkbookDropdown] = useState(false);
 
   // Chat state
   const [messages, setMessages] = useState([]);
@@ -4092,60 +4025,108 @@ const CoachingSessionPage = () => {
   const [diagramSuggestions, setDiagramSuggestions] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-// Entire file remains the same, with modifications in fetchSession function
+  // Workbook state
+  const [rightPanelMode, setRightPanelMode] = useState('workbook'); // 'workbook' or 'diagram'
+  const [activeWorkbookTab, setActiveWorkbookTab] = useState('requirements');
+  const [formData, setFormData] = useState({
+    requirements: {},
+    api: {},
+    data: {},
+    architecture: {},
+    scaling: {},
+    reliability: {}
+  });
 
-useEffect(() => {
-  console.log('FULL ROUTER QUERY:', router.query);
-  console.log('SESSION ID FROM ROUTER:', router.query.id);
-
-  const sessionId = router.query.id;
-
-  if (!sessionId) {
-    console.error('NO VALID SESSION ID');
-    setLoading(false);
-    return;
-  }
-
-  const fetchSession = async () => {
-    try {
-      const data = await getCoachingSession(sessionId);
-      console.log('SESSION DATA:', JSON.stringify(data, null, 2));
-
-      const initialMessages = data.conversation 
-        ? data.conversation.map((msg, index) => ({
-            id: index,
-            role: msg.role === 'system' ? 'system' : 
-                   msg.role === 'assistant' ? 'assistant' : 'user',
-            content: msg.content || "No content available",
-            timestamp: msg.timestamp || new Date().toISOString()
-          }))
-        : [{
-            id: 0,
-            role: 'assistant',
-            content: `Welcome to your ${data.problem?.title || 'system design'} coaching session. Let's begin our system design journey!`,
-            timestamp: new Date().toISOString()
-          }];
-
-      console.log('INITIAL MESSAGES:', JSON.stringify(initialMessages, null, 2));
-      setMessages(initialMessages);
-      setSession(data);
-      setError(null);
-    } catch (err) {
-      console.error('FETCH SESSION ERROR:', err);
-      setError("Failed to load coaching session");
-      setMessages([{
-        id: 0,
-        role: 'assistant',
-        content: "Welcome to your system design coaching session. There was an error loading the session.",
-        timestamp: new Date().toISOString()
-      }]);
-    } finally {
-      setLoading(false);
-    }
+  // Define workbook tabs
+  const workbookTabs = [
+    { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
+    { id: 'api', label: 'API Design', icon: <Code size={18} /> },
+    { id: 'data', label: 'Data Model', icon: <Database size={18} /> },
+    { id: 'architecture', label: 'Architecture', icon: <Layout size={18} /> },
+    { id: 'scaling', label: 'Scaling Strategy', icon: <BarChart size={18} /> },
+    { id: 'reliability', label: 'Reliability & Security', icon: <Shield size={18} /> }
+  ];
+  
+  // Define diagram tabs
+  const [diagramTabs, setDiagramTabs] = useState([
+    { id: 'flowchart', label: 'Flow Diagram', active: true },
+    { id: 'sequence', label: 'Sequence Diagram', active: false }
+  ]);
+  
+  const setActiveDiagramTab = (tabId) => {
+    setDiagramTabs(diagramTabs.map(tab => ({
+      ...tab,
+      active: tab.id === tabId
+    })));
   };
 
-  fetchSession();
-}, [router.query]);
+  // Update form data
+  const updateFormData = (section, data) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: data
+    }));
+  };
+  
+  // Add click outside handler for workbook dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (workbookDropdownRef.current && !workbookDropdownRef.current.contains(event.target)) {
+        setShowWorkbookDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [workbookDropdownRef]);
+
+  // Load session data
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    const fetchSession = async () => {
+      try {
+        const data = await getCoachingSession(sessionId);
+        console.log('SESSION DATA:', JSON.stringify(data, null, 2));
+
+        const initialMessages = data.conversation 
+          ? data.conversation.map((msg, index) => ({
+              id: index,
+              role: msg.role === 'system' ? 'system' : 
+                    msg.role === 'assistant' ? 'assistant' : 'user',
+              content: msg.content || "No content available",
+              timestamp: msg.timestamp || new Date().toISOString()
+            }))
+          : [{
+              id: 0,
+              role: 'assistant',
+              content: `Welcome to your ${data.problem?.title || 'system design'} coaching session. Let's begin our system design journey!`,
+              timestamp: new Date().toISOString()
+            }];
+
+        console.log('INITIAL MESSAGES:', JSON.stringify(initialMessages, null, 2));
+        setMessages(initialMessages);
+        setSession(data);
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching coaching session ${sessionId}:`, err);
+        setError("Failed to load coaching session");
+        setMessages([{
+          id: 0,
+          role: 'assistant',
+          content: "Welcome to your system design coaching session. Let's get started!",
+          timestamp: new Date().toISOString()
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, [sessionId]);
+  
+  // Auto-scroll to bottom of messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -4179,23 +4160,13 @@ useEffect(() => {
       console.error("Invalid message:", message);
       return;
     }
+    if (!sessionId) {
+      console.error("No valid sessionId available");
+      return;
+    }
+    
     setIsSending(true);
-    console.log("Sending message to session:", router.query.id, message);
     try {
-      if (!router.query.id) {
-        console.error("No valid sessionId provided to sendCoachingMessage");
-        setMessages(prev => [
-          ...prev,
-          {
-            id: prev.length,
-            role: 'assistant',
-            content: "There seems to be an issue with the session ID. Please refresh or start a new session.",
-            timestamp: new Date().toISOString()
-          }
-        ]);
-        setIsSending(false);
-        return;
-      }
       const userMessage = {
         id: messages.length,
         role: 'user',
@@ -4214,10 +4185,11 @@ useEffect(() => {
       
       setIsTyping(true);
       const response = await sendCoachingMessage(
-        router.query.id,
+        sessionId,
         message,
         Object.keys(finalContextInfo).length > 0 ? finalContextInfo : null
       );
+      
       console.log("Message response:", response);
       if (response && response.message) {
         const responseMessage = {
@@ -4242,12 +4214,9 @@ useEffect(() => {
             ]
           };
         });
-        console.log("Checking for diagram suggestions:", response.diagramSuggestions);
         if (response.diagramSuggestions) {
-          console.log("Diagram suggestions found, processing them...");
           handleDiagramSuggestions(response.diagramSuggestions);
         } else if (requestDiagramSuggestions) {
-          console.log("No suggestions in response, generating from context...");
           handleGetDiagramSuggestion();
         }
       } else {
@@ -4510,6 +4479,21 @@ useEffect(() => {
   };
 
   const renderDiagramEditor = () => {
+    // Get active diagram tab
+    const activeDiagramTab = diagramTabs.find(tab => tab.active)?.id || 'flowchart';
+    
+    if (activeDiagramTab === 'sequence') {
+      return (
+        <div className="relative h-full">
+          <SequenceDiagram 
+            initialDiagram={currentDiagramState}
+            onDiagramUpdate={handleDiagramUpdate}
+          />
+        </div>
+      );
+    }
+    
+    // Default flowchart diagram
     if (viewMode === 'edit') {
       return (
         <div className="relative h-full">
@@ -4592,6 +4576,26 @@ useEffect(() => {
     }
   };
 
+  // Render active workbook component
+  const getActiveWorkbookComponent = () => {
+    switch (activeWorkbookTab) {
+      case 'requirements':
+        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+      case 'api':
+        return <APIDesignPage data={formData.api} updateData={(data) => updateFormData('api', data)} />;
+      case 'data':
+        return <DataModelPage data={formData.data} updateData={(data) => updateFormData('data', data)} />;
+      case 'architecture':
+        return <SystemArchitecturePage data={formData.architecture} updateData={(data) => updateFormData('architecture', data)} />;
+      case 'scaling':
+        return <ScalingStrategyPage data={formData.scaling} updateData={(data) => updateFormData('scaling', data)} />;
+      case 'reliability':
+        return <ReliabilitySecurityPage data={formData.reliability} updateData={(data) => updateFormData('reliability', data)} />;
+      default:
+        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+    }
+  };
+
   if (loading && !session) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -4632,6 +4636,30 @@ useEffect(() => {
             </h1>
           </div>
           <div className="flex items-center space-x-2">
+            <div className="mr-2">
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setRightPanelMode('workbook')}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    rightPanelMode === 'workbook'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Workbook
+                </button>
+                <button
+                  onClick={() => setRightPanelMode('diagram')}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    rightPanelMode === 'diagram'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Diagram
+                </button>
+              </div>
+            </div>
             <button
               onClick={handleSaveDiagram}
               className={`flex items-center px-3 py-1 rounded text-sm ${
@@ -4654,11 +4682,27 @@ useEffect(() => {
         <div className="w-1/2 flex flex-col border-r border-gray-200">
           {/* Messages area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <TopicGuidedCoaching 
-              currentTopic={currentTopic}
-              onSendMessage={(question) => handleSendMessage(question)}
-              onGetMaterials={handleGetMaterials}
-            />
+            <div className="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
+              <div className="flex justify-between items-center cursor-pointer p-3 bg-indigo-50 border-b border-gray-200" 
+                   onClick={() => setTopicGuidedOpen(!topicGuidedOpen)}>
+                <h3 className="font-medium text-indigo-700">Topic Guided Coaching</h3>
+                {topicGuidedOpen ? (
+                  <ChevronUp className="h-5 w-5 text-indigo-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-indigo-600" />
+                )}
+              </div>
+              {topicGuidedOpen && (
+                <div className="p-3">
+                  <TopicGuidedCoaching 
+                    currentTopic={currentTopic}
+                    onSendMessage={(question) => handleSendMessage(question)}
+                    onGetMaterials={handleGetMaterials}
+                  />
+                </div>
+              )}
+            </div>
+            
             {messages.length > 0 ? (
               messages.map((msg, index) => (
                 <div
@@ -4726,7 +4770,7 @@ useEffect(() => {
                     checked={includeDiagram}
                     onChange={() => setIncludeDiagram(!includeDiagram)}
                   />
-                  <span className="text-blue-700 font-medium">Include current diagram</span>
+                  <span className="text-blue-700 font-medium">Include current design</span>
                 </label>
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -4776,55 +4820,146 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Right panel - Diagram */}
+        {/* Right panel - Diagram or Workbook */}
         <div className="w-1/2 flex flex-col">
-          <div className="p-4 bg-white border-b border-gray-200 flex justify-between items-center">
-            <div className="flex items-center">
-              <h2 className="text-md font-medium">System Design Diagram</h2>
-              <div className="ml-4 flex border border-gray-300 rounded-md overflow-hidden">
-                <button
-                  onClick={() => setViewMode('edit')}
-                  className={`px-2 py-1 text-xs ${viewMode === 'edit' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setViewMode('preview')}
-                  className={`px-2 py-1 text-xs ${viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Preview
-                </button>
-                <button
-                  onClick={() => setViewMode('code')}
-                  className={`px-2 py-1 text-xs ${viewMode === 'code' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Code
-                </button>
+          {rightPanelMode === 'diagram' ? (
+            <>
+              {/* Diagram mode controls */}
+              <div className="bg-white border-b border-gray-200 p-3">
+                <div className="flex justify-between items-center">
+                  {/* Diagram type tabs */}
+                  <div className="flex space-x-4">
+                    {diagramTabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveDiagramTab(tab.id)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                          tab.active
+                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Diagram view controls */}
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => setViewMode('edit')}
+                      className={`px-3 py-1 text-xs rounded-lg border ${
+                        viewMode === 'edit'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Edit className="h-3 w-3 inline mr-1" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setViewMode('preview')}
+                      className={`px-3 py-1 text-xs rounded-lg border ${
+                        viewMode === 'preview'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Eye className="h-3 w-3 inline mr-1" />
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => setViewMode('code')}
+                      className={`px-3 py-1 text-xs rounded-lg border ${
+                        viewMode === 'code'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Code className="h-3 w-3 inline mr-1" />
+                      Code
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={handleSendDiagramToCoach}
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Get Feedback
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleGetDiagramSuggestion}
-                className="flex items-center px-2 py-1 text-xs bg-gray-100 rounded border border-gray-300 hover:bg-gray-200"
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                AI Suggest
-              </button>
-              <button
-                onClick={handleSendDiagramToCoach}
-                className="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded border border-blue-300 hover:bg-blue-200"
-              >
-                <MessageSquare className="h-3 w-3 mr-1" />
-                Get Feedback
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            {renderDiagramEditor()}
-          </div>
+              {/* Diagram content */}
+              <div className="flex-1 overflow-hidden">
+                {renderDiagramEditor()}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Workbook tabs */}
+              <div className="bg-white border-b border-gray-200">
+                <div className="flex w-full overflow-hidden relative">
+                  <div className="flex flex-1 overflow-x-auto">
+                    {workbookTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveWorkbookTab(tab.id)}
+                        className={`flex items-center py-3 px-4 text-sm font-medium whitespace-nowrap transition-colors ${
+                          activeWorkbookTab === tab.id
+                            ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
+                            : 'border-b-2 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="mr-2">{tab.icon}</span>
+                        <span className="truncate">{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="absolute right-0 top-0 h-full bg-gradient-to-l from-white to-transparent w-12 flex items-center justify-end">
+                    <button 
+                      onClick={() => setShowWorkbookDropdown(!showWorkbookDropdown)}
+                      className="h-full px-2 text-gray-500 hover:text-indigo-600">
+                      <ChevronDown size={16} />
+                    </button>
+                  </div>
+                  {/* Workbook tab dropdown */}
+                  {showWorkbookDropdown && (
+                    <div 
+                      ref={workbookDropdownRef}
+                      className="absolute right-2 top-12 bg-white shadow-lg border border-gray-200 rounded-md z-10">
+                      <div className="py-1">
+                        {workbookTabs.map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => {
+                              setActiveWorkbookTab(tab.id);
+                              setShowWorkbookDropdown(false);
+                            }}
+                            className={`flex items-center w-full text-left px-4 py-2 text-sm ${
+                              activeWorkbookTab === tab.id
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span className="mr-2">{tab.icon}</span>
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Workbook content area */}
+              <div className="flex-1 overflow-auto">
+                {getActiveWorkbookComponent()}
+              </div>
+            </>
+          )}
         </div>
       </div>
-
+      
       {/* Learning materials modal */}
       {activeMaterial && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -4859,7 +4994,6 @@ useEffect(() => {
 };
 
 export default CoachingSessionPage;
-
 
 
 ================================================================================
@@ -5006,21 +5140,120 @@ export default function CoachingIndexPage() {
 # FILE: client\pages\dashboard.js
 # EXTENSION: .js
 ================================================================================
-import MetricCard from '../components/MetricCard';
+import Link from 'next/link';
 import Sidebar from '../components/Sidebar';
+import MetricCard from '../components/MetricCard';
+import { Activity, Users, BookOpen, Bookmark, BarChart2 } from 'lucide-react';
 
-export default function Dashboard() {
+export default function Dashboard({ onSelectWorkbook }) {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar activeTab="dashboard" />
       <div className="flex-1 overflow-auto p-6">
-        {/* Your dashboard content */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">View your system design practice statistics</p>
         </div>
         
-        {/* You can add your metrics cards or other dashboard elements here */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard 
+            title="Sessions Completed" 
+            value="12"
+            icon={<Activity className="h-6 w-6 text-white" />}
+            iconBgColor="bg-blue-500"
+            progress={60}
+            subtext="20 sessions total"
+          />
+          <MetricCard 
+            title="Hours Practiced" 
+            value="24.5"
+            icon={<BookOpen className="h-6 w-6 text-white" />}
+            iconBgColor="bg-green-500"
+            progress={75}
+            subtext="Target: 30 hours"
+          />
+          <MetricCard 
+            title="Avg. Score" 
+            value="8.4"
+            icon={<BarChart2 className="h-6 w-6 text-white" />}
+            iconBgColor="bg-purple-500"
+            progress={84}
+            subtext="Out of 10"
+          />
+          <MetricCard 
+            title="Designs Saved" 
+            value="7"
+            icon={<Bookmark className="h-6 w-6 text-white" />}
+            iconBgColor="bg-orange-500"
+            subtext="3 shared with community"
+          />
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-4">Continue Your Learning</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button 
+              onClick={onSelectWorkbook}
+              className="flex items-center p-4 border border-indigo-200 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            >
+              <div className="rounded-full bg-indigo-100 p-3 mr-4">
+                <BookOpen className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">System Design Workbook</h3>
+                <p className="text-sm text-indigo-600">Create structured system designs</p>
+              </div>
+            </button>
+            
+            <Link href="/interviews">
+              <div className="flex items-center p-4 border border-green-200 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer">
+                <div className="rounded-full bg-green-100 p-3 mr-4">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Practice Interviews</h3>
+                  <p className="text-sm text-green-600">Simulate real interviews</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+          <div className="space-y-4">
+            <div className="flex items-start border-b border-gray-100 pb-4">
+              <div className="rounded-full bg-blue-100 p-2 mr-4">
+                <Activity className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Completed Practice Interview</h3>
+                <p className="text-sm text-gray-600">You scored 8.5/10 on "Design Twitter"</p>
+                <p className="text-xs text-gray-500 mt-1">2 days ago</p>
+              </div>
+            </div>
+            <div className="flex items-start border-b border-gray-100 pb-4">
+              <div className="rounded-full bg-purple-100 p-2 mr-4">
+                <BookOpen className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Completed System Design</h3>
+                <p className="text-sm text-gray-600">You created "URL Shortener" design</p>
+                <p className="text-xs text-gray-500 mt-1">3 days ago</p>
+              </div>
+            </div>
+            <div className="flex items-start">
+              <div className="rounded-full bg-green-100 p-2 mr-4">
+                <Bookmark className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Saved Design Template</h3>
+                <p className="text-sm text-gray-600">You saved "E-commerce Platform" template</p>
+                <p className="text-xs text-gray-500 mt-1">5 days ago</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -5031,582 +5264,101 @@ export default function Dashboard() {
 # FILE: client\pages\DataModelPage.js
 # EXTENSION: .js
 ================================================================================
+// client/components/DataModelPage.js
 import React, { useState } from 'react';
-import { Plus, Trash2, ArrowRight, Database, MessageSquare, Save } from 'lucide-react';
 
-const DataModelPage = () => {
-  const [tables, setTables] = useState([
-    {
-      id: 1,
-      name: 'User',
-      description: 'Stores user account information',
-      fields: [
-        { id: 1, name: 'id', type: 'uuid', primaryKey: true, nullable: false, description: 'Unique identifier' },
-        { id: 2, name: 'username', type: 'string', primaryKey: false, nullable: false, description: 'User\'s chosen name' },
-        { id: 3, name: 'email', type: 'string', primaryKey: false, nullable: false, description: 'User\'s email address' }
-      ],
-      relationships: [
-        { id: 1, name: 'has_many', targetTable: 'Profile', description: 'User has one profile' }
-      ]
-    }
-  ]);
+const DataModelPage = ({ data = {}, updateData }) => {
+  const [formState, setFormState] = useState({
+    entities: data.entities || '',
+    relationships: data.relationships || '',
+    databaseChoice: data.databaseChoice || '',
+    schemaDesign: data.schemaDesign || '',
+    caching: data.caching || ''
+  });
 
-  const [activeTab, setActiveTab] = useState(1);
-  const [dbType, setDbType] = useState('relational');
-  
-  const fieldTypes = [
-    'string', 'integer', 'float', 'boolean', 'date', 'datetime', 'uuid', 
-    'json', 'array', 'text', 'binary', 'enum', 'reference'
-  ];
-  
-  const relationshipTypes = [
-    'has_one', 'has_many', 'belongs_to', 'many_to_many'
-  ];
-  
-  const addTable = () => {
-    const newId = tables.length > 0 ? Math.max(...tables.map(t => t.id)) + 1 : 1;
-    setTables([...tables, {
-      id: newId,
-      name: `Table${newId}`,
-      description: '',
-      fields: [{ id: 1, name: 'id', type: 'uuid', primaryKey: true, nullable: false, description: 'Unique identifier' }],
-      relationships: []
-    }]);
-    setActiveTab(newId);
-  };
-  
-  const removeTable = (id) => {
-    const newTables = tables.filter(t => t.id !== id);
-    setTables(newTables);
-    
-    if (activeTab === id && newTables.length > 0) {
-      setActiveTab(newTables[0].id);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formState, [name]: value };
+    setFormState(newState);
+    if (updateData) {
+      updateData(newState);
     }
   };
-  
-  const updateTable = (id, field, value) => {
-    setTables(tables.map(table => 
-      table.id === id ? { ...table, [field]: value } : table
-    ));
-  };
-  
-  const addField = (tableId) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newFieldId = table.fields.length > 0 
-      ? Math.max(...table.fields.map(f => f.id)) + 1 
-      : 1;
-      
-    const newFields = [...table.fields, {
-      id: newFieldId,
-      name: '',
-      type: 'string',
-      primaryKey: false,
-      nullable: true,
-      description: ''
-    }];
-    
-    updateTable(tableId, 'fields', newFields);
-  };
-  
-  const removeField = (tableId, fieldId) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newFields = table.fields.filter(f => f.id !== fieldId);
-    updateTable(tableId, 'fields', newFields);
-  };
-  
-  const updateField = (tableId, fieldId, field, value) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newFields = table.fields.map(f => 
-      f.id === fieldId ? { ...f, [field]: value } : f
-    );
-    
-    updateTable(tableId, 'fields', newFields);
-  };
-  
-  const addRelationship = (tableId) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newRelationshipId = table.relationships.length > 0 
-      ? Math.max(...table.relationships.map(r => r.id)) + 1 
-      : 1;
-      
-    const newRelationships = [...table.relationships, {
-      id: newRelationshipId,
-      name: 'has_one',
-      targetTable: '',
-      description: ''
-    }];
-    
-    updateTable(tableId, 'relationships', newRelationships);
-  };
-  
-  const removeRelationship = (tableId, relationshipId) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newRelationships = table.relationships.filter(r => r.id !== relationshipId);
-    updateTable(tableId, 'relationships', newRelationships);
-  };
-  
-  const updateRelationship = (tableId, relationshipId, field, value) => {
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    
-    const newRelationships = table.relationships.map(r => 
-      r.id === relationshipId ? { ...r, [field]: value } : r
-    );
-    
-    updateTable(tableId, 'relationships', newRelationships);
-  };
-  
-  const activeTable = tables.find(t => t.id === activeTab) || tables[0];
-  
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="bg-purple-700 p-4 text-white">
-        <h1 className="text-xl font-bold">Data Modeling</h1>
-        <p className="text-sm text-purple-200">Define database schemas and relationships</p>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">Data Model</h2>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Key Entities
+        </label>
+        <textarea
+          name="entities"
+          value={formState.entities}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="List main data entities and their attributes..."
+        />
       </div>
       
-      {/* Fields */}
-      <div className="mb-6">
-        <h3 className="text-md font-semibold text-gray-800 mb-3">Fields</h3>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Entity Relationships
+        </label>
+        <textarea
+          name="relationships"
+          value={formState.relationships}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Define relationships between entities (1:1, 1:N, M:N)..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Database Selection
+          </label>
+          <textarea
+            name="databaseChoice"
+            value={formState.databaseChoice}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="SQL vs NoSQL, specific database technologies..."
+          />
+        </div>
         
-        <div className="border border-gray-300 rounded-md overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-2 bg-gray-100 p-2 text-xs font-medium text-gray-700">
-            <div className="col-span-3">Name</div>
-            <div className="col-span-2">Type</div>
-            <div className="col-span-2">Constraints</div>
-            <div className="col-span-4">Description</div>
-            <div className="col-span-1"></div>
-          </div>
-          
-          {/* Fields */}
-          {activeTable.fields.map(field => (
-            <div key={field.id} className="grid grid-cols-12 gap-2 p-2 border-t border-gray-300">
-              <div className="col-span-3">
-                <input
-                  type="text"
-                  value={field.name}
-                  onChange={(e) => updateField(activeTable.id, field.id, 'name', e.target.value)}
-                  placeholder="Field name"
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-              </div>
-              <div className="col-span-2">
-                <select
-                  value={field.type}
-                  onChange={(e) => updateField(activeTable.id, field.id, 'type', e.target.value)}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                >
-                  {fieldTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-2">
-                <div className="flex items-center space-x-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={field.primaryKey}
-                      onChange={(e) => updateField(activeTable.id, field.id, 'primaryKey', e.target.checked)}
-                      className="mr-1"
-                    />
-                    <span className="text-xs">PK</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={!field.nullable}
-                      onChange={(e) => updateField(activeTable.id, field.id, 'nullable', !e.target.checked)}
-                      className="mr-1"
-                    />
-                    <span className="text-xs">Required</span>
-                  </label>
-                </div>
-              </div>
-              <div className="col-span-4">
-                <input
-                  type="text"
-                  value={field.description}
-                  onChange={(e) => updateField(activeTable.id, field.id, 'description', e.target.value)}
-                  placeholder="Field description"
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-              </div>
-              <div className="col-span-1 flex justify-end">
-                <button 
-                  onClick={() => removeField(activeTable.id, field.id)}
-                  className="p-1 text-gray-500 hover:text-red-500"
-                  disabled={field.primaryKey && activeTable.fields.length === 1}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-          
-          {/* Add Field Button */}
-          <div className="p-2 border-t border-gray-300">
-            <button
-              onClick={() => addField(activeTable.id)}
-              className="flex items-center text-xs text-purple-600 hover:text-purple-800"
-            >
-              <Plus size={14} className="mr-1" />
-              Add Field
-            </button>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Schema Design
+          </label>
+          <textarea
+            name="schemaDesign"
+            value={formState.schemaDesign}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Tables/collections structure, indexes..."
+          />
         </div>
       </div>
       
-      {/* Relationships */}
-      <div className="mb-6">
-        <h3 className="text-md font-semibold text-gray-800 mb-3">Relationships</h3>
-        
-        <div className="border border-gray-300 rounded-md overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-2 bg-gray-100 p-2 text-xs font-medium text-gray-700">
-            <div className="col-span-3">Type</div>
-            <div className="col-span-3">Target Table</div>
-            <div className="col-span-5">Description</div>
-            <div className="col-span-1"></div>
-          </div>
-          
-          {/* Relationships */}
-          {activeTable.relationships.map(relationship => (
-            <div key={relationship.id} className="grid grid-cols-12 gap-2 p-2 border-t border-gray-300">
-              <div className="col-span-3">
-                <select
-                  value={relationship.name}
-                  onChange={(e) => updateRelationship(activeTable.id, relationship.id, 'name', e.target.value)}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                >
-                  {relationshipTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-3">
-                <select
-                  value={relationship.targetTable}
-                  onChange={(e) => updateRelationship(activeTable.id, relationship.id, 'targetTable', e.target.value)}
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                >
-                  <option value="">Select a table</option>
-                  {tables.filter(t => t.id !== activeTable.id).map(table => (
-                    <option key={table.id} value={table.name}>{table.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-5">
-                <input
-                  type="text"
-                  value={relationship.description}
-                  onChange={(e) => updateRelationship(activeTable.id, relationship.id, 'description', e.target.value)}
-                  placeholder="Relationship description"
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                />
-              </div>
-              <div className="col-span-1 flex justify-end">
-                <button 
-                  onClick={() => removeRelationship(activeTable.id, relationship.id)}
-                  className="p-1 text-gray-500 hover:text-red-500"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-          
-          {/* Add Relationship Button */}
-          <div className="p-2 border-t border-gray-300">
-            <button
-              onClick={() => addRelationship(activeTable.id)}
-              className="flex items-center text-xs text-purple-600 hover:text-purple-800"
-            >
-              <Plus size={14} className="mr-1" />
-              Add Relationship
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-auto flex flex-col">
-        {/* Database Type Selection */}
-        <div className="bg-gray-50 p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Database Type</h2>
-          <div className="flex space-x-4">
-            <label className="flex items-center">
-              <input 
-                type="radio" 
-                name="dbType" 
-                value="relational"
-                checked={dbType === 'relational'}
-                onChange={() => setDbType('relational')}
-                className="mr-2" 
-              />
-              <span>Relational (SQL)</span>
-            </label>
-            <label className="flex items-center">
-              <input 
-                type="radio" 
-                name="dbType" 
-                value="document"
-                checked={dbType === 'document'}
-                onChange={() => setDbType('document')}
-                className="mr-2" 
-              />
-              <span>Document (NoSQL)</span>
-            </label>
-            <label className="flex items-center">
-              <input 
-                type="radio" 
-                name="dbType" 
-                value="keyvalue"
-                checked={dbType === 'keyvalue'}
-                onChange={() => setDbType('keyvalue')}
-                className="mr-2" 
-              />
-              <span>Key-Value</span>
-            </label>
-            <label className="flex items-center">
-              <input 
-                type="radio" 
-                name="dbType" 
-                value="graph"
-                checked={dbType === 'graph'}
-                onChange={() => setDbType('graph')}
-                className="mr-2" 
-              />
-              <span>Graph</span>
-            </label>
-          </div>
-        </div>
-        
-        {/* Table Tabs */}
-        <div className="border-b border-gray-200 bg-gray-50 flex items-center space-x-1 px-2 overflow-x-auto">
-          {tables.map(table => (
-            <button
-              key={table.id}
-              onClick={() => setActiveTab(table.id)}
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 ${
-                activeTab === table.id 
-                  ? 'border-purple-500 text-purple-600 bg-white' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Database size={14} className="mr-1" />
-              {table.name}
-              {tables.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeTable(table.id);
-                  }}
-                  className="ml-2 text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-            </button>
-          ))}
-          <button
-            onClick={addTable}
-            className="flex items-center px-3 py-2 text-sm font-medium text-purple-600 hover:text-purple-800"
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-        
-        {/* Table Content */}
-        {activeTable && (
-          <div className="flex-1 p-6 overflow-auto">
-            {/* Table Details */}
-            <div className="mb-6 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Table Name</label>
-                <input
-                  type="text"
-                  value={activeTable.name}
-                  onChange={(e) => updateTable(activeTable.id, 'name', e.target.value)}
-                  placeholder="Table name"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <input
-                  type="text"
-                  value={activeTable.description}
-                  onChange={(e) => updateTable(activeTable.id, 'description', e.target.value)}
-                  placeholder="Table description"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
-                />
-              </div>
-
-              {/* Fields Section */}
-              <div className="mt-6">
-                <h3 className="text-md font-medium text-gray-700 mb-2">Fields</h3>
-                <div className="space-y-3 max-h-60 overflow-y-auto p-1">
-                  {activeTable.fields.map(field => (
-                    <div key={field.id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded">
-                      <div className="col-span-3">
-                        <input
-                          type="text"
-                          value={field.name}
-                          onChange={(e) => updateField(activeTable.id, field.id, 'name', e.target.value)}
-                          placeholder="Field name"
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <select
-                          value={field.type}
-                          onChange={(e) => updateField(activeTable.id, field.id, 'type', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        >
-                          <option value="">Select type</option>
-                          <option value="string">String</option>
-                          <option value="integer">Integer</option>
-                          <option value="float">Float</option>
-                          <option value="boolean">Boolean</option>
-                          <option value="date">Date</option>
-                          <option value="datetime">DateTime</option>
-                          <option value="json">JSON</option>
-                          <option value="binary">Binary</option>
-                        </select>
-                      </div>
-                      <div className="col-span-5">
-                        <input
-                          type="text"
-                          value={field.constraints}
-                          onChange={(e) => updateField(activeTable.id, field.id, 'constraints', e.target.value)}
-                          placeholder="Constraints (e.g. NOT NULL, UNIQUE)"
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        />
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        <button
-                          onClick={() => removeField(activeTable.id, field.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <button
-                  onClick={() => addField(activeTable.id)}
-                  className="mt-2 flex items-center text-sm text-blue-600 hover:text-blue-800"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Add Field
-                </button>
-              </div>
-              
-              {/* Relationships Section */}
-              <div className="mt-6">
-                <h3 className="text-md font-medium text-gray-700 mb-2">Relationships</h3>
-                <div className="space-y-3 max-h-60 overflow-y-auto p-1">
-                  {activeTable.relationships.map(rel => (
-                    <div key={rel.id} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded">
-                      <div className="col-span-3">
-                        <select
-                          value={rel.type}
-                          onChange={(e) => updateRelationship(activeTable.id, rel.id, 'type', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        >
-                          <option value="">Relationship type</option>
-                          <option value="one-to-one">One-to-One</option>
-                          <option value="one-to-many">One-to-Many</option>
-                          <option value="many-to-many">Many-to-Many</option>
-                        </select>
-                      </div>
-                      <div className="col-span-3">
-                        <select
-                          value={rel.targetTable}
-                          onChange={(e) => updateRelationship(activeTable.id, rel.id, 'targetTable', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        >
-                          <option value="">Target table</option>
-                          {tables.filter(t => t.id !== activeTable.id).map(table => (
-                            <option key={table.id} value={table.id}>{table.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="col-span-5">
-                        <input
-                          type="text"
-                          value={rel.description}
-                          onChange={(e) => updateRelationship(activeTable.id, rel.id, 'description', e.target.value)}
-                          placeholder="Description (e.g. User has many Posts)"
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        />
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        <button
-                          onClick={() => removeRelationship(activeTable.id, rel.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <button
-                  onClick={() => addRelationship(activeTable.id)}
-                  className="mt-2 flex items-center text-sm text-blue-600 hover:text-blue-800"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Add Relationship
-                </button>
-              </div>
-              
-              {/* Modal Footer */}
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  onClick={closeTableModal}
-                  className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={closeTableModal}
-                  className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Caching Strategy
+        </label>
+        <textarea
+          name="caching"
+          value={formState.caching}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Cache layers, TTL policies, invalidation strategies..."
+        />
       </div>
     </div>
   );
@@ -5619,15 +5371,18 @@ export default DataModelPage;
 # FILE: client\pages\index.js
 # EXTENSION: .js
 ================================================================================
-import Link from 'next/link';
+import React, { useState } from 'react';
 import Dashboard from './dashboard';
+import WorkbookLayout from './WorkbookLayout';
 
 export default function Home() {
-  return (
-    <div>
-      <Dashboard />
-    </div>
-  );
+  const [view, setView] = useState('dashboard');
+  
+  if (view === 'workbook') {
+    return <WorkbookLayout onBack={() => setView('dashboard')} />;
+  }
+  
+  return <Dashboard onSelectWorkbook={() => setView('workbook')} />;
 }
 
 
@@ -6658,721 +6413,118 @@ export default function InterviewResultsPage() {
 # FILE: client\pages\ReliabilitySecurityPage.js
 # EXTENSION: .js
 ================================================================================
+// client/components/ReliabilitySecurityPage.js
 import React, { useState } from 'react';
-import { MessageSquare, Save, ChevronDown, ChevronUp, Plus, Trash2, Shield, Activity } from 'lucide-react';
 
-const ReliabilitySecurityPage = () => {
-  // Reliability state
-  const [reliabilityTargets, setReliabilityTargets] = useState([
-    { id: 1, metric: 'Availability', target: '99.9', unit: '%', notes: 'Maximum 8.76 hours downtime per year' },
-    { id: 2, metric: 'Response Time', target: '200', unit: 'ms', notes: 'P95 latency' }
-  ]);
-  
-  const [failureScenarios, setFailureScenarios] = useState([
-    { id: 1, component: '', scenario: '', mitigation: '' }
-  ]);
-  
-  // Security state
-  const [authMethods, setAuthMethods] = useState({
-    jwt: false,
-    oauth: false,
-    apiKey: false,
-    sessionCookie: false,
-    custom: false,
-    customDetails: ''
+const ReliabilitySecurityPage = ({ data = {}, updateData }) => {
+  const [formState, setFormState] = useState({
+    faultTolerance: data.faultTolerance || '',
+    dataBackup: data.dataBackup || '',
+    monitoring: data.monitoring || '',
+    securityMeasures: data.securityMeasures || '',
+    compliance: data.compliance || '',
+    disasterRecovery: data.disasterRecovery || ''
   });
-  
-  const [dataProtection, setDataProtection] = useState({
-    encryption: {
-      inTransit: false,
-      atRest: false,
-      endToEnd: false,
-      notes: ''
-    },
-    accessControl: {
-      rbac: false,
-      acl: false,
-      customPolicy: false,
-      notes: ''
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formState, [name]: value };
+    setFormState(newState);
+    if (updateData) {
+      updateData(newState);
     }
-  });
-  
-  const [securityMeasures, setSecurityMeasures] = useState([
-    { id: 1, type: 'Input Validation', implemented: false, details: '' }
-  ]);
-  
-  const [complianceRequirements, setComplianceRequirements] = useState([
-    { id: 1, standard: '', requirements: '', implemented: false }
-  ]);
-  
-  // Reliability section handlers
-  const addReliabilityTarget = () => {
-    const newId = reliabilityTargets.length > 0 
-      ? Math.max(...reliabilityTargets.map(t => t.id)) + 1 
-      : 1;
-    
-    setReliabilityTargets([
-      ...reliabilityTargets,
-      { id: newId, metric: '', target: '', unit: '', notes: '' }
-    ]);
   };
-  
-  const updateReliabilityTarget = (id, field, value) => {
-    setReliabilityTargets(reliabilityTargets.map(target => 
-      target.id === id ? { ...target, [field]: value } : target
-    ));
-  };
-  
-  const removeReliabilityTarget = (id) => {
-    setReliabilityTargets(reliabilityTargets.filter(target => target.id !== id));
-  };
-  
-  const addFailureScenario = () => {
-    const newId = failureScenarios.length > 0 
-      ? Math.max(...failureScenarios.map(s => s.id)) + 1 
-      : 1;
-    
-    setFailureScenarios([
-      ...failureScenarios,
-      { id: newId, component: '', scenario: '', mitigation: '' }
-    ]);
-  };
-  
-  const updateFailureScenario = (id, field, value) => {
-    setFailureScenarios(failureScenarios.map(scenario => 
-      scenario.id === id ? { ...scenario, [field]: value } : scenario
-    ));
-  };
-  
-  const removeFailureScenario = (id) => {
-    setFailureScenarios(failureScenarios.filter(scenario => scenario.id !== id));
-  };
-  
-  // Security section handlers
-  const updateAuthMethod = (method, value) => {
-    setAuthMethods({
-      ...authMethods,
-      [method]: value
-    });
-  };
-  
-  const updateDataProtection = (category, field, value) => {
-    setDataProtection({
-      ...dataProtection,
-      [category]: {
-        ...dataProtection[category],
-        [field]: value
-      }
-    });
-  };
-  
-  const addSecurityMeasure = () => {
-    const newId = securityMeasures.length > 0 
-      ? Math.max(...securityMeasures.map(m => m.id)) + 1 
-      : 1;
-    
-    setSecurityMeasures([
-      ...securityMeasures,
-      { id: newId, type: '', implemented: false, details: '' }
-    ]);
-  };
-  
-  const updateSecurityMeasure = (id, field, value) => {
-    setSecurityMeasures(securityMeasures.map(measure => 
-      measure.id === id ? { ...measure, [field]: value } : measure
-    ));
-  };
-  
-  const removeSecurityMeasure = (id) => {
-    setSecurityMeasures(securityMeasures.filter(measure => measure.id !== id));
-  };
-  
-  const addComplianceRequirement = () => {
-    const newId = complianceRequirements.length > 0 
-      ? Math.max(...complianceRequirements.map(r => r.id)) + 1 
-      : 1;
-    
-    setComplianceRequirements([
-      ...complianceRequirements,
-      { id: newId, standard: '', requirements: '', implemented: false }
-    ]);
-  };
-  
-  const updateComplianceRequirement = (id, field, value) => {
-    setComplianceRequirements(complianceRequirements.map(req => 
-      req.id === id ? { ...req, [field]: value } : req
-    ));
-  };
-  
-  const removeComplianceRequirement = (id) => {
-    setComplianceRequirements(complianceRequirements.filter(req => req.id !== id));
-  };
-  
-  // UI state
-  const [expandedSections, setExpandedSections] = useState({
-    reliabilityTargets: true,
-    failureScenarios: true,
-    authMethods: true,
-    dataProtection: true,
-    securityMeasures: true,
-    compliance: true
-  });
-  
-  const toggleSection = (section) => {
-    setExpandedSections({
-      ...expandedSections,
-      [section]: !expandedSections[section]
-    });
-  };
-  
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="bg-red-700 p-4 text-white">
-        <h1 className="text-xl font-bold">Reliability & Security</h1>
-        <p className="text-sm text-red-200">Define how your system stays available, resilient, and secure</p>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">Reliability & Security</h2>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Fault Tolerance
+        </label>
+        <textarea
+          name="faultTolerance"
+          value={formState.faultTolerance}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Redundancy, failover mechanisms, circuit breakers..."
+        />
       </div>
       
-      <div className="flex-1 overflow-auto p-6 space-y-8">
-        {/* Reliability Section */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center mb-4">
-            <Activity className="h-5 w-5 text-red-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-800">Reliability & Availability</h2>
-          </div>
-          
-          {/* Reliability Targets */}
-          <div className="mb-6">
-            <div 
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleSection('reliabilityTargets')}
-            >
-              <h3 className="text-md font-medium text-gray-700">Reliability Targets</h3>
-              {expandedSections.reliabilityTargets ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </div>
-            
-            {expandedSections.reliabilityTargets && (
-              <div className="mt-2 space-y-3">
-                {reliabilityTargets.map(target => (
-                  <div key={target.id} className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-3">
-                      <input
-                        type="text"
-                        value={target.metric}
-                        onChange={(e) => updateReliabilityTarget(target.id, 'metric', e.target.value)}
-                        placeholder="Metric"
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <div className="flex">
-                        <input
-                          type="text"
-                          value={target.target}
-                          onChange={(e) => updateReliabilityTarget(target.id, 'target', e.target.value)}
-                          placeholder="Value"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-l text-sm"
-                        />
-                        <span className="bg-gray-100 px-3 py-2 border border-l-0 border-gray-300 rounded-r text-sm text-gray-500">
-                          <input
-                            type="text"
-                            value={target.unit}
-                            onChange={(e) => updateReliabilityTarget(target.id, 'unit', e.target.value)}
-                            placeholder="unit"
-                            className="w-10 bg-transparent border-none p-0 text-sm text-center"
-                          />
-                        </span>
-                      </div>
-                    </div>
-                    <div className="col-span-6">
-                      <input
-                        type="text"
-                        value={target.notes}
-                        onChange={(e) => updateReliabilityTarget(target.id, 'notes', e.target.value)}
-                        placeholder="Notes"
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                      />
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <button 
-                        onClick={() => removeReliabilityTarget(target.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                
-                <button 
-                  onClick={addReliabilityTarget}
-                  className="flex items-center text-sm text-red-600 hover:text-red-800"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Add Reliability Metric
-                </button>
-                
-                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
-                  <p className="font-medium mb-1">Common reliability targets:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Availability (uptime): 99.9% to 99.999%</li>
-                    <li>Latency: P95, P99 response times</li>
-                    <li>Error Rate: % of failed requests</li>
-                    <li>Recovery Time (RTO/RPO): Minutes/hours/data loss limits</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Failure Scenarios */}
-          <div>
-            <div 
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleSection('failureScenarios')}
-            >
-              <h3 className="text-md font-medium text-gray-700">Failure Scenarios & Mitigations</h3>
-              {expandedSections.failureScenarios ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </div>
-            
-            {expandedSections.failureScenarios && (
-              <div className="mt-2 space-y-3">
-                {failureScenarios.map(scenario => (
-                  <div key={scenario.id} className="border border-gray-300 rounded-md p-3">
-                    <div className="grid grid-cols-12 gap-3">
-                      <div className="col-span-4">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Component/Service</label>
-                        <input
-                          type="text"
-                          value={scenario.component}
-                          onChange={(e) => updateFailureScenario(scenario.id, 'component', e.target.value)}
-                          placeholder="Which component can fail?"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                      <div className="col-span-8">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Failure Scenario</label>
-                        <input
-                          type="text"
-                          value={scenario.scenario}
-                          onChange={(e) => updateFailureScenario(scenario.id, 'scenario', e.target.value)}
-                          placeholder="What could go wrong?"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                      <div className="col-span-12">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Mitigation Strategy</label>
-                        <textarea
-                          value={scenario.mitigation}
-                          onChange={(e) => updateFailureScenario(scenario.id, 'mitigation', e.target.value)}
-                          placeholder="How will you handle this failure?"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                          rows="2"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end mt-2">
-                      <button 
-                        onClick={() => removeFailureScenario(scenario.id)}
-                        className="text-red-500 hover:text-red-700 text-sm flex items-center"
-                      >
-                        <Trash2 size={14} className="mr-1" />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                
-                <button 
-                  onClick={addFailureScenario}
-                  className="flex items-center text-sm text-red-600 hover:text-red-800"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Add Failure Scenario
-                </button>
-                
-                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
-                  <p className="font-medium mb-1">Common failure scenarios to consider:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Service instance failure</li>
-                    <li>Network partitions</li>
-                    <li>Database unavailability</li>
-                    <li>Region/zone outages</li>
-                    <li>Dependency failures</li>
-                    <li>Traffic spikes/DDoS</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Data Backup & Recovery
+          </label>
+          <textarea
+            name="dataBackup"
+            value={formState.dataBackup}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Backup strategies, recovery point objectives..."
+          />
         </div>
         
-        {/* Security Section */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center mb-4">
-            <Shield className="h-5 w-5 text-red-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-800">Security & Privacy</h2>
-          </div>
-          
-          {/* Authentication Methods */}
-          <div className="mb-6">
-            <div 
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleSection('authMethods')}
-            >
-              <h3 className="text-md font-medium text-gray-700">Authentication & Authorization</h3>
-              {expandedSections.authMethods ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </div>
-            
-            {expandedSections.authMethods && (
-              <div className="mt-2 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-1">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Authentication Methods</h4>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={authMethods.jwt}
-                          onChange={(e) => updateAuthMethod('jwt', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">JWT Tokens</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={authMethods.oauth}
-                          onChange={(e) => updateAuthMethod('oauth', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">OAuth 2.0</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={authMethods.apiKey}
-                          onChange={(e) => updateAuthMethod('apiKey', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">API Keys</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={authMethods.sessionCookie}
-                          onChange={(e) => updateAuthMethod('sessionCookie', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Session Cookies</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={authMethods.custom}
-                          onChange={(e) => updateAuthMethod('custom', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Custom Solution</span>
-                      </label>
-                      
-                      {authMethods.custom && (
-                        <textarea
-                          value={authMethods.customDetails}
-                          onChange={(e) => updateAuthMethod('customDetails', e.target.value)}
-                          placeholder="Describe your custom authentication method"
-                          className="w-full mt-2 px-3 py-2 border border-gray-300 rounded text-sm"
-                          rows="2"
-                        />
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="col-span-1">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Authorization Strategy</h4>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={dataProtection.accessControl.rbac}
-                          onChange={(e) => updateDataProtection('accessControl', 'rbac', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Role-Based Access Control (RBAC)</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={dataProtection.accessControl.acl}
-                          onChange={(e) => updateDataProtection('accessControl', 'acl', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Access Control Lists (ACL)</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={dataProtection.accessControl.customPolicy}
-                          onChange={(e) => updateDataProtection('accessControl', 'customPolicy', e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Custom Policy Engine</span>
-                      </label>
-                      
-                      <textarea
-                        value={dataProtection.accessControl.notes}
-                        onChange={(e) => updateDataProtection('accessControl', 'notes', e.target.value)}
-                        placeholder="Additional notes about authorization"
-                        className="w-full mt-2 px-3 py-2 border border-gray-300 rounded text-sm"
-                        rows="2"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Data Protection */}
-          <div className="mb-6">
-            <div 
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleSection('dataProtection')}
-            >
-              <h3 className="text-md font-medium text-gray-700">Data Protection</h3>
-              {expandedSections.dataProtection ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </div>
-            
-            {expandedSections.dataProtection && (
-              <div className="mt-2 space-y-3">
-                <h4 className="text-sm font-medium text-gray-700">Encryption Strategies</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dataProtection.encryption.inTransit}
-                      onChange={(e) => updateDataProtection('encryption', 'inTransit', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Encryption in Transit (TLS/SSL)</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dataProtection.encryption.atRest}
-                      onChange={(e) => updateDataProtection('encryption', 'atRest', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Encryption at Rest</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dataProtection.encryption.endToEnd}
-                      onChange={(e) => updateDataProtection('encryption', 'endToEnd', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">End-to-End Encryption</span>
-                  </label>
-                  
-                  <textarea
-                    value={dataProtection.encryption.notes}
-                    onChange={(e) => updateDataProtection('encryption', 'notes', e.target.value)}
-                    placeholder="Additional notes about encryption"
-                    className="w-full mt-2 px-3 py-2 border border-gray-300 rounded text-sm"
-                    rows="2"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Security Measures */}
-          <div className="mb-6">
-            <div 
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleSection('securityMeasures')}
-            >
-              <h3 className="text-md font-medium text-gray-700">Security Measures</h3>
-              {expandedSections.securityMeasures ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </div>
-            
-            {expandedSections.securityMeasures && (
-              <div className="mt-2 space-y-3">
-                {securityMeasures.map(measure => (
-                  <div key={measure.id} className="flex items-start space-x-2 border-b border-gray-200 pb-2">
-                    <input
-                      type="checkbox"
-                      checked={measure.implemented}
-                      onChange={(e) => updateSecurityMeasure(measure.id, 'implemented', e.target.checked)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <div className="col-span-1">
-                        <input
-                          type="text"
-                          value={measure.type}
-                          onChange={(e) => updateSecurityMeasure(measure.id, 'type', e.target.value)}
-                          placeholder="Security Measure"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="text"
-                          value={measure.details}
-                          onChange={(e) => updateSecurityMeasure(measure.id, 'details', e.target.value)}
-                          placeholder="Implementation details"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => removeSecurityMeasure(measure.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                
-                <button 
-                  onClick={addSecurityMeasure}
-                  className="flex items-center text-sm text-red-600 hover:text-red-800"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Add Security Measure
-                </button>
-                
-                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
-                  <p className="font-medium mb-1">Common security measures to consider:</p>
-                  <ul className="grid grid-cols-2 gap-1 list-disc list-inside">
-                    <li>Input validation</li>
-                    <li>Rate limiting</li>
-                    <li>WAF (Web App Firewall)</li>
-                    <li>DDoS protection</li>
-                    <li>Audit logging</li>
-                    <li>Secure dependencies</li>
-                    <li>CSRF protection</li>
-                    <li>XSS prevention</li>
-                    <li>SQL injection prevention</li>
-                    <li>Secret management</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Compliance */}
-          <div>
-            <div 
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleSection('compliance')}
-            >
-              <h3 className="text-md font-medium text-gray-700">Compliance Requirements</h3>
-              {expandedSections.compliance ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </div>
-            
-            {expandedSections.compliance && (
-              <div className="mt-2 space-y-3">
-                {complianceRequirements.map(req => (
-                  <div key={req.id} className="flex items-start space-x-2 border-b border-gray-200 pb-2">
-                    <input
-                      type="checkbox"
-                      checked={req.implemented}
-                      onChange={(e) => updateComplianceRequirement(req.id, 'implemented', e.target.checked)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <div className="col-span-1">
-                        <input
-                          type="text"
-                          value={req.standard}
-                          onChange={(e) => updateComplianceRequirement(req.id, 'standard', e.target.value)}
-                          placeholder="Standard/Regulation"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="text"
-                          value={req.requirements}
-                          onChange={(e) => updateComplianceRequirement(req.id, 'requirements', e.target.value)}
-                          placeholder="Specific requirements"
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => removeComplianceRequirement(req.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-                
-                <button 
-                  onClick={addComplianceRequirement}
-                  className="flex items-center text-sm text-red-600 hover:text-red-800"
-                >
-                  <Plus size={16} className="mr-1" />
-                  Add Compliance Requirement
-                </button>
-                
-                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
-                  <p className="font-medium mb-1">Common compliance standards:</p>
-                  <ul className="grid grid-cols-2 gap-1 list-disc list-inside">
-                    <li>GDPR (EU data privacy)</li>
-                    <li>CCPA/CPRA (California)</li>
-                    <li>HIPAA (Healthcare)</li>
-                    <li>PCI DSS (Payment)</li>
-                    <li>SOC 2 (Security)</li>
-                    <li>ISO 27001 (Security)</li>
-                    <li>NIST (Federal)</li>
-                    <li>FedRAMP (Federal Cloud)</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Monitoring & Alerting
+          </label>
+          <textarea
+            name="monitoring"
+            value={formState.monitoring}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Monitoring tools, metrics collection, alerting..."
+          />
         </div>
       </div>
       
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Security Measures
+        </label>
+        <textarea
+          name="securityMeasures"
+          value={formState.securityMeasures}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Authentication, authorization, encryption, secure coding practices..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Compliance & Regulations
+          </label>
+          <textarea
+            name="compliance"
+            value={formState.compliance}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="GDPR, HIPAA, SOC2, etc. compliance measures..."
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Disaster Recovery
+          </label>
+          <textarea
+            name="disasterRecovery"
+            value={formState.disasterRecovery}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Disaster recovery plans, multi-region strategy..."
+          />
+        </div>
       </div>
     </div>
   );
@@ -7385,155 +6537,101 @@ export default ReliabilitySecurityPage;
 # FILE: client\pages\RequirementsPage.js
 # EXTENSION: .js
 ================================================================================
+// client/components/RequirementsPage.js
 import React, { useState } from 'react';
-import { Plus, Trash2, MessageSquare, Save } from 'lucide-react';
 
-const RequirementsPage = () => {
-  const [functionalReqs, setFunctionalReqs] = useState([
-    { id: 1, text: '', completed: false }
-  ]);
-  const [nonFunctionalReqs, setNonFunctionalReqs] = useState([
-    { id: 1, category: 'Performance', text: '' },
-    { id: 2, category: 'Scalability', text: '' },
-    { id: 3, category: 'Reliability', text: '' },
-    { id: 4, category: 'Security', text: '' }
-  ]);
-  const [constraints, setConstraints] = useState('');
-  const [assumptions, setAssumptions] = useState('');
-  
-  const addFunctionalReq = () => {
-    const newId = functionalReqs.length > 0 ? Math.max(...functionalReqs.map(r => r.id)) + 1 : 1;
-    setFunctionalReqs([...functionalReqs, { id: newId, text: '', completed: false }]);
+const RequirementsPage = ({ data = {}, updateData }) => {
+  const [formState, setFormState] = useState({
+    functionalReqs: data.functionalReqs || '',
+    nonFunctionalReqs: data.nonFunctionalReqs || '',
+    constraints: data.constraints || '',
+    userTypes: data.userTypes || '',
+    scale: data.scale || ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formState, [name]: value };
+    setFormState(newState);
+    if (updateData) {
+      updateData(newState);
+    }
   };
-  
-  const removeFunctionalReq = (id) => {
-    setFunctionalReqs(functionalReqs.filter(req => req.id !== id));
-  };
-  
-  const updateFunctionalReq = (id, text) => {
-    setFunctionalReqs(functionalReqs.map(req => 
-      req.id === id ? { ...req, text } : req
-    ));
-  };
-  
-  const toggleFunctionalReq = (id) => {
-    setFunctionalReqs(functionalReqs.map(req => 
-      req.id === id ? { ...req, completed: !req.completed } : req
-    ));
-  };
-  
-  const updateNonFunctionalReq = (id, text) => {
-    setNonFunctionalReqs(nonFunctionalReqs.map(req => 
-      req.id === id ? { ...req, text } : req
-    ));
-  };
-  
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="bg-indigo-700 p-4 text-white">
-        <h1 className="text-xl font-bold">Requirements Clarification</h1>
-        <p className="text-sm text-indigo-200">Define what the system needs to accomplish</p>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">Requirements Analysis</h2>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Functional Requirements
+        </label>
+        <textarea
+          name="functionalReqs"
+          value={formState.functionalReqs}
+          onChange={handleChange}
+          rows={5}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="List the main features and functionalities the system should provide..."
+        />
       </div>
       
-      <div className="flex-1 overflow-auto p-6 space-y-8">
-        {/* Functional Requirements */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Functional Requirements</h2>
-          <p className="text-sm text-gray-600 mb-4">What specific features and capabilities must the system provide?</p>
-          
-          <div className="space-y-2">
-            {functionalReqs.map(req => (
-              <div key={req.id} className="flex items-start gap-2">
-                <input 
-                  type="checkbox" 
-                  checked={req.completed}
-                  onChange={() => toggleFunctionalReq(req.id)}
-                  className="mt-1.5"
-                />
-                <input
-                  type="text"
-                  value={req.text}
-                  onChange={(e) => updateFunctionalReq(req.id, e.target.value)}
-                  placeholder="Enter requirement..."
-                  className="flex-1 p-2 border border-gray-300 rounded text-sm"
-                />
-                <button 
-                  onClick={() => removeFunctionalReq(req.id)}
-                  className="p-1 text-gray-500 hover:text-red-500"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-          
-          <button 
-            onClick={addFunctionalReq}
-            className="mt-3 flex items-center text-sm text-indigo-600 hover:text-indigo-800"
-          >
-            <Plus size={16} className="mr-1" />
-            Add Requirement
-          </button>
-        </div>
-        
-        {/* Non-Functional Requirements */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Non-Functional Requirements</h2>
-          <p className="text-sm text-gray-600 mb-4">Quality attributes that define how the system should perform</p>
-          
-          <div className="space-y-3">
-            {nonFunctionalReqs.map(req => (
-              <div key={req.id} className="flex flex-col">
-                <label className="font-medium text-sm text-gray-700">{req.category}</label>
-                <input
-                  type="text"
-                  value={req.text}
-                  onChange={(e) => updateNonFunctionalReq(req.id, e.target.value)}
-                  placeholder={`Enter ${req.category.toLowerCase()} requirements...`}
-                  className="p-2 border border-gray-300 rounded text-sm mt-1"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Constraints & Assumptions */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-3">Constraints</h2>
-            <p className="text-sm text-gray-600 mb-4">What limitations must be considered?</p>
-            <textarea
-              value={constraints}
-              onChange={(e) => setConstraints(e.target.value)}
-              placeholder="Enter system constraints..."
-              className="w-full h-32 p-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-3">Assumptions</h2>
-            <p className="text-sm text-gray-600 mb-4">What are you assuming about the system?</p>
-            <textarea
-              value={assumptions}
-              onChange={(e) => setAssumptions(e.target.value)}
-              placeholder="Enter your assumptions..."
-              className="w-full h-32 p-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Non-Functional Requirements
+        </label>
+        <textarea
+          name="nonFunctionalReqs"
+          value={formState.nonFunctionalReqs}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Performance, security, scalability requirements..."
+        />
       </div>
       
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Constraints
+        </label>
+        <textarea
+          name="constraints"
+          value={formState.constraints}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Technical, business, or regulatory constraints..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            User Types
+          </label>
+          <textarea
+            name="userTypes"
+            value={formState.userTypes}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Describe different types of users..."
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Scale & Load
+          </label>
+          <textarea
+            name="scale"
+            value={formState.scale}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Expected traffic, data volume, request rates..."
+          />
+        </div>
       </div>
     </div>
   );
@@ -7546,399 +6644,118 @@ export default RequirementsPage;
 # FILE: client\pages\ScalingStrategyPage.js
 # EXTENSION: .js
 ================================================================================
+// client/components/ScalingStrategyPage.js
 import React, { useState } from 'react';
-import { MessageSquare, Save, ChevronDown, ChevronUp, Check, Plus, Trash2 } from 'lucide-react';
 
-const ScalingStrategyPage = () => {
-  const [sections, setSections] = useState([
-    {
-      id: 'traffic',
-      title: 'Traffic Estimation',
-      description: 'Estimate the scale and volume of your system',
-      expanded: true,
-      fields: [
-        { id: 'dau', label: 'Daily Active Users (DAU)', value: '', unit: 'users' },
-        { id: 'requestsPerUser', label: 'Requests per user per day', value: '', unit: 'requests' },
-        { id: 'peakQPS', label: 'Peak QPS (Queries Per Second)', value: '', unit: 'QPS' }
-      ]
-    },
-    {
-      id: 'storage',
-      title: 'Storage Requirements',
-      description: 'Calculate how much data you need to store',
-      expanded: false,
-      fields: [
-        { id: 'objectSize', label: 'Average object size', value: '', unit: 'KB' },
-        { id: 'dailyNewData', label: 'New data per day', value: '', unit: 'GB' },
-        { id: 'retentionPeriod', label: 'Data retention period', value: '', unit: 'days' },
-        { id: 'totalStorage', label: 'Total storage needed', value: '', unit: 'TB' }
-      ]
-    },
-    {
-      id: 'bandwidth',
-      title: 'Bandwidth Estimation',
-      description: 'Estimate inbound and outbound network traffic',
-      expanded: false,
-      fields: [
-        { id: 'inboundTraffic', label: 'Inbound traffic per day', value: '', unit: 'GB' },
-        { id: 'outboundTraffic', label: 'Outbound traffic per day', value: '', unit: 'GB' },
-        { id: 'peakBandwidth', label: 'Peak bandwidth requirement', value: '', unit: 'Mbps' }
-      ]
-    },
-    {
-      id: 'memory',
-      title: 'Memory Requirements',
-      description: 'Estimate cache and working memory needs',
-      expanded: false,
-      fields: [
-        { id: 'cacheSize', label: 'Total cache size', value: '', unit: 'GB' },
-        { id: 'cacheHitRate', label: 'Target cache hit rate', value: '', unit: '%' }
-      ]
+const ScalingStrategyPage = ({ data = {}, updateData }) => {
+  const [formState, setFormState] = useState({
+    scaleApproach: data.scaleApproach || '',
+    loadBalancing: data.loadBalancing || '',
+    dbScaling: data.dbScaling || '',
+    caching: data.caching || '',
+    cdn: data.cdn || '',
+    serviceDiscovery: data.serviceDiscovery || ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formState, [name]: value };
+    setFormState(newState);
+    if (updateData) {
+      updateData(newState);
     }
-  ]);
-
-  const [strategies, setStrategies] = useState([
-    {
-      id: 'horizontal',
-      title: 'Horizontal Scaling',
-      applied: false,
-      description: '',
-      components: []
-    },
-    {
-      id: 'vertical',
-      title: 'Vertical Scaling',
-      applied: false,
-      description: '',
-      components: []
-    },
-    {
-      id: 'caching',
-      title: 'Caching Strategy',
-      applied: false,
-      description: '',
-      layers: []
-    },
-    {
-      id: 'database',
-      title: 'Database Scaling',
-      applied: false,
-      description: '',
-      techniques: []
-    }
-  ]);
-
-  const [bottlenecks, setBottlenecks] = useState([
-    { id: 1, description: '', solution: '' }
-  ]);
-
-  // Toggle section expansion
-  const toggleSection = (sectionId) => {
-    setSections(sections.map(section => 
-      section.id === sectionId 
-        ? { ...section, expanded: !section.expanded } 
-        : section
-    ));
-  };
-
-  // Update field value
-  const updateFieldValue = (sectionId, fieldId, value) => {
-    setSections(sections.map(section => 
-      section.id === sectionId 
-        ? {
-            ...section,
-            fields: section.fields.map(field => 
-              field.id === fieldId ? { ...field, value } : field
-            )
-          } 
-        : section
-    ));
-  };
-
-  // Toggle a scaling strategy's applied status
-  const toggleStrategy = (strategyId) => {
-    setStrategies(strategies.map(strategy => 
-      strategy.id === strategyId 
-        ? { ...strategy, applied: !strategy.applied } 
-        : strategy
-    ));
-  };
-
-  // Update strategy description
-  const updateStrategyDescription = (strategyId, description) => {
-    setStrategies(strategies.map(strategy => 
-      strategy.id === strategyId 
-        ? { ...strategy, description } 
-        : strategy
-    ));
-  };
-
-  // Add a component to a strategy
-  const addStrategyComponent = (strategyId) => {
-    setStrategies(strategies.map(strategy => {
-      if (strategy.id === strategyId) {
-        return {
-          ...strategy,
-          components: [
-            ...strategy.components,
-            { id: Date.now(), name: '', details: '' }
-          ]
-        };
-      }
-      return strategy;
-    }));
-  };
-
-  // Update a component in a strategy
-  const updateStrategyComponent = (strategyId, componentId, field, value) => {
-    setStrategies(strategies.map(strategy => {
-      if (strategy.id === strategyId) {
-        return {
-          ...strategy,
-          components: strategy.components.map(component => 
-            component.id === componentId 
-              ? { ...component, [field]: value } 
-              : component
-          )
-        };
-      }
-      return strategy;
-    }));
-  };
-
-  // Remove a component from a strategy
-  const removeStrategyComponent = (strategyId, componentId) => {
-    setStrategies(strategies.map(strategy => {
-      if (strategy.id === strategyId) {
-        return {
-          ...strategy,
-          components: strategy.components.filter(component => component.id !== componentId)
-        };
-      }
-      return strategy;
-    }));
-  };
-
-  // Add a bottleneck
-  const addBottleneck = () => {
-    setBottlenecks([
-      ...bottlenecks,
-      { id: Date.now(), description: '', solution: '' }
-    ]);
-  };
-
-  // Update a bottleneck
-  const updateBottleneck = (bottleneckId, field, value) => {
-    setBottlenecks(bottlenecks.map(bottleneck => 
-      bottleneck.id === bottleneckId 
-        ? { ...bottleneck, [field]: value } 
-        : bottleneck
-    ));
-  };
-
-  // Remove a bottleneck
-  const removeBottleneck = (bottleneckId) => {
-    setBottlenecks(bottlenecks.filter(bottleneck => bottleneck.id !== bottleneckId));
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="bg-orange-700 p-4 text-white">
-        <h1 className="text-xl font-bold">Scaling Strategy</h1>
-        <p className="text-sm text-orange-200">Define how your system will handle growth and high load</p>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">Scaling Strategy</h2>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Scaling Approach
+        </label>
+        <textarea
+          name="scaleApproach"
+          value={formState.scaleApproach}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Vertical vs horizontal scaling, auto-scaling strategies..."
+        />
       </div>
       
-      <div className="flex-1 overflow-auto p-6 space-y-8">
-        {/* Estimations Sections */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Scale Estimations</h2>
-          
-          <div className="space-y-4">
-            {sections.map(section => (
-              <div key={section.id} className="border border-gray-300 rounded-md">
-                <div 
-                  className="flex justify-between items-center p-3 bg-gray-100 cursor-pointer"
-                  onClick={() => toggleSection(section.id)}
-                >
-                  <div>
-                    <h3 className="font-medium text-gray-800">{section.title}</h3>
-                    <p className="text-sm text-gray-600">{section.description}</p>
-                  </div>
-                  <div>
-                    {section.expanded ? (
-                      <ChevronUp size={20} className="text-gray-500" />
-                    ) : (
-                      <ChevronDown size={20} className="text-gray-500" />
-                    )}
-                  </div>
-                </div>
-                
-                {section.expanded && (
-                  <div className="p-3 border-t border-gray-300">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {section.fields.map(field => (
-                        <div key={field.id} className="flex flex-col">
-                          <label className="text-sm font-medium text-gray-700 mb-1">{field.label}</label>
-                          <div className="flex">
-                            <input
-                              type="text"
-                              value={field.value}
-                              onChange={(e) => updateFieldValue(section.id, field.id, e.target.value)}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-                              placeholder="Enter value"
-                            />
-                            <span className="bg-gray-100 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md text-gray-500">
-                              {field.unit}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Load Balancing
+        </label>
+        <textarea
+          name="loadBalancing"
+          value={formState.loadBalancing}
+          onChange={handleChange}
+          rows={3}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Load balancing approaches and algorithms..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Database Scaling
+          </label>
+          <textarea
+            name="dbScaling"
+            value={formState.dbScaling}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Sharding, replication, read replicas..."
+          />
         </div>
         
-        {/* Scaling Strategies */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Scaling Approaches</h2>
-          
-          <div className="space-y-4">
-            {strategies.map(strategy => (
-              <div key={strategy.id} className="border border-gray-300 rounded-md overflow-hidden">
-                <div className="p-3 bg-white">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start">
-                      <div className="mt-0.5 mr-3">
-                        <button 
-                          onClick={() => toggleStrategy(strategy.id)}
-                          className={`w-5 h-5 rounded flex items-center justify-center ${
-                            strategy.applied ? 'bg-orange-500 text-white' : 'border border-gray-300'
-                          }`}
-                        >
-                          {strategy.applied && <Check size={14} />}
-                        </button>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-800">{strategy.title}</h3>
-                        <textarea
-                          value={strategy.description}
-                          onChange={(e) => updateStrategyDescription(strategy.id, e.target.value)}
-                          placeholder={`Describe your ${strategy.title.toLowerCase()} approach...`}
-                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
-                          rows="3"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {strategy.applied && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Components to Scale</h4>
-                      
-                      {strategy.components.map(component => (
-                        <div key={component.id} className="flex items-start mb-2">
-                          <input
-                            type="text"
-                            value={component.name}
-                            onChange={(e) => updateStrategyComponent(strategy.id, component.id, 'name', e.target.value)}
-                            placeholder="Component name"
-                            className="w-48 px-3 py-2 border border-gray-300 rounded-l-md text-sm"
-                          />
-                          <input
-                            type="text"
-                            value={component.details}
-                            onChange={(e) => updateStrategyComponent(strategy.id, component.id, 'details', e.target.value)}
-                            placeholder="How to scale this component"
-                            className="flex-1 px-3 py-2 border-t border-b border-r border-gray-300 text-sm"
-                          />
-                          <button 
-                            onClick={() => removeStrategyComponent(strategy.id, component.id)}
-                            className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 hover:text-red-500"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                      
-                      <button 
-                        onClick={() => addStrategyComponent(strategy.id)}
-                        className="flex items-center text-xs text-orange-600 hover:text-orange-800 mt-2"
-                      >
-                        <Plus size={14} className="mr-1" />
-                        Add Component
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Bottlenecks and Solutions */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Potential Bottlenecks & Solutions</h2>
-          
-          <div className="space-y-4">
-            {bottlenecks.map(bottleneck => (
-              <div key={bottleneck.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-300 rounded-md p-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bottleneck</label>
-                  <textarea
-                    value={bottleneck.description}
-                    onChange={(e) => updateBottleneck(bottleneck.id, 'description', e.target.value)}
-                    placeholder="Describe a potential bottleneck"
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                    rows="3"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
-                  <textarea
-                    value={bottleneck.solution}
-                    onChange={(e) => updateBottleneck(bottleneck.id, 'solution', e.target.value)}
-                    placeholder="Describe your solution"
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                    rows="3"
-                  />
-                </div>
-                <div className="md:col-span-2 flex justify-end">
-                  <button 
-                    onClick={() => removeBottleneck(bottleneck.id)}
-                    className="text-red-500 hover:text-red-700 text-sm flex items-center"
-                  >
-                    <Trash2 size={14} className="mr-1" />
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            
-            <button 
-              onClick={addBottleneck}
-              className="flex items-center text-sm text-orange-600 hover:text-orange-800 mt-2"
-            >
-              <Plus size={16} className="mr-1" />
-              Add Another Bottleneck
-            </button>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Caching Strategy
+          </label>
+          <textarea
+            name="caching"
+            value={formState.caching}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Multi-level caching, distributed caches..."
+          />
         </div>
       </div>
       
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            CDN Architecture
+          </label>
+          <textarea
+            name="cdn"
+            value={formState.cdn}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Content delivery strategy, edge caching..."
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Service Discovery & Orchestration
+          </label>
+          <textarea
+            name="serviceDiscovery"
+            value={formState.serviceDiscovery}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Service discovery, container orchestration..."
+          />
+        </div>
       </div>
     </div>
   );
@@ -7951,393 +6768,101 @@ export default ScalingStrategyPage;
 # FILE: client\pages\SystemArchitecturePage.js
 # EXTENSION: .js
 ================================================================================
+// client/components/SystemArchitecturePage.js
 import React, { useState } from 'react';
-import { MessageSquare, Save, FileDown, Code, Plus, Trash2, Download } from 'lucide-react';
 
-// Node type definitions with corresponding colors and labels
-const nodeTypes = {
-  client: { color: '#3B82F6', label: 'Client' },
-  server: { color: '#10B981', label: 'Server' },
-  database: { color: '#8B5CF6', label: 'Database' },
-  cache: { color: '#F59E0B', label: 'Cache' },
-  loadBalancer: { color: '#EC4899', label: 'Load Balancer' },
-  queue: { color: '#6366F1', label: 'Queue' },
-  microservice: { color: '#14B8A6', label: 'Microservice' }
-};
+const SystemArchitecturePage = ({ data = {}, updateData }) => {
+  const [formState, setFormState] = useState({
+    overview: data.overview || '',
+    components: data.components || '',
+    dataFlow: data.dataFlow || '',
+    technologies: data.technologies || '',
+    deploymentModel: data.deploymentModel || ''
+  });
 
-const SystemArchitecturePage = () => {
-  const [nodes, setNodes] = useState([
-    { id: '1', type: 'client', label: 'Client Application', x: 150, y: 50, notes: '' },
-    { id: '2', type: 'loadBalancer', label: 'Load Balancer', x: 150, y: 150, notes: '' },
-    { id: '3', type: 'server', label: 'API Server', x: 150, y: 250, notes: '' },
-    { id: '4', type: 'database', label: 'Database', x: 150, y: 350, notes: '' }
-  ]);
-
-  const [edges, setEdges] = useState([
-    { id: 'e1-2', source: '1', target: '2' },
-    { id: 'e2-3', source: '2', target: '3' },
-    { id: 'e3-4', source: '3', target: '4' }
-  ]);
-
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [editingNodeName, setEditingNodeName] = useState('');
-  const [editingNodeNotes, setEditingNodeNotes] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [draggedNode, setDraggedNode] = useState(null);
-  const [showMermaidCode, setShowMermaidCode] = useState(false);
-
-  // Generate Mermaid code from current diagram
-  const generateMermaidCode = () => {
-    let code = 'graph TD;\n';
-    
-    // Add nodes
-    nodes.forEach(node => {
-      const shape = node.type === 'database' ? '[(Database)]' :
-                  node.type === 'client' ? '[Client]' :
-                  node.type === 'cache' ? '((Cache))' :
-                  node.type === 'loadBalancer' ? '{Load Balancer}' :
-                  '[' + node.label + ']';
-      
-      code += `    ${node.id}${shape};\n`;
-    });
-    
-    // Add connections
-    edges.forEach(edge => {
-      code += `    ${edge.source} --> ${edge.target};\n`;
-    });
-    
-    return code;
-  };
-
-  const handleNodeClick = (nodeId, event) => {
-    event.stopPropagation();
-    const node = nodes.find(n => n.id === nodeId);
-    setSelectedNode(node);
-    setShowMenu(true);
-    setMenuPosition({ 
-      x: event.clientX, 
-      y: event.clientY 
-    });
-    setEditingNodeName(node.label);
-    setEditingNodeNotes(node.notes || '');
-  };
-
-  const handleStartEditing = () => {
-    setIsEditing(true);
-    setShowMenu(false);
-  };
-
-  const handleCancelEditing = () => {
-    setIsEditing(false);
-  };
-
-  const handleSaveEdit = () => {
-    if (!selectedNode) return;
-    
-    setNodes(nodes.map(node => {
-      if (node.id === selectedNode.id) {
-        return {
-          ...node,
-          label: editingNodeName,
-          notes: editingNodeNotes
-        };
-      }
-      return node;
-    }));
-    
-    setIsEditing(false);
-    setSelectedNode(null);
-  };
-
-  const handleDeleteNode = () => {
-    if (!selectedNode) return;
-    
-    setNodes(nodes.filter(node => node.id !== selectedNode.id));
-    setEdges(edges.filter(edge => 
-      edge.source !== selectedNode.id && edge.target !== selectedNode.id
-    ));
-    
-    setShowMenu(false);
-    setSelectedNode(null);
-  };
-
-  const handleAddNode = (type) => {
-    const newId = String(Date.now());
-    const newNode = {
-      id: newId,
-      type,
-      label: nodeTypes[type].label,
-      x: 150 + Math.random() * 200,
-      y: 150 + Math.random() * 200,
-      notes: ''
-    };
-    
-    setNodes([...nodes, newNode]);
-  };
-
-  const handleStartConnection = (sourceId) => {
-    setDraggedNode(sourceId);
-  };
-
-  const handleFinishConnection = (targetId) => {
-    if (!draggedNode || draggedNode === targetId) {
-      setDraggedNode(null);
-      return;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formState, [name]: value };
+    setFormState(newState);
+    if (updateData) {
+      updateData(newState);
     }
-    
-    // Check if connection already exists
-    const connectionExists = edges.some(
-      edge => edge.source === draggedNode && edge.target === targetId
-    );
-    
-    if (!connectionExists) {
-      const newEdge = {
-        id: `e${draggedNode}-${targetId}`,
-        source: draggedNode,
-        target: targetId
-      };
-      
-      setEdges([...edges, newEdge]);
-    }
-    
-    setDraggedNode(null);
-  };
-
-  const handleCanvasClick = () => {
-    setShowMenu(false);
-    setSelectedNode(null);
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="bg-blue-700 p-4 text-white">
-        <h1 className="text-xl font-bold">System Architecture</h1>
-        <p className="text-sm text-blue-200">Design the high-level components and their interactions</p>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-gray-900">System Architecture</h2>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Architecture Overview
+        </label>
+        <textarea
+          name="overview"
+          value={formState.overview}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="High-level description of the architecture (monolith, microservices, etc.)..."
+        />
       </div>
       
-      <div className="flex-1 overflow-hidden p-4">
-        <div className="flex h-full">
-          {/* Left sidebar - Component palette */}
-          <div className="w-48 bg-gray-50 p-3 rounded-lg border border-gray-200 mr-4">
-            <h3 className="font-medium text-sm mb-2">Add Components</h3>
-            <div className="space-y-2">
-              {Object.entries(nodeTypes).map(([type, info]) => (
-                <button
-                  key={type}
-                  onClick={() => handleAddNode(type)}
-                  className="flex items-center w-full px-2 py-1.5 text-xs border border-gray-200 rounded hover:bg-gray-100"
-                  style={{ borderLeftWidth: '4px', borderLeftColor: info.color }}
-                >
-                  {info.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Main canvas */}
-          <div 
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg overflow-auto relative"
-            onClick={handleCanvasClick}
-            style={{ minHeight: '500px' }}
-          >
-            {/* Drawing canvas */}
-            <div className="w-full h-full relative" style={{ minWidth: '800px', minHeight: '600px' }}>
-              {/* Render edges as SVG lines */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                {edges.map(edge => {
-                  const sourceNode = nodes.find(n => n.id === edge.source);
-                  const targetNode = nodes.find(n => n.id === edge.target);
-                  
-                  if (!sourceNode || !targetNode) return null;
-                  
-                  return (
-                    <g key={edge.id}>
-                      <line
-                        x1={sourceNode.x + 60}
-                        y1={sourceNode.y + 30}
-                        x2={targetNode.x + 60}
-                        y2={targetNode.y + 30}
-                        stroke="#999"
-                        strokeWidth="2"
-                        markerEnd="url(#arrowhead)"
-                      />
-                    </g>
-                  );
-                })}
-                {/* Add SVG arrow marker definition */}
-                <defs>
-                  <marker
-                    id="arrowhead"
-                    markerWidth="10"
-                    markerHeight="7"
-                    refX="9"
-                    refY="3.5"
-                    orient="auto"
-                  >
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#999" />
-                  </marker>
-                </defs>
-              </svg>
-
-              {/* Render nodes */}
-              {nodes.map(node => (
-                <div
-                  key={node.id}
-                  className="absolute flex flex-col items-center cursor-move rounded shadow-md"
-                  style={{
-                    left: node.x,
-                    top: node.y,
-                    zIndex: selectedNode?.id === node.id ? 10 : 1
-                  }}
-                  onClick={(e) => handleNodeClick(node.id, e)}
-                >
-                  {/* Node card with its styling based on type */}
-                  <div 
-                    className="w-120 p-2 rounded text-white flex flex-col items-center"
-                    style={{ backgroundColor: nodeTypes[node.type]?.color || '#888' }}
-                  >
-                    <div className="font-medium text-sm text-center">{node.label}</div>
-                    {node.notes && (
-                      <div className="text-xs mt-1 text-white text-opacity-80">{node.notes}</div>
-                    )}
-                  </div>
-                  
-                  {/* Connection points */}
-                  <div 
-                    className="w-4 h-4 bg-blue-500 rounded-full absolute -bottom-2 cursor-pointer"
-                    onMouseDown={() => handleStartConnection(node.id)}
-                    onMouseUp={() => handleFinishConnection(node.id)}
-                  />
-                </div>
-              ))}
-              
-              {/* Node editing form */}
-              {isEditing && selectedNode && (
-                <div className="absolute bg-white p-4 rounded-lg shadow-lg border border-gray-300 z-20"
-                    style={{ left: selectedNode.x + 120, top: selectedNode.y }}>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Component Name</label>
-                      <input
-                        type="text"
-                        value={editingNodeName}
-                        onChange={(e) => setEditingNodeName(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                      <textarea
-                        value={editingNodeNotes}
-                        onChange={(e) => setEditingNodeNotes(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded h-20"
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={handleCancelEditing}
-                        className="px-3 py-1 text-sm bg-gray-100 rounded"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveEdit}
-                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Context menu for node operations */}
-        {showMenu && selectedNode && (
-          <div className="fixed bg-white shadow-lg rounded-md border border-gray-200 p-2 z-20 w-40"
-              style={{ 
-                left: menuPosition.x, 
-                top: menuPosition.y,
-                transform: 'translate(10px, 10px)' 
-              }}>
-            <div className="space-y-1">
-              <button 
-                onClick={handleStartEditing}
-                className="flex w-full items-center px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
-              >
-                <MessageSquare size={14} className="mr-2" />
-                Edit
-              </button>
-              <button 
-                onClick={handleDeleteNode}
-                className="flex w-full items-center px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
-              >
-                <Trash2 size={14} className="mr-2" />
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Mermaid Code Modal */}
-        {showMermaidCode && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full overflow-hidden">
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-semibold">Mermaid Diagram Code</h3>
-                <button 
-                  onClick={() => setShowMermaidCode(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              <div className="p-4">
-                <pre className="bg-gray-50 p-4 rounded border border-gray-200 text-sm font-mono overflow-auto whitespace-pre max-h-96">
-                  {generateMermaidCode()}
-                </pre>
-              </div>
-              <div className="p-4 border-t border-gray-200 flex justify-end">
-                <button 
-                  onClick={() => setShowMermaidCode(false)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Key Components
+        </label>
+        <textarea
+          name="components"
+          value={formState.components}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Services, modules, and their responsibilities..."
+        />
       </div>
       
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => setShowMermaidCode(true)}
-            className="flex items-center px-3 py-2 text-sm bg-gray-50 text-gray-700 rounded-md hover:bg-gray-100"
-          >
-            <Code size={16} className="mr-1" />
-            Show Code
-          </button>
-          <button className="flex items-center px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100">
-            <MessageSquare size={16} className="mr-1" />
-            Ask Coach
-          </button>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Data Flow
+        </label>
+        <textarea
+          name="dataFlow"
+          value={formState.dataFlow}
+          onChange={handleChange}
+          rows={4}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="How data flows between components and services..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Technologies & Frameworks
+          </label>
+          <textarea
+            name="technologies"
+            value={formState.technologies}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Key technologies, frameworks, and libraries..."
+          />
         </div>
         
-        <button className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Deployment Model
+          </label>
+          <textarea
+            name="deploymentModel"
+            value={formState.deploymentModel}
+            onChange={handleChange}
+            rows={3}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Cloud infrastructure, containerization, etc..."
+          />
+        </div>
       </div>
     </div>
   );
@@ -8377,94 +6902,22 @@ export default function TestPage() {
 # FILE: client\pages\WorkbookLayout.js
 # EXTENSION: .js
 ================================================================================
+// pages/WorkbookLayout.js
 import React, { useState } from 'react';
-import { 
-  ClipboardList, 
-  Database, 
-  Code, 
-  Layout, 
-  BarChart, 
-  Shield, 
-  MessageSquare,
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react';
+import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X } from 'lucide-react';
 
-// Mocked components since we don't have direct imports
-// In a real implementation, these would be properly imported from files
-const RequirementsPage = () => (
-  <div className="text-center p-4 text-gray-500">
-    Requirements Page Component
-  </div>
+// Placeholder components - replace these with your actual components when ready
+const RequirementsPage = () => <div>Requirements Page</div>;
+const APIDesignPage = () => <div>API Design Page</div>;
+const DataModelPage = () => <div>Data Model Page</div>;
+const SystemArchitecturePage = () => <div>System Architecture Page</div>;
+const ScalingStrategyPage = () => <div>Scaling Strategy Page</div>;
+const ReliabilitySecurityPage = () => <div>Reliability & Security Page</div>;
+const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => (
+  isOpen ? <div>Coach Interface for {currentPage}</div> : null
 );
 
-const APIDesignPage = () => (
-  <div className="text-center p-4 text-gray-500">
-    API Design Page Component
-  </div>
-);
-
-const DataModelPage = () => (
-  <div className="text-center p-4 text-gray-500">
-    Data Model Page Component
-  </div>
-);
-
-const SystemArchitecturePage = () => (
-  <div className="text-center p-4 text-gray-500">
-    System Architecture Page Component
-  </div>
-);
-
-const ScalingStrategyPage = () => (
-  <div className="text-center p-4 text-gray-500">
-    Scaling Strategy Page Component
-  </div>
-);
-
-const ReliabilitySecurityPage = () => (
-  <div className="text-center p-4 text-gray-500">
-    Reliability & Security Page Component
-  </div>
-);
-
-// Coach Agent interface mock
-const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => {
-  if (!isOpen) return null;
-  
-  return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-4 max-w-lg w-full">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold">System Design Coach</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="bg-gray-100 p-4 rounded mb-4">
-          <p>I'm your design coach helping with <strong>{currentPage}</strong>.</p>
-          <p className="text-sm text-gray-600 mt-2">
-            Ask me questions about system design best practices, requirements gathering, 
-            architecture decisions, or anything else you need help with.
-          </p>
-        </div>
-        <div className="flex">
-          <input
-            type="text"
-            className="flex-1 border border-gray-300 rounded-l px-4 py-2"
-            placeholder="Ask a question..."
-          />
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded-r">
-            <MessageSquare size={18} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const WorkbookLayout = () => {
+const WorkbookLayout = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('requirements');
   const [showCoach, setShowCoach] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -8534,7 +6987,10 @@ const WorkbookLayout = () => {
             </div>
             
             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
-              <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+              <button 
+                onClick={onBack}
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+              >
                 Dashboard
               </button>
               <button className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
@@ -13009,6 +11465,6 @@ testAnthropic();
 
 ================================================================================
 # SUMMARY
-# Total files processed: 73
-# Extraction completed: 2025-03-11 05:05:16
+# Total files processed: 74
+# Extraction completed: 2025-03-11 13:27:50
 ================================================================================
