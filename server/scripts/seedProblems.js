@@ -1,8 +1,6 @@
-// server/scripts/seedProblems.js
 const mongoose = require('mongoose');
 const Problem = require('../models/Problem');
 
-// Sample system design problems
 const problems = [
   {
     id: "url-shortener",
@@ -23,42 +21,6 @@ const problems = [
         "Low latency",
         "Scalability"
       ]
-    },
-    promptSequence: [
-      {
-        id: "intro",
-        name: "Introduction",
-        question: "How would you approach designing a URL shortener service?",
-        expectedTopics: ["clarification", "requirements"]
-      },
-      {
-        id: "design",
-        name: "System Design",
-        question: "Could you outline the high-level architecture for this URL shortener?",
-        expectedTopics: ["components", "data flow"]
-      }
-    ]
-  },
-  {
-    id: "twitter",
-    title: "Design Twitter",
-    type: "both",
-    difficulty: "advanced",
-    description: "Design a simplified version of Twitter where users can post tweets, follow other users, and see a timeline of tweets.",
-    estimatedTime: 60,
-    requirements: {
-      functional: [
-        "Post tweets",
-        "Follow users",
-        "Timeline/feed",
-        "Search"
-      ],
-      nonFunctional: [
-        "High availability",
-        "Low latency",
-        "Scalability",
-        "Consistency"
-      ]
     }
   },
   {
@@ -73,10 +35,8 @@ const problems = [
 
 async function seedDatabase() {
   try {
-    // Hardcoded MongoDB URI - replace with your actual MongoDB URI
-    const mongoUri = "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach?retryWrites=true&w=majority";
+    const mongoUri = process.env.MONGO_URI || "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach";
     
-    // Connect to MongoDB
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
     
@@ -88,11 +48,15 @@ async function seedDatabase() {
     const result = await Problem.insertMany(problems);
     console.log(`Added ${result.length} problems to database`);
     
-    // Disconnect
+    // Verify the insertion
+    const count = await Problem.countDocuments();
+    console.log(`Total problems in database: ${count}`);
+    
     await mongoose.disconnect();
     console.log('Database seeding completed');
   } catch (error) {
     console.error('Error seeding database:', error);
+    process.exit(1);
   }
 }
 

@@ -1,9 +1,0 @@
-flask
-flask-cors
-pymongo
-python-dotenv
-langchain
-langchain-community
-openai
-anthropic
-python-jose

@@ -9,7 +9,6 @@ class ClaudeService extends AIService {
     if (!apiKey) {
       throw new Error("API key for Anthropic is required.");
     }
-    console.log('Using API Key: Key provided');
     this.anthropic = new Anthropic({ apiKey });
     this.defaultModel = config.model || 'claude-3-5-sonnet-latest';
     this.maxRetries = config.maxRetries || 10;
@@ -27,10 +26,8 @@ class ClaudeService extends AIService {
           content: msg.content
         }));
         
-        // Apply concise mode to system prompt if not explicitly disabled
         let systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
         if (options.conciseMode !== false) {
-          // Only add concise instructions if they're not already in the prompt
           if (!systemPrompt.includes("CONCISE communication style")) {
             systemPrompt += `\n\nUse a CONCISE communication style:
 - Keep paragraphs short (2-3 sentences maximum)
@@ -47,53 +44,13 @@ class ClaudeService extends AIService {
           system: systemPrompt,
           messages: formattedMessages,
           max_tokens: options.maxTokens || this.maxTokens,
-          temperature: options.temperature || this.temperature,
+          temperature: options.temperature || this.temperature
         });
         return response.content[0].text;
       } catch (error) {
-        console.error(`Attempt ${attempt + 1} failed:`, error.response ? error.response.data : error.message);
-        console.error("Full error details:", error);
-        attempt++;
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        } else {
-          return options.fallbackMessage || "I'm having trouble connecting to my knowledge base. Let's try again in a moment.";
-        }
+        console.error("Error in AI service:", error.response ? error.response.data : error.message);
+        if (++attempt === maxRetries) throw error;
       }
-    }
-  }
-
-  async generateContent(prompt, options = {}) {
-    try {
-      const messages = [{ role: "user", content: prompt }];
-      
-      // Apply concise mode to system prompt if not explicitly disabled
-      let systemPrompt = options.systemPrompt || options.system || "You are a helpful assistant.";
-      if (options.conciseMode !== false) {
-        // Only add concise instructions if they're not already in the prompt
-        if (!systemPrompt.includes("CONCISE communication style")) {
-          systemPrompt += `\n\nUse a CONCISE communication style:
-- Keep paragraphs short (2-3 sentences maximum)
-- Use bullet points for lists
-- Be direct and focused
-- Eliminate filler words and redundant phrases
-- Get to the point quickly
-- Avoid unnecessary explanations`;
-        }
-      }
-      
-      const response = await this.anthropic.messages.create({
-        model: options.model || this.defaultModel,
-        system: systemPrompt,
-        messages,
-        max_tokens: options.maxTokens || 1500,
-        temperature: options.temperature || 0.5,
-      });
-      return response.content[0].text;
-    } catch (error) {
-      console.error("Error in generateContent:", error.response ? error.response.data : error.message);
-      console.error("Full error details:", error);
-      return options.fallbackMessage || "I encountered an issue generating that content. Please try again later.";
     }
   }
 }

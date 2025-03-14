@@ -8,9 +8,12 @@ async function createTestWorkbook() {
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
     
+    // Create test data
     const testWorkbook = new Workbook({
       sessionId: 'test-session-' + Date.now(),
-      userId: new mongoose.Types.ObjectId(), // This creates a new ObjectId
+      userId: new mongoose.Types.ObjectId(),
+      title: "Test Workbook",
+      description: "This is a test workbook",
       apis: {
         endpoint: '/api/test',
         method: 'GET'
@@ -26,15 +29,30 @@ async function createTestWorkbook() {
       diagram: {
         nodes: [],
         edges: []
-      }
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
+    console.log('Attempting to save workbook...');
     const savedWorkbook = await testWorkbook.save();
-    console.log('Test workbook created:', JSON.stringify(savedWorkbook, null, 2));
+    console.log('Workbook saved successfully:', JSON.stringify(savedWorkbook, null, 2));
+
+    // Verify the save
+    const found = await Workbook.findById(savedWorkbook._id);
+    console.log('\nVerified workbook in database:', found ? 'Yes' : 'No');
     
-    mongoose.connection.close();
+    await mongoose.connection.close();
+    console.log('Database connection closed');
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    if (error.errors) {
+      console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
+    }
     process.exit(1);
   }
 }
