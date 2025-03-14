@@ -2,24 +2,31 @@ const mongoose = require('mongoose');
 
 const WorkbookSchema = new mongoose.Schema({
   sessionId: {
-    type: String,
-    required: true,
-    unique: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Session',
+    required: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  apis: Object,
-  apiType: String,
-  requirements: Object,
-  architecture: Object,
-  diagram: Object,
+  title: {
+    type: String,
+    required: true
+  },
+  description: String,
+  content: mongoose.Schema.Types.Mixed,
   lastModified: {
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('Workbook', WorkbookSchema);
+WorkbookSchema.index({ sessionId: 1 });
+WorkbookSchema.index({ userId: 1 });
+
+const Workbook = mongoose.model('Workbook', WorkbookSchema);
+module.exports = Workbook;

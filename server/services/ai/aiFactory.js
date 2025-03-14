@@ -1,16 +1,9 @@
-// server/services/ai/aiFactory.js
-const ClaudeService = require('./claudeService');
+const AIService = require('./aiService');
+const { config } = require('../../config/aiConfig');
 
 class AIFactory {
-  static createService(provider, config = {}) {
-    switch (provider.toLowerCase()) {
-      case 'claude':
-      case 'anthropic':
-        return new ClaudeService(config);
-      default:
-        console.warn(`Unknown AI provider: ${provider}. Defaulting to Claude.`);
-        return new ClaudeService(config);
-    }
+  static createService() {
+    return new AIService(config);
   }
 }
 

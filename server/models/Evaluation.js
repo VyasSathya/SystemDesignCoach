@@ -1,59 +1,45 @@
-// server/models/Evaluation.js
 const mongoose = require('mongoose');
 
-const scoreSchema = new mongoose.Schema({
-  score: Number,
-  maxScore: Number
-}, { _id: false });
-
-const evaluationSchema = new mongoose.Schema({
+const EvaluationSchema = new mongoose.Schema({
   sessionId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Interview',
+    ref: 'Session',
     required: true
   },
-  evaluationType: {
-    type: String,
-    enum: ['coaching', 'interview'],
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
-  },
-  userLevel: {
-    type: String,
-    enum: ['junior', 'mid-level', 'senior', 'staff+'],
-    default: 'mid-level'
   },
   problemId: {
-    type: String
-  },
-  content: {
     type: String,
     required: true
   },
-  scores: {
-    overall: scoreSchema,
-    'Requirements Analysis': scoreSchema,
-    'System Interface Design': scoreSchema,
-    'Capacity Estimation': scoreSchema,
-    'Data Modeling': scoreSchema,
-    'High-Level Architecture': scoreSchema,
-    'Detailed Component Design': scoreSchema,
-    'Scalability & Performance': scoreSchema,
-    'Reliability & Fault Tolerance': scoreSchema
+  criteria: [{
+    name: String,
+    score: Number,
+    feedback: String
+  }],
+  overallScore: {
+    type: Number,
+    required: true
   },
-  timestamp: {
+  feedback: {
+    strengths: [String],
+    improvements: [String],
+    generalComments: String
+  },
+  evaluatedAt: {
     type: Date,
     default: Date.now
-  },
-  isFinal: {
-    type: Boolean,
-    default: false
   }
+}, {
+  timestamps: true
 });
 
-// Add indexes for efficient queries
-evaluationSchema.index({ sessionId: 1 });
-evaluationSchema.index({ sessionId: 1, timestamp: -1 });
+EvaluationSchema.index({ sessionId: 1 }, { name: 'evaluation_session_id' });
+EvaluationSchema.index({ userId: 1 }, { name: 'evaluation_user_id' });
+EvaluationSchema.index({ problemId: 1 }, { name: 'evaluation_problem_id' });
 
-const Evaluation = mongoose.model('Evaluation', evaluationSchema);
-
+const Evaluation = mongoose.model('Evaluation', EvaluationSchema);
 module.exports = Evaluation;

@@ -1,17 +1,16 @@
-# Ignore root-level node_modules (if any)
-/node_modules
-
-# Ignore node_modules in client and server folders
-/client/node_modules
-/server/node_modules
-
-# Ignore environment files
+# Environment variables
 .env
-*.env
-*.env.local
-client/.env.local
-server/.env
+.env.local
+.env.*.local
 
-# Ignore build outputs
-/.next
-/dist
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Logs
+logs/
+*.log

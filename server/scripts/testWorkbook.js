@@ -3,7 +3,7 @@ const Workbook = require('../models/Workbook');
 
 async function createTestWorkbook() {
   try {
-    const mongoUri = process.env.MONGO_URI || "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach";
+    const mongoUri = process.env.MONGODB_URI;
     
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
@@ -29,30 +29,15 @@ async function createTestWorkbook() {
       diagram: {
         nodes: [],
         edges: []
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
+      }
     });
-
-    console.log('Attempting to save workbook...');
-    const savedWorkbook = await testWorkbook.save();
-    console.log('Workbook saved successfully:', JSON.stringify(savedWorkbook, null, 2));
-
-    // Verify the save
-    const found = await Workbook.findById(savedWorkbook._id);
-    console.log('\nVerified workbook in database:', found ? 'Yes' : 'No');
+    
+    await testWorkbook.save();
+    console.log('Test workbook created');
     
     await mongoose.connection.close();
-    console.log('Database connection closed');
   } catch (error) {
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    if (error.errors) {
-      console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
-    }
+    console.error('Error:', error);
     process.exit(1);
   }
 }

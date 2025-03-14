@@ -95,6 +95,26 @@
 |   |   |   |       |-- method: map(node => {
       // Fix participant positions
       if (node.type === 'actor' || node.type === 'participant')
+|   |   |   |-- DiagramAnalysis.js
+|   |   |   |   |-- module:DiagramAnalysis.js
+|   |   |   |   |-- fn: AnalysisSection({ title, items, icon: Icon }) [internal]
+|   |   |   |   |-- fn: DiagramAnalysis({ analysis, onClose }) [internal]
+|   |   |   |   |-- component:AnalysisSection [internal]
+|   |   |   |   |-- component:DiagramAnalysis [internal]
+|   |   |   |-- DiagramEvaluation.js
+|   |   |   |   |-- module:DiagramEvaluation.js
+|   |   |   |   |-- fn: CriterionCard({ title, score, previousScore, feedback, suggestions }) [internal]
+|   |   |   |   |-- fn: ProgressChart({ evaluationHistory }) [internal]
+|   |   |   |   |-- fn: DiagramEvaluation({ 
+  sessionId, 
+  evaluation, 
+  previousEvaluation,
+  onClose 
+}) [internal]
+|   |   |   |   |-- component:CriterionCard [internal]
+|   |   |   |   |-- component:Arrow [internal]
+|   |   |   |   |-- component:ProgressChart [internal]
+|   |   |   |   |-- component:DiagramEvaluation [internal]
 |   |   |   |-- DiagramPanel.js
 |   |   |   |   |-- module:DiagramPanel.js
 |   |   |   |   |-- fn: DiagramPanel({
@@ -105,11 +125,15 @@
   onClose,
   onSave,
   onRefresh,
-  onAiSuggest
+  onAiSuggest,
+  onSaveAndContinue, // Add this prop
 }) [internal]
 |   |   |   |   |-- fn: handleCustomRequest(e) [internal]
 |   |   |   |   |-- fn: onDragStart(event, nodeType) [internal]
 |   |   |   |   |-- fn: handleInsertNode(type) [internal]
+|   |   |   |   |-- fn: getSaveButtonUI() [internal]
+|   |   |   |   |-- fn: createNode(type, position, data = {}) [internal]
+|   |   |   |   |-- fn: handleAddNode(type, position) [internal]
 |   |   |   |   |-- component:MermaidRenderer [internal]
 |   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
 |   |   |   |   |-- component:DiagramPanel [internal]
@@ -203,6 +227,10 @@
 |   |   |   |-- module:MetricCard.js
 |   |   |   |-- fn: MetricCard({ title, value, icon, iconBgColor, progress, subtext }) [internal]
 |   |   |   |-- component:MetricCard [internal]
+|   |   |-- RealTimeFeedback.js
+|   |   |   |-- module:RealTimeFeedback.js
+|   |   |   |-- fn: RealTimeFeedback({ section, content, onFeedback }) [internal]
+|   |   |   |-- component:RealTimeFeedback [internal]
 |   |   |-- Sidebar.js
 |   |   |   |-- module:Sidebar.js
 |   |   |   |-- fn: Sidebar({ activeTab }) [internal]
@@ -221,6 +249,7 @@
 |   |   +-- Workbook.js
 |   |       |-- module:Workbook.js
 |   |       |-- fn: Workbook({ sessionId, userId, initialData }) [internal]
+|   |       |-- fn: handleFeedback(section, feedback) [internal]
 |   |       |-- component:Workbook [internal]
 |   |-- contexts
 |   |   +-- AuthContext.js
@@ -335,6 +364,7 @@
 |   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
 |   |   |   |-- fn: updateConstraints(value) [internal]
 |   |   |   |-- fn: updateAssumptions(value) [internal]
+|   |   |   |-- fn: handleSaveAndContinue() [internal]
 |   |   |   |-- component:EnhancedRequirementsPage [internal]
 |   |   |-- ScalingStrategyPage.js
 |   |   |   |-- module:ScalingStrategyPage.js
@@ -395,6 +425,9 @@
 |   |   |-- module:postcss.config.js
 |   +-- tailwind.config.js
 |       |-- module:tailwind.config.js
+|-- components
+|   +-- WorkbookLayout.js
+|       |-- fn: WorkbookLayout({ sessionId }) [internal]
 |-- data
 |   |-- knowledge_base
 |   |   +-- facebook
@@ -417,8 +450,12 @@
 |   |       |-- module:interviewerPersona.js
 |   |-- tempresults
 |   |   +-- 1
-|   +-- problems.js
-|       |-- module:problems.js
+|   |-- diagram_structure.js
+|   |-- enhanced_skills.js
+|   |   |-- module:enhanced_skills.js
+|   |-- problems.js
+|   |   |-- module:problems.js
+|   +-- workbook_progress.js
 |-- server
 |   |-- __pycache__
 |   |-- config
@@ -434,27 +471,31 @@
 |   |   |-- Diagram.js
 |   |   |   |-- module:Diagram.js
 |   |   |   |-- method: pre('save', function(next)
-|   |   |   |-- component:DiagramSchema [internal]
 |   |   |-- Evaluation.js
 |   |   |   |-- module:Evaluation.js
+|   |   |   |-- method: get(function()
 |   |   |-- Interview.js
 |   |   |   |-- module:Interview.js
 |   |   |-- Problem.js
 |   |   |   |-- module:Problem.js
 |   |   |-- Session.js
 |   |   |   |-- module:Session.js
-|   |   |   |-- method: get(function()
 |   |   |   |-- method: pre('save', function(next)
+|   |   |   |-- method: get(function()
 |   |   |-- User.js
 |   |   |   |-- module:User.js
 |   |   |   |-- method: pre('save', async function(next)
 |   |   +-- Workbook.js
 |   |       |-- module:Workbook.js
 |   |-- routes
+|   |   |-- ai.js
+|   |   |   |-- module:ai.js
 |   |   |-- auth.js
 |   |   |   |-- module:auth.js
 |   |   |-- coaching.js
 |   |   |   |-- module:coaching.js
+|   |   |-- diagrams.js
+|   |   |   |-- module:diagrams.js
 |   |   |-- grader.js
 |   |   |   |-- module:grader.js
 |   |   |-- interviews.js
@@ -470,6 +511,8 @@
 |   |   |   |-- module:users.js
 |   |   +-- workbook.js
 |   |       |-- module:workbook.js
+|   |       |-- component:Workbook [internal]
+|   |       |-- component:Diagram [internal]
 |   |-- scripts
 |   |   |-- checkConnection.js
 |   |   |   |-- module:checkConnection.js
@@ -478,6 +521,10 @@
 |   |   |-- checkDatabase.js
 |   |   |   |-- fn: checkDatabase() [internal]
 |   |   |   |-- method: checkDatabase()
+|   |   |-- initializeDatabase.js
+|   |   |   |-- module:initializeDatabase.js
+|   |   |   |-- fn: initializeDatabase() [exported]
+|   |   |   |-- method: initializeDatabase()
 |   |   |-- seedProblems.js
 |   |   |   |-- fn: seedDatabase() [internal]
 |   |   |   |-- method: seedDatabase()
@@ -500,21 +547,82 @@
 |   |   |   |-- aiFactory.js
 |   |   |   |   |-- module:aiFactory.js
 |   |   |   |   |-- class:AIFactory [internal]
-|   |   |   |   |-- method: createService(provider, config = {})
+|   |   |   |   |-- method: createService()
+|   |   |   |-- aiService.js
+|   |   |   |   |-- module:aiService.js
+|   |   |   |   |-- class:AIService [internal]
+|   |   |   |   |-- method: constructor(config)
+|   |   |   |   |-- method: _initializeClient()
+|   |   |   |   |-- method: sendMessage(messages, options = {})
+|   |   |   |   |-- method: _sendClaudeMessage(messages, systemPrompt, options)
+|   |   |   |   |-- method: _sendOpenAIMessage(messages, systemPrompt, options)
+|   |   |   |   |-- method: analyzeDiagram(diagramData, context = {})
+|   |   |   |   |-- method: reviewCode(code, context = {})
+|   |   |   |   |-- method: generateTestCases(implementation, requirements)
 |   |   |   |-- claudeService.js
 |   |   |   |   |-- module:claudeService.js
 |   |   |   |   |-- class:ClaudeService extends AIService [internal]
 |   |   |   |   |-- method: constructor(config = {})
 |   |   |   |   |-- method: sendMessage(messages, options = {})
+|   |   |   |-- coachingEngine.js
+|   |   |   |   |-- module:coachingEngine.js
+|   |   |   |   |-- class:CoachingEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: processMessage(sessionId, message, options = {})
+|   |   |   |   |-- method: _updateWorkbookProgress(sessionId, message, response)
 |   |   |   +-- index.js
 |   |   |       |-- module:index.js
+|   |   |-- coaching
+|   |   |   +-- coachingService.js
+|   |   |       |-- module:coachingService.js
+|   |   |       |-- class:CoachingService [internal]
+|   |   |       |-- method: constructor()
+|   |   |       |-- method: processMessage(sessionId, message, context = {})
+|   |   |       |-- method: analyzeDiagram(sessionId, diagram)
+|   |   |       |-- method: _logInteraction(sessionId, input, output)
 |   |   |-- diagram
-|   |   |   +-- diagramService.js
-|   |   |       |-- module:diagramService.js
-|   |   |       |-- fn: extractMermaidCode(text) [internal]
-|   |   |       |-- fn: getPromptForDiagramType(diagramType, title, customPrompt) [internal]
-|   |   |       |-- method: extractMermaidCode(text)
-|   |   |       |-- method: getPromptForDiagramType(diagramType, title, customPrompt)
+|   |   |   |-- diagramAnalyzer.js
+|   |   |   |   |-- module:diagramAnalyzer.js
+|   |   |   |   |-- class:DiagramAnalyzer [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: analyzeDiagram(nodes, edges, type)
+|   |   |   |   |-- method: _analyzeSecurityConcerns(nodes, edges)
+|   |   |   |   |-- method: _analyzeScalability(nodes)
+|   |   |   |   |-- method: _analyzeReliability(nodes, edges)
+|   |   |   |   |-- method: _generateSuggestions(nodes, edges, type)
+|   |   |   |-- diagramEvaluationService.js
+|   |   |   |   |-- module:diagramEvaluationService.js
+|   |   |   |   |-- class:DiagramEvaluationService [internal]
+|   |   |   |   |-- method: evaluateDiagram(diagram, type, context)
+|   |   |   |   |-- method: _evaluateCriterion(diagram, criterion, config, context)
+|   |   |   |   |-- method: _analyzeComponents(diagram)
+|   |   |   |   |-- method: _identifyPatterns(diagram)
+|   |   |   |   |-- method: _storeEvaluation(evaluation, context)
+|   |   |   |   |-- method: _normalizeDiagram(diagram, type)
+|   |   |   |   |-- method: _calculateOverallScore(scores)
+|   |   |   |-- diagramManager.js
+|   |   |   |   |-- module:diagramManager.js
+|   |   |   |   |-- class:DiagramManager [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: createDiagram(type, initialData)
+|   |   |   |   |-- method: updateDiagram(diagramId, updates)
+|   |   |   |   |-- method: _initializeComponents(type, data)
+|   |   |   |   |-- method: _generateMermaid(type, components)
+|   |   |   |   |-- method: _mergeComponents(existing, updates)
+|   |   |   |   |-- method: map(item => {
+            if (item.id)
+|   |   |   |   |-- method: getDiagram(diagramId)
+|   |   |   |   |-- method: deleteDiagram(diagramId)
+|   |   |   |-- diagramService.js
+|   |   |   |   |-- module:diagramService.js
+|   |   |   |   |-- class:DiagramService [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: generateDiagram(sessionId, type, context = {})
+|   |   |   |   |-- method: evaluateDiagram(diagram, sessionId, type)
+|   |   |   |   |-- method: extractMermaidCode(text)
+|   |   |   |   |-- method: _buildGenerationPrompt(type, problem, context)
+|   |   |   +-- templates.js
+|   |   |       |-- module:templates.js
 |   |   |-- engines
 |   |   |   |-- baseEngine.js
 |   |   |   |   |-- module:baseEngine.js
@@ -533,6 +641,13 @@
 |   |   |   |   |-- method: generateDiagram(sessionId, diagramType, options = {})
 |   |   |   |   |-- method: _getFallbackDiagram(type)
 |   |   |   |   |-- method: evaluateDesign(sessionId, options = {})
+|   |   |   |-- coachingEngine.js
+|   |   |   |   |-- module:coachingEngine.js
+|   |   |   |   |-- class:CoachingEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: processMessage(sessionId, message, options = {})
+|   |   |   |   |-- method: startSession(userId, contentId, options = {})
+|   |   |   |   |-- method: _shouldEvaluateSkills(message, response)
 |   |   |   |-- graderEngine.js
 |   |   |   |   |-- module:graderEngine.js
 |   |   |   |   |-- class:GraderEngine extends BaseEngine [internal]
@@ -573,19 +688,59 @@
 |   |   |       |-- method: formatResponse(patternKey, variables = {})
 |   |   |       |-- method: getAllPersonas()
 |   |   |-- evaluation
-|   |   |   +-- evaluationParser.js
+|   |   |   |-- evaluationParser.js
+|   |   |   |-- evaluationService.js
+|   |   |   |   |-- module:evaluationService.js
+|   |   |   |   |-- class:EvaluationService [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: evaluateSection(sessionId, section, content)
+|   |   |   |   |-- method: evaluateWorkbook(sessionId)
+|   |   |   |   |-- method: _calculateMetrics(section, content)
+|   |   |   |   |-- method: _calculateCompletion(section, metrics)
+|   |   |   |   |-- method: _generateFeedback(section, metrics)
+|   |   |   |   |-- method: _identifyImprovements(section, metrics)
+|   |   |   +-- workbookEvaluationService.js
+|   |   |       |-- module:workbookEvaluationService.js
+|   |   |       |-- class:WorkbookEvaluationService [internal]
+|   |   |       |-- method: constructor()
+|   |   |       |-- method: evaluateSection(sessionId, section, content)
+|   |   |       |-- method: evaluateProgress(sessionId)
+|   |   |       |-- method: _calculateOverallProgress(evaluations)
+|   |   |       |-- method: _generateRecommendations(evaluations)
 |   |   |-- knowledge
 |   |   |   |-- knowledgeService.js
 |   |   |   |   |-- module:knowledgeService.js
 |   |   |   |   |-- class:KnowledgeService [internal]
 |   |   |   |   |-- method: constructor()
-|   |   |   |   |-- method: initialize()
+|   |   |   |   |-- method: initializeVectorStore()
 |   |   |   |   |-- method: queryKnowledge(query, company = 'facebook')
 |   |   |   |   |-- method: _executeCommand(command, params = {})
 |   |   |   |   |-- method: _getPythonScript()
 |   |   |   +-- vector_store.py
 |   |   |       |-- fn: initialize_vector_store() [public]
 |   |   |       |-- fn: query_knowledge(query, company="facebook") [public]
+|   |   |-- progress
+|   |   |   +-- progressTrackingService.js
+|   |   |       |-- module:progressTrackingService.js
+|   |   |       |-- class:ProgressTrackingService [internal]
+|   |   |       |-- method: trackProgress(sessionId, userId)
+|   |   |       |-- method: getProgressTimeline(sessionId)
+|   |   |-- skills
+|   |   |   |-- skillEvaluationService.js
+|   |   |   |   |-- module:skillEvaluationService.js
+|   |   |   |   |-- class:SkillEvaluationService [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: evaluateResponse(category, skillName, response, context)
+|   |   |   |   |-- method: evaluateDesignSession(sessionData)
+|   |   |   |   |-- method: _buildEvaluationPrompt(skill, response, context)
+|   |   |   |   |-- method: _getAIEvaluation(prompt)
+|   |   |   |   |-- method: _generateSessionSummary(evaluations)
+|   |   |   +-- skillProgressService.js
+|   |   |       |-- module:skillProgressService.js
+|   |   |       |-- class:SkillProgressService [internal]
+|   |   |       |-- method: constructor()
+|   |   |       |-- method: updateProgress(userId, sessionId, evaluations)
+|   |   |       |-- method: getSkillRoadmap(userId)
 |   |   |-- utils
 |   |   |   +-- diagramUtils.js
 |   |   |       |-- module:diagramUtils.js
@@ -607,10 +762,19 @@
 |   |   +-- coaching.js
 |   |       |-- module:coaching.js
 |   |       |-- fn: logMessageProcessing(sessionId, message, systemPrompt, projectDetails) [internal]
+|   |       |-- fn: formatSystemPrompt(prompt) [internal]
+|   |-- tests
+|   |   +-- ai.test.js
 |   |-- utils
+|   |   |-- dbHealth.js
+|   |   |   |-- module:dbHealth.js
+|   |   |   |-- class:DatabaseHealthCheck [internal]
+|   |   |   |-- method: checkConnection()
+|   |   |   |-- method: ping()
 |   |   +-- logger.js
 |   |       |-- module:logger.js
 |   |-- app.js
+|   |   |-- module:app.js
 |   |-- index.js
 |   |   |-- module:index.js
 |   +-- testAnthropic.js

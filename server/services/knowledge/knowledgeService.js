@@ -1,48 +1,39 @@
-// server/services/knowledge/knowledgeService.js
-const fs = require('fs');
+const AIFactory = require('../ai/aiFactory');
+const aiConfig = require('../../config/aiConfig');
 const path = require('path');
-const { spawn } = require('child_process');
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+const fs = require('fs');
+
+const KNOWLEDGE_BASE_DIR = path.join(__dirname, '../../../data/knowledge_base');
+const VECTOR_DB_DIR = path.join(__dirname, '../../../data/chroma_db');
 
 class KnowledgeService {
   constructor() {
-    this.initialized = false;
-    this.pythonService = null;
+    this.aiService = AIFactory.createService(
+      aiConfig.defaultProvider, 
+      aiConfig[aiConfig.defaultProvider]
+    );
+    this.vectorStores = {};
   }
 
-  async initialize() {
-    if (this.initialized) return;
+  async initializeVectorStore() {
+    const companies = fs.readdirSync(KNOWLEDGE_BASE_DIR)
+      .filter(d => fs.statSync(path.join(KNOWLEDGE_BASE_DIR, d)).isDirectory());
     
-    try {
-      // Create Python script for vector store operations
-      const scriptPath = path.join(__dirname, 'vector_store.py');
-      if (!fs.existsSync(scriptPath)) {
-        fs.writeFileSync(scriptPath, this._getPythonScript());
+    for (const company of companies) {
+      const companyDir = path.join(KNOWLEDGE_BASE_DIR, company);
+      
+      // Check if documents exist
+      if (!fs.readdirSync(companyDir).some(f => f.endsWith('.md'))) {
+        console.log(`No markdown files found for ${company}`);
+        continue;
       }
       
-      // Start Python process
-      this.pythonService = spawn('python', [scriptPath]);
-      
-      // Handle output
-      this.pythonService.stdout.on('data', (data) => {
-        console.log(`Vector store: ${data}`);
-      });
-      
-      this.pythonService.stderr.on('data', (data) => {
-        console.error(`Vector store error: ${data}`);
-      });
-      
-      // Initialize the vector database
-      await this._executeCommand('initialize');
-      
-      this.initialized = true;
-      console.log('Knowledge base initialized successfully');
-    } catch (error) {
-      console.error('Error initializing knowledge base:', error);
+      // Create vector store directory
+      const companyVectorDir = path.join(VECTOR_DB_DIR, company);
+      // ... rest of vector store initialization
     }
   }
-  
+
   async queryKnowledge(query, company = 'facebook') {
     if (!this.initialized) await this.initialize();
     

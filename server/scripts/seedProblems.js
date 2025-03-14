@@ -35,7 +35,7 @@ const problems = [
 
 async function seedDatabase() {
   try {
-    const mongoUri = process.env.MONGO_URI || "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach";
+    const mongoUri = process.env.MONGODB_URI;
     
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');

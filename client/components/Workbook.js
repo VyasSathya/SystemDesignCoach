@@ -1,88 +1,56 @@
+import RealTimeFeedback from './RealTimeFeedback';
 import { useState, useEffect } from 'react';
 import { autoSaveWorkbook } from '../utils/workbookStorage';
-import { CheckCircle, AlertCircle } from 'react-feather';
 
 const Workbook = ({ sessionId, userId, initialData }) => {
-  const [saveStatus, setSaveStatus] = useState('idle');
+  const [currentSection, setCurrentSection] = useState('requirements');
   const [workbookData, setWorkbookData] = useState(initialData);
+  const [evaluations, setEvaluations] = useState({});
 
-  const handleWorkbookChange = async (newData) => {
-    console.log('Workbook changed:', newData);
+  const handleSectionChange = async (section, content) => {
+    const newData = {
+      ...workbookData,
+      [section]: content
+    };
     setWorkbookData(newData);
+
     try {
-      await autoSaveWorkbook(sessionId, newData, userId, (status) => {
-        console.log('Save status:', status);
-        setSaveStatus(status);
-      });
+      await autoSaveWorkbook(sessionId, newData);
     } catch (error) {
-      console.error('Auto-save error:', error);
-      setSaveStatus('error');
+      console.error('Save error:', error);
     }
   };
 
-  const handleManualSave = async () => {
-    console.log('Manual save triggered');
-    setSaveStatus('saving');
-    try {
-      await autoSaveWorkbook(sessionId, workbookData, userId, setSaveStatus);
-      console.log('Manual save completed');
-    } catch (error) {
-      console.error('Manual save error:', error);
-      setSaveStatus('error');
-    }
+  const handleFeedback = (section, feedback) => {
+    setEvaluations(prev => ({
+      ...prev,
+      [section]: feedback
+    }));
   };
-
-  // Debug logging
-  useEffect(() => {
-    console.log('Current save status:', saveStatus);
-  }, [saveStatus]);
 
   return (
-    <div>
-      <div className="fixed bottom-4 right-4 z-50">
-        {saveStatus === 'saving' && (
-          <div className="flex items-center bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            Saving...
-          </div>
-        )}
-        {saveStatus === 'saved' && (
-          <div className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Saved
-          </div>
-        )}
-        {saveStatus === 'error' && (
-          <div className="flex items-center bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            Save failed
-          </div>
-        )}
+    <div className="flex h-screen">
+      <div className="flex-1 p-4">
+        <WorkbookSection
+          section={currentSection}
+          content={workbookData[currentSection]}
+          onChange={(content) => handleSectionChange(currentSection, content)}
+        />
+        
+        <RealTimeFeedback
+          section={currentSection}
+          content={workbookData[currentSection]}
+          onFeedback={(feedback) => handleFeedback(currentSection, feedback)}
+        />
       </div>
 
-      <button
-        onClick={handleManualSave}
-        disabled={saveStatus === 'saving'}
-        className={`fixed bottom-4 left-4 z-50 px-4 py-2 rounded-lg shadow-lg flex items-center ${
-          saveStatus === 'saving' 
-            ? 'bg-gray-400 cursor-not-allowed' 
-            : 'bg-blue-600 hover:bg-blue-700'
-        } text-white`}
-      >
-        {saveStatus === 'saving' ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            Saving...
-          </>
-        ) : (
-          <>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Save
-          </>
-        )}
-      </button>
-
-      {/* Your existing workbook content */}
+      <div className="w-64 bg-gray-100 p-4">
+        <ProgressSidebar
+          evaluations={evaluations}
+          currentSection={currentSection}
+          onSectionChange={setCurrentSection}
+        />
+      </div>
     </div>
   );
 };

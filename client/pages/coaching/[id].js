@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import {
   ArrowLeft, Save, Send, RefreshCw, MessageSquare, CheckCircle, XCircle, Eye, Edit, 
   ClipboardList, Database, Code, Layout, BarChart, Shield, ChevronDown, ChevronUp
@@ -226,10 +228,6 @@ const CoachingSessionPage = () => {
       console.error("Invalid message:", message);
       return;
     }
-    if (!sessionId) {
-      console.error("No valid sessionId available");
-      return;
-    }
     
     setIsSending(true);
     try {
@@ -241,74 +239,45 @@ const CoachingSessionPage = () => {
       };
       setMessages(prev => [...prev, userMessage]);
 
-      let finalContextInfo = contextInfo || {};
-      if (!finalContextInfo.diagramContext && includeDiagram && currentDiagramState) {
-        finalContextInfo.diagramContext = currentDiagramState;
-      }
-      if (!finalContextInfo.requestDiagramSuggestions && requestDiagramSuggestions) {
-        finalContextInfo.requestDiagramSuggestions = true;
-      }
+      const response = await sendCoachingMessage(sessionId, message, contextInfo);
       
-      setIsTyping(true);
-      const response = await sendCoachingMessage(
-        sessionId,
-        message,
-        Object.keys(finalContextInfo).length > 0 ? finalContextInfo : null
-      );
-      
-      console.log("Message response:", response);
-      if (response && response.message) {
+      if (response?.message) {
+        // Log response details in a cleaner format
+        console.log("Processing coach response:", {
+          messageId: messages.length + 1,
+          role: response.message.role,
+          timestamp: response.message.timestamp,
+          hasDiagramSuggestions: !!response.diagramSuggestions
+        });
+
         const responseMessage = {
           id: messages.length + 1,
           role: response.message.role === 'coach' ? 'assistant' : response.message.role,
           content: response.message.content,
-          timestamp: response.message.timestamp || new Date().toISOString()
+          timestamp: response.message.timestamp
         };
+        
         setMessages(prev => [...prev, responseMessage]);
-        setSession(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            conversation: [
-              ...(prev.conversation || []),
-              userMessage,
-              {
-                role: response.message.role,
-                content: response.message.content,
-                timestamp: response.message.timestamp
-              }
-            ]
-          };
-        });
+        setSession(prev => ({
+          ...prev,
+          conversation: [
+            ...(prev.conversation || []),
+            userMessage,
+            {
+              role: response.message.role,
+              content: response.message.content,
+              timestamp: response.message.timestamp
+            }
+          ]
+        }));
+
         if (response.diagramSuggestions) {
           handleDiagramSuggestions(response.diagramSuggestions);
-        } else if (requestDiagramSuggestions) {
-          handleGetDiagramSuggestion();
         }
-      } else {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            role: 'assistant',
-            content: "I'm having trouble processing your request. Please try again.",
-            timestamp: new Date().toISOString()
-          }
-        ]);
       }
     } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          role: 'assistant',
-          content: "There was an error communicating with the coaching service. Please try again later.",
-          timestamp: new Date().toISOString()
-        }
-      ]);
+      console.error("Error handling message:", error);
     } finally {
-      setIsTyping(false);
       setIsSending(false);
     }
   };
@@ -770,6 +739,8 @@ const CoachingSessionPage = () => {
                   } ${msg.error ? 'border-red-300 text-red-600' : ''}`}
                 >
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
                     components={{
                       code({ node, inline, className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');

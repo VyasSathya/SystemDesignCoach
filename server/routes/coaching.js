@@ -8,7 +8,8 @@ const coachEngine = require('../services/engines/coachEngine');
 // Get all coaching problems
 router.get('/problems', auth, async (req, res) => {
   try {
-    const problems = await Problem.find({ type: 'coaching' });
+    // Load problems directly from the data file
+    const problems = require('../../data/problems');
     res.json({ success: true, problems });
   } catch (error) {
     console.error('Error fetching coaching problems:', error);
@@ -26,7 +27,7 @@ router.post('/sessions', auth, async (req, res) => {
     res.json({ success: true, session });
   } catch (error) {
     console.error('Error creating coaching session:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 

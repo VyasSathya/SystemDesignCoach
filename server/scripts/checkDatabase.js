@@ -3,8 +3,7 @@ const Workbook = require('../models/Workbook');
 
 async function checkDatabase() {
   try {
-    // Use your MongoDB URI
-    const mongoUri = process.env.MONGO_URI || "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach";
+    const mongoUri = process.env.MONGODB_URI;
     
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
@@ -27,6 +26,7 @@ async function checkDatabase() {
     mongoose.connection.close();
   } catch (error) {
     console.error('Error:', error);
+    process.exit(1);
   }
 }
 

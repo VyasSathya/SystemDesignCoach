@@ -1,0 +1,579 @@
+|-- client
+|   |-- components
+|   |   |-- coaching
+|   |   |   +-- TopicGuidedCoaching.js
+|   |   |       |-- module:TopicGuidedCoaching.js
+|   |   |       |-- fn: TopicGuidedCoaching({ currentTopic, onSendMessage, onGetMaterials }) [internal]
+|   |   |       |-- component:SYSTEM_DESIGN_TOPICS [internal]
+|   |   |       |-- component:TopicGuidedCoaching [internal]
+|   |   |-- diagram
+|   |   |   |-- NodeTypes
+|   |   |   |   |-- CacheNode.js
+|   |   |   |   |   |-- module:CacheNode.js
+|   |   |   |   |   |-- fn: CacheNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:CacheNode [internal]
+|   |   |   |   |-- ClientNode.js
+|   |   |   |   |   |-- module:ClientNode.js
+|   |   |   |   |   |-- fn: ClientNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:ClientNode [internal]
+|   |   |   |   |-- CustomNode.js
+|   |   |   |   |   |-- module:CustomNode.js
+|   |   |   |   |   |-- fn: CustomNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:CustomNode [internal]
+|   |   |   |   |-- DatabaseNode.js
+|   |   |   |   |   |-- module:DatabaseNode.js
+|   |   |   |   |   |-- fn: DatabaseNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:DatabaseNode [internal]
+|   |   |   |   |-- LoadBalancerNode.js
+|   |   |   |   |   |-- module:LoadBalancerNode.js
+|   |   |   |   |   |-- fn: LoadBalancerNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:LoadBalancerNode [internal]
+|   |   |   |   |-- QueueNode.js
+|   |   |   |   |   |-- module:QueueNode.js
+|   |   |   |   |   |-- fn: QueueNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:QueueNode [internal]
+|   |   |   |   +-- ServiceNode.js
+|   |   |   |       |-- module:ServiceNode.js
+|   |   |   |       |-- fn: ServiceNode({ data, isConnectable }) [internal]
+|   |   |   |       |-- component:ServiceNode [internal]
+|   |   |   |-- utils
+|   |   |   |   |-- conversion.js
+|   |   |   |   |   |-- module:conversion.js
+|   |   |   |   |   |-- fn: getNodeType(mermaidNodeDef) [internal]
+|   |   |   |   |   |-- fn: getNodeLabel(nodeText) [internal]
+|   |   |   |   |   |-- fn: mermaidToReactFlow(mermaidCode) [exported]
+|   |   |   |   |   |-- fn: reactFlowToMermaid({ nodes, edges }) [exported]
+|   |   |   |   |   |-- method: forEach(edge => {
+      const arrow = '-->'; // Use directed arrows
+      
+      if (edge.label)
+|   |   |   |   |   |-- component:MERMAID_NODE_TYPES [internal]
+|   |   |   |   +-- nodePresets.js
+|   |   |   |       |-- module:nodePresets.js
+|   |   |   |       |-- fn: createNode(type, position, label = '', notes = '') [exported]
+|   |   |   |       |-- fn: createEdge(sourceId, targetId, label = '') [exported]
+|   |   |   |       |-- fn: getNodeTypePalette() [exported]
+|   |   |   |       |-- component:NODE_TYPES [exported]
+|   |   |   |-- DiagramPanel.js
+|   |   |   |   |-- module:DiagramPanel.js
+|   |   |   |   |-- fn: DiagramPanel({
+  hideModes = false,
+  sessionId,
+  sessionType = 'coaching',
+  initialDiagram = null,
+  onClose,
+  onSave,
+  onRefresh,
+  onAiSuggest
+}) [internal]
+|   |   |   |   |-- fn: handleCustomRequest(e) [internal]
+|   |   |   |   |-- fn: onDragStart(event, nodeType) [internal]
+|   |   |   |   |-- fn: handleInsertNode(type) [internal]
+|   |   |   |   |-- component:MermaidRenderer [internal]
+|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |   |-- component:DiagramPanel [internal]
+|   |   |   |-- DiagramToolbar.js
+|   |   |   |   |-- module:DiagramToolbar.js
+|   |   |   |   |-- fn: DiagramToolbar() [internal]
+|   |   |   |   |-- fn: onDragStart(event, nodeType) [internal]
+|   |   |   |   |-- component:DiagramToolbar [internal]
+|   |   |   |-- ElementTypeIndicator.js
+|   |   |   |   |-- module:ElementTypeIndicator.js
+|   |   |   |   |-- fn: ElementTypeIndicator({ type, size = 'md', showLabel = false, className = '' }) [internal]
+|   |   |   |   |-- component:ElementTypeIndicator [internal]
+|   |   |   |-- MermaidRenderer.js
+|   |   |   |   |-- module:MermaidRenderer.js
+|   |   |   |   |-- fn: MermaidRenderer({ code, onError }) [internal]
+|   |   |   |   |-- fn: cleanup() [internal]
+|   |   |   |   |-- component:MermaidRenderer [internal]
+|   |   |   |-- ReactFlowDiagram.js
+|   |   |   |   |-- module:ReactFlowDiagram.js
+|   |   |   |   |-- fn: Flow({ 
+  initialNodes, 
+  initialEdges, 
+  onNodesChange, 
+  onEdgesChange, 
+  onConnect,
+  onDiagramUpdate 
+}) [internal]
+|   |   |   |   |-- fn: ReactFlowDiagramWithProvider(props) [internal]
+|   |   |   |   |-- method: map(n => {
+      if (n.id === selectedNode.id)
+|   |   |   |   |-- component:Flow [internal]
+|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   +-- SequenceDiagram.js
+|   |   |       |-- module:SequenceDiagram.js
+|   |   |       |-- fn: generateMermaidCode(nodes, edges) [internal]
+|   |   |       |-- fn: return() [internal]
+|   |   |       |-- fn: MessageEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  style = {},
+}) [internal]
+|   |   |       |-- fn: SequenceDiagram({ initialDiagram, onDiagramUpdate }) [internal]
+|   |   |       |-- fn: SequenceDiagramWrapped(props) [internal]
+|   |   |       |-- method: generateMermaidCode(nodes, edges)
+|   |   |       |-- method: forEach(participant => {
+    if (participant.type === 'actor')
+|   |   |       |-- component:ActorNode [internal]
+|   |   |       |-- component:ParticipantNode [internal]
+|   |   |       |-- component:LifelineNode [internal]
+|   |   |       |-- component:MessageEdge [internal]
+|   |   |       |-- component:SequenceDiagram [internal]
+|   |   |       |-- component:SequenceDiagramWrapped [internal]
+|   |   |-- evaluation
+|   |   |   +-- EvaluationSummary.js
+|   |   |       |-- module:EvaluationSummary.js
+|   |   |       |-- fn: EvaluationSummary({ evaluation, scores }) [internal]
+|   |   |       |-- fn: getScoreColor(score) [internal]
+|   |   |       |-- component:EvaluationSummary [internal]
+|   |   |-- CoachAgentInterface.js
+|   |   |   |-- module:CoachAgentInterface.js
+|   |   |   |-- fn: getDefaultSuggestions(currentPage) [internal]
+|   |   |   |-- fn: CoachAgentInterface({ isOpen, onClose, currentPage, currentData }) [internal]
+|   |   |   |-- fn: getCoachContext() [internal]
+|   |   |   |-- component:CoachAgentInterface [internal]
+|   |   |-- ConciseModeToggle.js
+|   |   |   |-- module:ConciseModeToggle.js
+|   |   |   |-- fn: ConciseModeToggle({ isEnabled, onToggle }) [internal]
+|   |   |   |-- component:ConciseModeToggle [internal]
+|   |   |-- ExperienceLevelSelector.js
+|   |   |   |-- module:ExperienceLevelSelector.js
+|   |   |   |-- fn: ExperienceLevelSelector({ currentLevel, onLevelChange }) [internal]
+|   |   |   |-- component:ExperienceLevelSelector [internal]
+|   |   |-- MermaidToolbar.js
+|   |   |   |-- module:MermaidToolbar.js
+|   |   |   |-- fn: ComponentButton({ icon, label, snippet, onInsert }) [internal]
+|   |   |   |-- fn: MermaidToolbar({ onInsert }) [internal]
+|   |   |   |-- component:ComponentButton [internal]
+|   |   |   |-- component:MermaidToolbar [internal]
+|   |   |-- MetricCard.js
+|   |   |   |-- module:MetricCard.js
+|   |   |   |-- fn: MetricCard({ title, value, icon, iconBgColor, progress, subtext }) [internal]
+|   |   |   |-- component:MetricCard [internal]
+|   |   |-- Sidebar.js
+|   |   |   |-- module:Sidebar.js
+|   |   |   |-- fn: Sidebar({ activeTab }) [internal]
+|   |   |   |-- component:Sidebar [internal]
+|   |   |-- SimpleFlow.js
+|   |   |   |-- module:SimpleFlow.js
+|   |   |   |-- fn: Flow() [internal]
+|   |   |   |-- fn: SimpleFlowWithProvider() [internal]
+|   |   |   |-- method: Flow()
+|   |   |   |-- method: SimpleFlowWithProvider()
+|   |   |   |-- component:Flow [internal]
+|   |   |   |-- component:SimpleFlowWithProvider [exported]
+|   |   +-- SystemDesignDiagram.tsx
+|   |       |-- module:SystemDesignDiagram.tsx
+|   |-- contexts
+|   |   +-- AuthContext.js
+|   |       |-- module:AuthContext.js
+|   |       |-- fn: AuthProvider({ children }) [exported]
+|   |       |-- fn: logout() [internal]
+|   |       |-- fn: useAuth() [exported]
+|   |       |-- component:AuthContext [internal]
+|   |       |-- component:AuthProvider [exported]
+|   |-- pages
+|   |   |-- api
+|   |   |   +-- mock
+|   |   |       +-- coaching
+|   |   |           |-- [id].js
+|   |   |           |   |-- module:[id].js
+|   |   |           |   |-- fn: handler(req, res) [internal]
+|   |   |           |   |-- method: handler(req, res)
+|   |   |           +-- message.js
+|   |   |               |-- module:message.js
+|   |   |               |-- fn: handler(req, res) [internal]
+|   |   |               |-- method: handler(req, res)
+|   |   |-- auth
+|   |   |   |-- login.js
+|   |   |   |   |-- module:login.js
+|   |   |   |   |-- fn: Login() [internal]
+|   |   |   |   |-- method: Login()
+|   |   |   |   |-- component:Login [exported]
+|   |   |   +-- register.js
+|   |   |       |-- module:register.js
+|   |   |       |-- fn: Register() [internal]
+|   |   |       |-- method: Register()
+|   |   |       |-- component:Register [exported]
+|   |   |-- coaching
+|   |   |   |-- [id].js
+|   |   |   |   |-- module:[id].js
+|   |   |   |   |-- fn: handleClickOutside(event) [internal]
+|   |   |   |   |-- fn: CoachingSessionPage() [internal]
+|   |   |   |   |-- fn: setActiveDiagramTab(tabId) [internal]
+|   |   |   |   |-- fn: updateFormData(section, data) [internal]
+|   |   |   |   |-- fn: detectCurrentTopic(conversation) [internal]
+|   |   |   |   |-- fn: handleDiagramSuggestions(suggestions) [internal]
+|   |   |   |   |-- fn: handleAcceptSuggestions() [internal]
+|   |   |   |   |-- fn: handleDiscardSuggestions() [internal]
+|   |   |   |   |-- fn: handleDiagramUpdate(diagramData) [internal]
+|   |   |   |   |-- fn: renderDiagramEditor() [internal]
+|   |   |   |   |-- fn: getActiveWorkbookComponent() [internal]
+|   |   |   |   |-- method: handleClickOutside(event)
+|   |   |   |   |-- method: code({ node, inline, className, children, ...props })
+|   |   |   |   |-- component:MermaidRenderer [internal]
+|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |   |-- component:SequenceDiagram [internal]
+|   |   |   |   |-- component:CoachingSessionPage [internal]
+|   |   |   +-- index.js
+|   |   |       |-- module:index.js
+|   |   |       |-- fn: CoachingIndexPage() [internal]
+|   |   |       |-- method: CoachingIndexPage()
+|   |   |       |-- component:CoachingIndexPage [exported]
+|   |   |-- interviews
+|   |   |   |-- results
+|   |   |   |   +-- [id].js
+|   |   |   |       |-- module:[id].js
+|   |   |   |       |-- fn: InterviewResultsPage() [internal]
+|   |   |   |       |-- fn: getScoreColor(score) [internal]
+|   |   |   |       |-- fn: getScoreIcon(score) [internal]
+|   |   |   |       |-- method: InterviewResultsPage()
+|   |   |   |       |-- component:InterviewResultsPage [exported]
+|   |   |   |-- [id].js
+|   |   |   |   |-- module:[id].js
+|   |   |   |   |-- fn: InterviewPage() [internal]
+|   |   |   |   |-- fn: updateTimeRemaining() [internal]
+|   |   |   |   |-- fn: formatTime(ms) [internal]
+|   |   |   |   |-- method: InterviewPage()
+|   |   |   |   |-- component:InterviewPage [exported]
+|   |   |   +-- index.js
+|   |   |       |-- module:index.js
+|   |   |       |-- fn: InterviewsPage() [internal]
+|   |   |       |-- fn: openProblemDetails(problem) [internal]
+|   |   |       |-- fn: closeProblemDetails() [internal]
+|   |   |       |-- method: InterviewsPage()
+|   |   |       |-- component:InterviewsPage [exported]
+|   |   |-- _app.js
+|   |   |   |-- module:_app.js
+|   |   |   |-- fn: MyApp({ Component, pageProps }) [exported]
+|   |   |   |-- method: MyApp({ Component, pageProps })
+|   |   |-- APIDesignPage.js
+|   |   |   |-- module:APIDesignPage.js
+|   |   |   |-- fn: EnhancedAPIDesignPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: addAPI() [internal]
+|   |   |   |-- fn: removeAPI(id) [internal]
+|   |   |   |-- fn: updateAPI(id, field, value) [internal]
+|   |   |   |-- fn: toggleExpand(id) [internal]
+|   |   |   |-- fn: addRequestParam(apiId) [internal]
+|   |   |   |-- fn: removeRequestParam(apiId, paramId) [internal]
+|   |   |   |-- fn: updateRequestParam(apiId, paramId, field, value) [internal]
+|   |   |   |-- fn: updateApiType(type) [internal]
+|   |   |   |-- component:EnhancedAPIDesignPage [internal]
+|   |   |-- dashboard.js
+|   |   |   |-- module:dashboard.js
+|   |   |   |-- fn: Dashboard({ onSelectWorkbook }) [internal]
+|   |   |   |-- method: Dashboard({ onSelectWorkbook })
+|   |   |   |-- component:Dashboard [exported]
+|   |   |-- DataModelPage.js
+|   |   |   |-- module:DataModelPage.js
+|   |   |   |-- fn: EnhancedDataModelPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
+|   |   |   |-- component:EnhancedDataModelPage [internal]
+|   |   |-- index.js
+|   |   |   |-- module:index.js
+|   |   |   |-- fn: Home() [internal]
+|   |   |   |-- method: Home()
+|   |   |   |-- component:Home [exported]
+|   |   |-- ReliabilitySecurityPage.js
+|   |   |   |-- module:ReliabilitySecurityPage.js
+|   |   |   |-- fn: ReliabilitySecurityPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: addReliabilityTarget() [internal]
+|   |   |   |-- fn: updateReliabilityTarget(id, field, value) [internal]
+|   |   |   |-- fn: removeReliabilityTarget(id) [internal]
+|   |   |   |-- fn: addFailureScenario() [internal]
+|   |   |   |-- fn: updateFailureScenario(id, field, value) [internal]
+|   |   |   |-- fn: removeFailureScenario(id) [internal]
+|   |   |   |-- fn: updateAuthMethod(method, value) [internal]
+|   |   |   |-- fn: updateDataProtection(category, field, value) [internal]
+|   |   |   |-- fn: addSecurityMeasure() [internal]
+|   |   |   |-- fn: updateSecurityMeasure(id, field, value) [internal]
+|   |   |   |-- fn: removeSecurityMeasure(id) [internal]
+|   |   |   |-- fn: addComplianceRequirement() [internal]
+|   |   |   |-- fn: updateComplianceRequirement(id, field, value) [internal]
+|   |   |   |-- fn: removeComplianceRequirement(id) [internal]
+|   |   |   |-- fn: toggleSection(section) [internal]
+|   |   |   |-- component:ReliabilitySecurityPage [internal]
+|   |   |-- RequirementsPage.js
+|   |   |   |-- module:RequirementsPage.js
+|   |   |   |-- fn: EnhancedRequirementsPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: addFunctionalReq() [internal]
+|   |   |   |-- fn: removeFunctionalReq(id) [internal]
+|   |   |   |-- fn: updateFunctionalReq(id, text) [internal]
+|   |   |   |-- fn: toggleFunctionalReq(id) [internal]
+|   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
+|   |   |   |-- fn: updateConstraints(value) [internal]
+|   |   |   |-- fn: updateAssumptions(value) [internal]
+|   |   |   |-- component:EnhancedRequirementsPage [internal]
+|   |   |-- ScalingStrategyPage.js
+|   |   |   |-- module:ScalingStrategyPage.js
+|   |   |   |-- fn: EnhancedScalingStrategyPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: toggleSection(sectionId) [internal]
+|   |   |   |-- fn: updateFieldValue(sectionId, fieldId, value) [internal]
+|   |   |   |-- fn: toggleStrategy(strategyId) [internal]
+|   |   |   |-- fn: updateStrategyDescription(strategyId, description) [internal]
+|   |   |   |-- fn: addStrategyComponent(strategyId) [internal]
+|   |   |   |-- fn: updateStrategyComponent(strategyId, componentId, field, value) [internal]
+|   |   |   |-- fn: removeStrategyComponent(strategyId, componentId) [internal]
+|   |   |   |-- fn: addBottleneck() [internal]
+|   |   |   |-- fn: updateBottleneck(bottleneckId, field, value) [internal]
+|   |   |   |-- fn: removeBottleneck(bottleneckId) [internal]
+|   |   |   |-- method: map(strategy => {
+      if (strategy.id === strategyId)
+|   |   |   |-- component:EnhancedScalingStrategyPage [internal]
+|   |   |-- SystemArchitecturePage.js
+|   |   |   |-- module:SystemArchitecturePage.js
+|   |   |   |-- fn: EnhancedSystemArchitecturePage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleChange(e) [internal]
+|   |   |   |-- component:EnhancedSystemArchitecturePage [internal]
+|   |   |-- test-flow.js
+|   |   |   |-- module:test-flow.js
+|   |   |   |-- fn: TestPage() [internal]
+|   |   |   |-- method: TestPage()
+|   |   |   |-- component:SimpleFlow [internal]
+|   |   |   |-- component:TestPage [exported]
+|   |   +-- WorkbookLayout.js
+|   |       |-- module:WorkbookLayout.js
+|   |       |-- fn: getTabStyles(tabId, isActive) [internal]
+|   |       |-- fn: getMobileTabStyles(tabId, isActive) [internal]
+|   |       |-- fn: getCoachButtonStyles(tabId) [internal]
+|   |       |-- fn: getProgressBarStyles(tabId) [internal]
+|   |       |-- fn: getExportButtonStyles(tabId) [internal]
+|   |       |-- fn: getCoachPanelBgStyle(tabId) [internal]
+|   |       |-- fn: getCoachPanelTextStyle(tabId) [internal]
+|   |       |-- fn: getCoachInputFocusStyle(tabId) [internal]
+|   |       |-- fn: WorkbookLayout({ onBack, sessionId }) [internal]
+|   |       |-- fn: updateFormData(section, data) [internal]
+|   |       |-- fn: getActivePageComponent() [internal]
+|   |       |-- fn: handleSave() [internal]
+|   |       |-- component:WorkbookLayout [internal]
+|   |-- public
+|   |-- styles
+|   |-- utils
+|   |   +-- api.js
+|   |       |-- module:api.js
+|   |       |-- fn: createDefaultSession(id = 'default') [internal]
+|   |       |-- method: createDefaultSession(id = 'default')
+|   |-- next.config.js
+|   |   |-- module:next.config.js
+|   |   |-- method: rewrites()
+|   |-- postcss.config.js
+|   |   |-- module:postcss.config.js
+|   +-- tailwind.config.js
+|       |-- module:tailwind.config.js
+|-- data
+|   |-- knowledge_base
+|   |   +-- facebook
+|   |       |-- architecture
+|   |       |   +-- core_tech.md
+|   |       |-- design_questions
+|   |       |   |-- messenger.md
+|   |       |   |-- news_feed.md
+|   |       |   +-- photo_storage.md
+|   |       |-- evaluation_criteria
+|   |       |   +-- scoring_rubric.md
+|   |       +-- interview_format
+|   |           +-- standard_progression.md
+|   |-- persona
+|   |   |-- coachPersona.js
+|   |   |   |-- module:coachPersona.js
+|   |   |-- graderPersona.js
+|   |   |   |-- module:graderPersona.js
+|   |   +-- interviewerPersona.js
+|   |       |-- module:interviewerPersona.js
+|   |-- tempresults
+|   |   +-- 1
+|   +-- problems.js
+|       |-- module:problems.js
+|-- server
+|   |-- __pycache__
+|   |-- config
+|   |   +-- aiConfig.js
+|   |       |-- module:aiConfig.js
+|   |-- models
+|   |   |-- Evaluation.js
+|   |   |   |-- module:Evaluation.js
+|   |   |-- Interview.js
+|   |   |   |-- module:Interview.js
+|   |   |-- Problem.js
+|   |   |   |-- module:Problem.js
+|   |   |   |-- method: get(function()
+|   |   |   |-- method: pre('save', function(next)
+|   |   |-- Session.js
+|   |   |   |-- module:Session.js
+|   |   |   |-- method: get(function()
+|   |   |   |-- method: pre('save', function(next)
+|   |   +-- User.js
+|   |       |-- module:User.js
+|   |       |-- method: pre('save', async function(next)
+|   |-- routes
+|   |   |-- auth.js
+|   |   |   |-- module:auth.js
+|   |   |-- coaching.js
+|   |   |   |-- module:coaching.js
+|   |   |   |-- component:Problem [internal]
+|   |   |   |-- component:Interview [internal]
+|   |   |   |-- component:ClaudeService [internal]
+|   |   |   |-- component:PersonaService [internal]
+|   |   |-- grader.js
+|   |   |   |-- module:grader.js
+|   |   |-- interviews.js
+|   |   |   |-- module:interviews.js
+|   |   |   |-- fn: handleError(res, error, defaultMessage = 'An unexpected error occurred') [internal]
+|   |   |-- problems.js
+|   |   |   |-- module:problems.js
+|   |   |   |-- fn: loadProblems() [internal]
+|   |   |   |-- method: loadProblems()
+|   |   |-- sessions.js
+|   |   |   |-- module:sessions.js
+|   |   +-- users.js
+|   |       |-- module:users.js
+|   |-- scripts
+|   |   |-- seedProblems.js
+|   |   |   |-- fn: seedDatabase() [internal]
+|   |   |   |-- method: seedDatabase()
+|   |   +-- setupDatabase.js
+|   |       |-- fn: setupDatabase() [internal]
+|   |       |-- method: setupDatabase()
+|   |-- services
+|   |   |-- ai
+|   |   |   |-- base
+|   |   |   |   +-- AIService.js
+|   |   |   |       |-- module:AIService.js
+|   |   |   |       |-- class:AIService [internal]
+|   |   |   |       |-- method: sendMessage(messages, options = {})
+|   |   |   |       |-- method: generateResponse(messages, context, options = {})
+|   |   |   |       |-- method: generateContent(prompt, options = {})
+|   |   |   |-- prompts
+|   |   |   |   +-- grader.js
+|   |   |   |       |-- module:grader.js
+|   |   |   |-- aiFactory.js
+|   |   |   |   |-- module:aiFactory.js
+|   |   |   |   |-- class:AIFactory [internal]
+|   |   |   |   |-- method: createService(provider, config = {})
+|   |   |   |-- claudeService.js
+|   |   |   |   |-- module:claudeService.js
+|   |   |   |   |-- class:ClaudeService extends AIService [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: sendMessage(messages, options = {})
+|   |   |   |   |-- method: generateContent(prompt, options = {})
+|   |   |   +-- index.js
+|   |   |       |-- module:index.js
+|   |   |-- diagram
+|   |   |   +-- diagramService.js
+|   |   |       |-- module:diagramService.js
+|   |   |       |-- fn: extractMermaidCode(text) [internal]
+|   |   |       |-- fn: getPromptForDiagramType(diagramType, title, customPrompt) [internal]
+|   |   |       |-- method: extractMermaidCode(text)
+|   |   |       |-- method: getPromptForDiagramType(diagramType, title, customPrompt)
+|   |   |-- engines
+|   |   |   |-- baseEngine.js
+|   |   |   |   |-- module:baseEngine.js
+|   |   |   |   |-- class:BaseEngine [internal]
+|   |   |   |   |-- method: constructor(engineConfig = {})
+|   |   |   |   |-- method: processMessage(sessionId, message, options = {})
+|   |   |   |   |-- method: startSession(userId, contentId, options = {})
+|   |   |   |   |-- method: generateContent(sessionId, contentType, options = {})
+|   |   |   |-- coachEngine.js
+|   |   |   |   |-- module:coachEngine.js
+|   |   |   |   |-- class:CoachEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: processMessage(sessionId, message, options = {})
+|   |   |   |   |-- method: startSession(userId, problemId, options = {})
+|   |   |   |   |-- method: generateContent(sessionId, topic, options = {})
+|   |   |   |   |-- method: generateDiagram(sessionId, diagramType, options = {})
+|   |   |   |   |-- method: _getFallbackDiagram(type)
+|   |   |   |   |-- method: evaluateDesign(sessionId, options = {})
+|   |   |   |-- graderEngine.js
+|   |   |   |   |-- module:graderEngine.js
+|   |   |   |   |-- class:GraderEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: evaluateWorkbook(sessionId, workbookContent, options = {})
+|   |   |   |   |-- method: _extractScores(evaluationText)
+|   |   |   |   |-- method: provideFinalAssessment(interviewId, options = {})
+|   |   |   |   |-- method: _buildGraderPrompt(context)
+|   |   |   |   |-- method: _getDefaultGraderPrompt(context = {})
+|   |   |   |-- interviewEngine.js
+|   |   |   |   |-- module:interviewEngine.js
+|   |   |   |   |-- class:InterviewEngine extends BaseEngine [internal]
+|   |   |   |   |-- method: constructor(config = {})
+|   |   |   |   |-- method: startInterview(userId, problemId, options = {})
+|   |   |   |   |-- method: generateContent(sessionId, contentType, options = {})
+|   |   |   |   |-- method: generateDiagram(sessionId, options = {})
+|   |   |   |   |-- method: processResponse(interviewId, message, options = {})
+|   |   |   |   |-- method: finalizeInterview(interview)
+|   |   |   |   |-- method: _extractEntities(messages, currentStage)
+|   |   |   |   |-- method: _shouldAdvanceStage(conversation, currentStage, messageCount)
+|   |   |   |   |-- method: _getNextStage(currentStage)
+|   |   |   |   |-- component:BaseEngine [internal]
+|   |   |   |   |-- component:Interview [internal]
+|   |   |   |   |-- component:Problem [internal]
+|   |   |   +-- PersonaService.js
+|   |   |       |-- module:PersonaService.js
+|   |   |       |-- class:PersonaService [internal]
+|   |   |       |-- method: constructor()
+|   |   |       |-- method: initialize(config)
+|   |   |       |-- method: forEach(requiredId => {
+      if (!this.personas[requiredId])
+|   |   |       |-- method: setActivePersona(personaId)
+|   |   |       |-- method: setConciseMode(enabled)
+|   |   |       |-- method: getActivePersona()
+|   |   |       |-- method: getPersona(personaId)
+|   |   |       |-- method: getPageSuggestions(pageId)
+|   |   |       |-- method: getSystemPrompt(context = {})
+|   |   |       |-- method: formatResponse(patternKey, variables = {})
+|   |   |       |-- method: getAllPersonas()
+|   |   |-- evaluation
+|   |   |   +-- evaluationParser.js
+|   |   |-- knowledge
+|   |   |   |-- knowledgeService.js
+|   |   |   |   |-- module:knowledgeService.js
+|   |   |   |   |-- class:KnowledgeService [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: initialize()
+|   |   |   |   |-- method: queryKnowledge(query, company = 'facebook')
+|   |   |   |   |-- method: _executeCommand(command, params = {})
+|   |   |   |   |-- method: _getPythonScript()
+|   |   |   +-- vector_store.py
+|   |   |       |-- fn: initialize_vector_store() [public]
+|   |   |       |-- fn: query_knowledge(query, company="facebook") [public]
+|   |   +-- utils
+|   |       +-- diagramUtils.js
+|   |           |-- module:diagramUtils.js
+|   |           |-- fn: getDiagramTypeForStage(currentStage) [internal]
+|   |           |-- fn: generateSvgDiagram(entities, diagramType, title) [internal]
+|   |           |-- fn: generateArchitectureDiagram(entities, title) [internal]
+|   |           |-- fn: generateErDiagram(entities, title) [internal]
+|   |           |-- fn: generateApiDiagram(entities, title) [internal]
+|   |           |-- method: getDiagramTypeForStage(currentStage)
+|   |           |-- method: generateSvgDiagram(entities, diagramType, title)
+|   |           |-- method: generateArchitectureDiagram(entities, title)
+|   |           |-- method: generateErDiagram(entities, title)
+|   |           |-- method: generateApiDiagram(entities, title)
+|   |-- utils
+|   |-- config.py
+|   |-- index.js
+|   |   |-- module:index.js
+|   |-- requirements.txt
+|   |-- run.py
+|   |   |-- fn: health_check() [public]
+|   |   |-- fn: login() [public]
+|   |   |-- fn: get_me() [public]
+|   |   |-- fn: coaching_problems() [public]
+|   |   |-- fn: start_coaching_session(problemId) [public]
+|   +-- testAnthropic.js
+|       |-- fn: testAnthropic() [internal]
+|       |-- method: testAnthropic()
+|-- advanced_tree_structure.txt
+|-- all_source_code.txt
+|-- folders.txt
+|-- js_files.txt
+|-- md_files.txt
+|-- project_overview.txt
+|-- README.md
+|-- sysdesignsummarydata.txt
++-- tree_structure.txt

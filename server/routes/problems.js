@@ -1,49 +1,54 @@
-// server/routes/problems.js
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
+const Problem = require('../models/Problem');
+const logger = require('../utils/logger');
 
-const problemsDir = path.join(__dirname, '../../data/problems');
+// Cache for problems to avoid frequent DB queries
+let problemsCache = null;
+let lastCacheUpdate = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-function loadProblems() {
-  let problems = [];
+async function loadProblems() {
   try {
-    const files = fs.readdirSync(problemsDir);
-    files.forEach(file => {
-      const ext = path.extname(file).toLowerCase();
-      const filePath = path.join(problemsDir, file);
-      if (ext === '.md') {
-        const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n');
-        let title = file.replace('.md', '');
-        if (lines[0].startsWith('#')) {
-          title = lines[0].replace('#', '').trim();
-        }
-        problems.push({
-          id: file.replace('.md', ''),
-          title,
-          content,
-          difficulty: 'medium'
-        });
-      } else if (ext === '.json') {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        problems.push(data);
-      }
-    });
-    console.log(`Loaded ${problems.length} problems from ${problemsDir}.`);
+    if (problemsCache && lastCacheUpdate && (Date.now() - lastCacheUpdate) < CACHE_DURATION) {
+      return problemsCache;
+    }
+
+    const problems = await Problem.find({ active: true })
+      .select('id title difficulty category description tags')
+      .sort({ difficulty: 1, category: 1 })
+      .lean();
+
+    problemsCache = problems;
+    lastCacheUpdate = Date.now();
+    return problems;
   } catch (error) {
-    console.error("Error reading problem files:", error);
+    logger.error('Error loading problems:', error);
+    throw error;
   }
-  return problems;
 }
 
-router.get('/', (req, res) => {
-  const problems = loadProblems();
-  if (problems.length === 0) {
-    return res.status(404).json({ error: "No problems found" });
+router.get('/', async (req, res) => {
+  try {
+    const problems = await loadProblems();
+    res.json(problems);
+  } catch (error) {
+    logger.error('Failed to fetch problems:', error);
+    res.status(500).json({ error: 'Failed to fetch problems' });
   }
-  res.json(problems);
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const problem = await Problem.findOne({ id: req.params.id });
+    if (!problem) {
+      return res.status(404).json({ error: 'Problem not found' });
+    }
+    res.json(problem);
+  } catch (error) {
+    logger.error(`Failed to fetch problem ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Failed to fetch problem' });
+  }
 });
 
 module.exports = router;

@@ -4,9 +4,10 @@ const Interview = require('../../models/Interview');
 const Problem = require('../../models/Problem');
 const knowledgeService = require('../knowledge/knowledgeService');
 const PersonaService = require('./PersonaService');
+const path = require('path');
 
-// Correct path relative to coachEngine.js location
-const coachPersona = require('../../../data/persona/coachPersona');
+const coachPersona = require(path.join(__dirname, '../../../data/persona/coachPersona'));
+const problems = require(path.join(__dirname, '../../../data/problems'));
 
 const sessions = {};
 
@@ -161,9 +162,16 @@ class CoachEngine extends BaseEngine {
   
   async startSession(userId, problemId, options = {}) {
     try {
-      const problem = await Problem.findOne({ id: problemId });
-      if (!problem) throw new Error('Problem not found');
-      
+      const problem = problems.find(p => p.id === problemId);
+      if (!problem) {
+        throw new Error('Problem not found');
+      }
+
+      const persona = coachPersona.problems[problemId];
+      if (!persona) {
+        throw new Error('Persona configuration not found for problem');
+      }
+
       // Build dynamic problem context
       const problemContext = [
         `Project: ${problem.title}`,

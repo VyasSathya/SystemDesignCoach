@@ -168,4 +168,54 @@ export const startCoachingSession = async (problemId) => {
   }
 };
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+export const sendMessage = async (sessionId, message, context = {}) => {
+  const response = await fetch(`${API_BASE_URL}/ai/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sessionId, message, context }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to send message');
+  }
+  
+  return response.json();
+};
+
+export const analyzeDiagram = async (sessionId, diagram) => {
+  const response = await fetch(`${API_BASE_URL}/ai/analyze-diagram`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sessionId, diagram }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to analyze diagram');
+  }
+  
+  return response.json();
+};
+
+export const reviewCode = async (code, context = {}) => {
+  const response = await fetch(`${API_BASE_URL}/ai/review-code`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ code, context }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to review code');
+  }
+  
+  return response.json();
+};
+
 export default api;

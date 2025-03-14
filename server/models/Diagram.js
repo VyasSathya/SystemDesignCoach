@@ -1,49 +1,34 @@
 const mongoose = require('mongoose');
 
 const DiagramSchema = new mongoose.Schema({
-  userId: {
+  sessionId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Session',
     required: true
   },
-  sessionId: {
-    type: String,
+  workbookId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Workbook',
     required: true
   },
   type: {
     type: String,
-    enum: ['architecture', 'sequence', 'flowchart', 'er', 'component'],
-    default: 'architecture'
-  },
-  mermaidCode: {
-    type: String,
     required: true
   },
-  reactFlowData: {
-    type: mongoose.Schema.Types.Mixed
-  },
-  name: {
-    type: String,
-    default: 'System Design'
+  content: {
+    nodes: [mongoose.Schema.Types.Mixed],
+    edges: [mongoose.Schema.Types.Mixed]
   },
   version: {
     type: Number,
     default: 1
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
+}, {
+  timestamps: true
 });
 
-// Update the updatedAt timestamp before saving
-DiagramSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+DiagramSchema.index({ sessionId: 1 }, { name: 'diagram_session_id' });
+DiagramSchema.index({ workbookId: 1 }, { name: 'diagram_workbook_id' });
 
-module.exports = mongoose.model('Diagram', DiagramSchema);
+const Diagram = mongoose.model('Diagram', DiagramSchema);
+module.exports = Diagram;

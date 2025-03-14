@@ -5,7 +5,7 @@
 
 module.exports = [
     {
-      id: "urlShortener",
+      id: "url-shortener", // Changed to match coachPersona.js
       title: "URL Shortener Service",
       description: "Design a scalable URL shortener service similar to TinyURL or bit.ly. The service must generate unique short URLs that redirect to the original long URLs.",
       additionalInfo: "The service should support high-frequency URL creation and redirection, include URL analytics, abuse prevention, custom aliases, and expiration policies.",

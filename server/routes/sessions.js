@@ -2,26 +2,31 @@ const express = require('express');
 const Session = require('../models/Session');
 const Problem = require('../models/Problem');
 const User = require('../models/User');
+const Workbook = require('../models/Workbook');
 const { getAIService } = require('../services/ai');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
 // Create or update session
 router.post('/:problemId', async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { problemId } = req.params;
     const userId = req.user.id;
     const { messages, currentStage, diagram } = req.body;
     
-    // Find existing session or create new one
-    let session = await Session.findOne({ 
+    // Find or create session
+    let sessionDoc = await Session.findOne({ 
       userId, 
       problemId,
       completed: false
-    });
+    }).session(session);
     
-    if (!session) {
-      session = new Session({
+    if (!sessionDoc) {
+      sessionDoc = new Session({
         userId,
         problemId,
         messages: [],
@@ -30,21 +35,50 @@ router.post('/:problemId', async (req, res) => {
     }
     
     // Update session data
-    if (messages) session.messages = messages;
-    if (currentStage !== undefined) session.currentStage = currentStage;
-    if (diagram) session.diagram = diagram;
+    if (messages) sessionDoc.messages = messages;
+    if (currentStage !== undefined) sessionDoc.currentStage = currentStage;
     
-    await session.save();
+    // Create or update associated workbook
+    let workbook = await Workbook.findOne({ sessionId: sessionDoc._id }).session(session);
+    if (!workbook) {
+      workbook = new Workbook({
+        sessionId: sessionDoc._id,
+        userId,
+        diagram
+      });
+    } else if (diagram) {
+      workbook.diagram = diagram;
+    }
+    
+    await workbook.save({ session });
+    sessionDoc.workbook = workbook._id;
+    await sessionDoc.save({ session });
     
     // Update user progress
-    const user = await User.findById(userId);
-    await user.updateProgress(session);
-    await user.save();
+    const user = await User.findById(userId).session(session);
+    await user.updateProgress(sessionDoc);
     
-    res.json({ session });
+    if (!user.activeSessions.includes(sessionDoc._id)) {
+      user.activeSessions.push(sessionDoc._id);
+    }
+    if (!user.workbooks.includes(workbook._id)) {
+      user.workbooks.push(workbook._id);
+    }
+    
+    await user.save({ session });
+    await session.commitTransaction();
+    
+    res.json({ 
+      session: sessionDoc,
+      workbook,
+      progress: user.progress
+    });
   } catch (error) {
-    console.error('Update session error:', error);
+    await session.abortTransaction();
+    logger.error('Update session error:', error);
     res.status(500).json({ error: 'Failed to update session' });
+  } finally {
+    session.endSession();
   }
 });
 
