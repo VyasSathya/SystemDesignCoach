@@ -66,9 +66,12 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email); // Debug log
     
     // Find user by email
     const user = await User.findOne({ email });
+    console.log('User found:', user ? 'yes' : 'no'); // Debug log
+    
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -78,6 +81,8 @@ router.post('/login', async (req, res) => {
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match:', isMatch); // Debug log
+    
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -92,6 +97,10 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Update last login
+    user.lastLoginAt = new Date();
+    await user.save();
+
     res.json({
       success: true,
       token,
@@ -104,7 +113,7 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error); // Detailed error log
     res.status(500).json({
       success: false,
       error: 'An error occurred during login'

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 async function checkConnection() {
   try {
-    const mongoUri = process.env.MONGO_URI || "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach";
+    const mongoUri = process.env.MONGODB_URI;
     
     console.log('Attempting to connect to MongoDB...');
     await mongoose.connect(mongoUri);
@@ -17,7 +17,7 @@ async function checkConnection() {
     await mongoose.connection.db.admin().serverStatus();
     console.log('Server status check passed');
     
-    mongoose.connection.close();
+    await mongoose.connection.close();
   } catch (error) {
     console.error('Connection error details:', {
       name: error.name,
@@ -29,4 +29,4 @@ async function checkConnection() {
   }
 }
 
-checkConnection();
+module.exports = checkConnection;

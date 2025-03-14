@@ -25,13 +25,17 @@ export default function Login() {
     setIsSubmitting(true);
     
     try {
+      console.log('Attempting login with:', email); // Debug log
       const result = await login(email, password);
+      console.log('Login result:', result); // Debug log
+      
       if (result.success) {
         router.push('/dashboard');
       } else {
         setError(result.error || 'Login failed');
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError(error.message || 'An error occurred during login');
     } finally {
       setIsSubmitting(false);

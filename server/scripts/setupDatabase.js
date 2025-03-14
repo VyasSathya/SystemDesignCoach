@@ -1,11 +1,9 @@
-// server/scripts/setupDatabase.js
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
 async function setupDatabase() {
   try {
-    // Hardcoded MongoDB URI - replace with your actual MongoDB URI
-    const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/systemdesigncoach";
+    const mongoUri = process.env.MONGODB_URI;
     
     // Connect to MongoDB
     await mongoose.connect(mongoUri);
@@ -28,23 +26,12 @@ async function setupDatabase() {
     } else {
       console.log('Admin user already exists');
     }
-    
-    // List collections and counts
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('Collections in database:');
-    
-    for (const collection of collections) {
-      const count = await mongoose.connection.db.collection(collection.name).countDocuments();
-      console.log(`- ${collection.name}: ${count} documents`);
-    }
-    
-    // Disconnect
-    await mongoose.disconnect();
-    console.log('Database setup completed');
+
+    await mongoose.connection.close();
   } catch (error) {
-    console.error('Error setting up database:', error);
-    console.error(error.stack);
+    console.error('Error:', error);
+    process.exit(1);
   }
 }
 
-setupDatabase();
+module.exports = setupDatabase;

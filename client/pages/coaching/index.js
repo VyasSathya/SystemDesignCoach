@@ -5,22 +5,33 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ArrowRight, School } from 'lucide-react';
 import Sidebar from '../../components/Sidebar';
 import { getCoachingProblems, startCoachingSession } from '../../utils/api';
+import Cookies from 'js-cookie';
 
 export default function CoachingIndexPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startingSession, setStartingSession] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    console.log('Coaching page auth state:', {
+      isAuthenticated,
+      isLoading,
+      hasCookie: !!Cookies.get('auth_token'),
+      cookieValue: Cookies.get('auth_token')?.substring(0, 20) + '...'
+    });
+    
+    if (!isLoading && !isAuthenticated) {
+      console.log('Redirecting to login - not authenticated');
       router.push('/auth/login');
       return;
     }
 
-    fetchProblems();
-  }, [isAuthenticated, router]);
+    if (isAuthenticated) {
+      fetchProblems();
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const fetchProblems = async () => {
     try {
@@ -47,17 +58,18 @@ export default function CoachingIndexPage() {
   const handleStartSession = async (problemId) => {
     try {
       setStartingSession(true);
-      const response = await startCoachingSession(problemId);
+      // For debugging
+      console.log('Starting session for problem:', problemId);
+      console.log('startCoachingSession function:', startCoachingSession);
       
+      const response = await startCoachingSession(problemId);
       console.log('Start session response:', response);
       
-      // Check for different response formats
       if (response && response.session && response.session._id) {
         router.push(`/coaching/${response.session._id}`);
       } else if (response && response.id) {
         router.push(`/coaching/${response.id}`);
       } else if (response) {
-        // If we have any response, try to use it
         const id = response._id || response.sessionId || response.id || problemId;
         router.push(`/coaching/${id}`);
       } else {
@@ -65,6 +77,8 @@ export default function CoachingIndexPage() {
       }
     } catch (error) {
       console.error('Error starting coaching session:', error);
+      // Optionally, add user feedback here
+      alert('Failed to start coaching session. Please try again.');
     } finally {
       setStartingSession(false);
     }

@@ -1,39 +1,37 @@
 const mongoose = require('mongoose');
 
 const ProblemSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true
-  },
   title: {
     type: String,
-    required: true
-  },
-  type: {
-    type: String,
-    enum: ['interview', 'coaching', 'both'],
-    default: 'both'
-  },
-  difficulty: {
-    type: String,
-    enum: ['beginner', 'intermediate', 'advanced'],
     required: true
   },
   description: {
     type: String,
     required: true
   },
-  estimatedTime: {
-    type: Number,
+  type: {
+    type: String,
+    enum: ['coaching', 'interview', 'both'],
     required: true
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  difficulty: {
+    type: String,
+    enum: ['easy', 'medium', 'hard'],
+    required: true
+  },
+  estimatedTime: {
+    type: Number
+  },
+  requirements: {
+    functional: [String],
+    nonFunctional: [String]
   }
+}, {
+  timestamps: true
 });
 
-// Create and export the model
+// Create the model from the schema
 const Problem = mongoose.model('Problem', ProblemSchema);
+
+// Export the model
 module.exports = Problem;

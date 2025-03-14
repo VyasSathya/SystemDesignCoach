@@ -3,7 +3,10 @@ const BaseEngine = require('./baseEngine');
 const Interview = require('../../models/Interview');
 const Problem = require('../../models/Problem');
 const knowledgeService = require('../knowledge/knowledgeService');
-const PersonaService = require('./PersonaService'); // Ensure PersonaService is initialized
+const PersonaService = require('./PersonaService');
+
+// Correct path relative to coachEngine.js location
+const coachPersona = require('../../../data/persona/coachPersona');
 
 const sessions = {};
 
