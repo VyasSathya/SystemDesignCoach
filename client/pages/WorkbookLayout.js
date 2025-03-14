@@ -1,6 +1,6 @@
 // pages/WorkbookLayout.js
 import React, { useState } from 'react';
-import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X, User, Save, ChevronRight } from 'lucide-react';
+import { ClipboardList, Database, Code, Layout, BarChart, Shield, MessageSquare, LogOut, Menu, X, User, Save, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react';
 import ExperienceLevelSelector from '../components/ExperienceLevelSelector';
 import ConciseModeToggle from '../components/ConciseModeToggle';
 import { getEvaluation } from '../utils/api';
@@ -13,7 +13,6 @@ import DataModelPage from './DataModelPage';
 import SystemArchitecturePage from './SystemArchitecturePage';
 import ScalingStrategyPage from './ScalingStrategyPage';
 import ReliabilitySecurityPage from './ReliabilitySecurityPage';
-import CoachAgentInterface from '../components/CoachAgentInterface';
 
 // The color mapping function for tabs
 const getTabStyles = (tabId, isActive) => {
@@ -200,6 +199,7 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [workbookName, setWorkbookName] = useState('E-commerce Platform Design');
   const [workbookTags, setWorkbookTags] = useState('e-commerce, scalability, web');
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
   
   const [formData, setFormData] = useState({
     requirements: {},
@@ -231,19 +231,40 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
   const getActivePageComponent = () => {
     switch (activeTab) {
       case 'requirements':
-        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+        return <RequirementsPage 
+          data={formData.requirements} 
+          updateData={(data) => updateFormData('requirements', data)} 
+        />;
       case 'api':
-        return <APIDesignPage data={formData.api} updateData={(data) => updateFormData('api', data)} />;
+        return <APIDesignPage 
+          data={formData.api} 
+          updateData={(data) => updateFormData('api', data)} 
+        />;
       case 'data':
-        return <DataModelPage data={formData.data} updateData={(data) => updateFormData('data', data)} />;
+        return <DataModelPage 
+          data={formData.data} 
+          updateData={(data) => updateFormData('data', data)} 
+        />;
       case 'architecture':
-        return <SystemArchitecturePage data={formData.architecture} updateData={(data) => updateFormData('architecture', data)} />;
+        return <SystemArchitecturePage 
+          data={formData.architecture} 
+          updateData={(data) => updateFormData('architecture', data)} 
+        />;
       case 'scaling':
-        return <ScalingStrategyPage data={formData.scaling} updateData={(data) => updateFormData('scaling', data)} />;
+        return <ScalingStrategyPage 
+          data={formData.scaling} 
+          updateData={(data) => updateFormData('scaling', data)} 
+        />;
       case 'reliability':
-        return <ReliabilitySecurityPage data={formData.reliability} updateData={(data) => updateFormData('reliability', data)} />;
+        return <ReliabilitySecurityPage 
+          data={formData.reliability} 
+          updateData={(data) => updateFormData('reliability', data)} 
+        />;
       default:
-        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+        return <RequirementsPage 
+          data={formData.requirements} 
+          updateData={(data) => updateFormData('requirements', data)} 
+        />;
     }
   };
   
@@ -291,12 +312,20 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
     setShowCoach(true);
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setShowSaveModal(false);
-    }, 1200);
+  const handleSave = async () => {
+    console.log('Save button clicked');
+    if (!sessionId || !workbookData) {
+      console.error('Missing required data for save');
+      return;
+    }
+    
+    try {
+      setSaveStatus('saving');
+      await autoSaveWorkbook(sessionId, workbookData, userId, setSaveStatus);
+    } catch (error) {
+      console.error('Save error:', error);
+      setSaveStatus('error');
+    }
   };
   
   return (
@@ -336,34 +365,6 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
                   </div>
                 </div>
                 <span className="text-sm text-gray-600">{progressPercent}%</span>
-              </div>
-
-              {/* Settings */}
-              <div className="flex items-center space-x-4">
-                {/* Concise Mode Toggle */}
-                <ConciseModeToggle 
-                  isEnabled={conciseMode}
-                  onToggle={setConciseMode}
-                />
-                
-                <div className="border-l border-gray-300 h-6"></div>
-                
-                {/* Experience Level */}
-                <ExperienceLevelSelector 
-                  currentLevel={userLevel}
-                  onLevelChange={setUserLevel}
-                />
-                
-                <div className="border-l border-gray-300 h-6"></div>
-                
-                {/* Save Button */}
-                <button 
-                  onClick={() => setShowSaveModal(true)}
-                  className="flex items-center px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  <Save size={14} className="mr-1" />
-                  Save
-                </button>
               </div>
             </div>
             
@@ -609,13 +610,27 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center"
+                className={`px-4 py-2 rounded flex items-center ${
+                  saveStatus === 'error' 
+                    ? 'bg-red-600 hover:bg-red-700' 
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                } text-white`}
                 disabled={isSaving}
               >
                 {isSaving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Saving...
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <CheckCircle size={16} className="mr-2 text-green-300" />
+                    Saved
+                  </>
+                ) : saveStatus === 'error' ? (
+                  <>
+                    <AlertCircle size={16} className="mr-2" />
+                    Retry Save
                   </>
                 ) : (
                   <>

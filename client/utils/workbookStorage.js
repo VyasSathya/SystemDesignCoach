@@ -1,6 +1,5 @@
 import { saveDiagram } from './api';
 
-// Debounce function to prevent too frequent saves
 const debounce = (func, wait) => {
   let timeout;
   return function executedFunction(...args) {
@@ -13,18 +12,25 @@ const debounce = (func, wait) => {
   };
 };
 
-export const saveWorkbookData = async (sessionId, workbookData, userId) => {
+export const saveWorkbookData = async (sessionId, workbookData, userId, onSaveStatus) => {
+  console.log('Saving workbook data:', { sessionId, userId });
+  
   if (!sessionId) {
+    console.error('Missing sessionId');
     throw new Error('Session ID is required');
   }
 
   try {
-    // Save diagram data separately using existing saveDiagram function
+    console.log('Setting save status to saving');
+    onSaveStatus?.('saving');
+
+    // Save diagram data separately
     if (workbookData.diagram) {
+      console.log('Saving diagram data');
       await saveDiagram(sessionId, workbookData.diagram);
     }
 
-    // Save workbook data
+    console.log('Sending workbook data to API');
     const response = await fetch(`/api/workbook/${sessionId}/save`, {
       method: 'POST',
       headers: {
@@ -41,16 +47,22 @@ export const saveWorkbookData = async (sessionId, workbookData, userId) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to save workbook data');
+      throw new Error(`Failed to save workbook data: ${response.statusText}`);
     }
 
-    console.log(`Workbook saved successfully at ${new Date().toISOString()}`);
-    return await response.json();
+    const result = await response.json();
+    console.log('Save successful:', result);
+    onSaveStatus?.('saved');
+    return result;
   } catch (error) {
-    console.error('Error saving workbook:', error);
+    console.error('Error in saveWorkbookData:', error);
+    onSaveStatus?.('error');
     throw error;
   }
 };
 
-// Create a debounced version for auto-save
-export const autoSaveWorkbook = debounce(saveWorkbookData, 3000);
+// Debounced version for auto-save
+export const autoSaveWorkbook = debounce((sessionId, workbookData, userId, onSaveStatus) => {
+  console.log('Auto-save triggered');
+  return saveWorkbookData(sessionId, workbookData, userId, onSaveStatus);
+}, 3000);
