@@ -726,18 +726,6 @@ const CoachingSessionPage = () => {
                 </button>
               </div>
             </div>
-            <button
-              onClick={handleSaveDiagram}
-              className={`flex items-center px-3 py-1 rounded text-sm ${
-                isSavingDiagram
-                  ? 'bg-gray-300 text-gray-700'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-              disabled={isSavingDiagram}
-            >
-              <Save className="h-4 w-4 mr-1" />
-              {isSavingDiagram ? 'Saving...' : 'Save Progress'}
-            </button>
           </div>
         </div>
       </header>
