@@ -1,21 +1,13 @@
-const winston = require('winston');
-
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    })
-  ]
-});
+const logger = {
+  info: (message, data = '') => {
+    console.log(`[INFO] ${message}`, data);
+  },
+  error: (message, error) => {
+    console.error(`[ERROR] ${message}`, error);
+  },
+  debug: (message, data = '') => {
+    console.debug(`[DEBUG] ${message}`, data);
+  }
+};
 
 module.exports = logger;

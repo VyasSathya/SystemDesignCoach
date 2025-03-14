@@ -13,7 +13,6 @@ export default function Login() {
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
   
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       router.push('/dashboard');
@@ -25,17 +24,20 @@ export default function Login() {
     setError('');
     setIsSubmitting(true);
     
-    const result = await login(email, password);
-    
-    if (result.success) {
-      router.push('/dashboard');
-    } else {
-      setError(result.error);
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Login failed');
+      }
+    } catch (error) {
+      setError(error.message || 'An error occurred during login');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
-  
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">

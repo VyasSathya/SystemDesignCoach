@@ -1,114 +1,112 @@
-// server/routes/coaching.js
 const express = require('express');
 const router = express.Router();
 const Problem = require('../models/Problem');
-const Interview = require('../models/Interview');
-const ClaudeService = require('../services/ai/claudeService');
-const coachEngine = require('../services/engines/coachEngine');
-const PersonaService = require('../services/engines/PersonaService');
-const diagramService = require('../services/diagram/diagramService');
+const logger = require('../utils/logger');
 
-// In-memory session store for development/fallback
-const sessions = {};
-
-// Get all coaching problems
+// Get coaching problems
 router.get('/problems', async (req, res) => {
-  console.log('GET request for coaching problems');
   try {
-    const problems = await Problem.find({ $or: [{ type: 'coaching' }, { type: 'both' }] });
-    if (problems && problems.length > 0) {
-      const formatted = problems.map(p => ({
-        id: p.id,
-        title: p.title,
-        difficulty: p.difficulty,
-        description: p.description,
-        estimatedTime: p.estimatedTime
-      }));
-      return res.json(formatted);
+    // Find all problems that are either type 'coaching' or 'both'
+    const problems = await Problem.find({
+      $or: [
+        { type: 'coaching' },
+        { type: 'both' }
+      ]
+    });
+
+    // If no problems found in DB, return default problems
+    if (!problems || problems.length === 0) {
+      const defaultProblems = [
+        {
+          id: "distributed-cache",
+          title: "Design a Distributed Cache",
+          difficulty: "intermediate",
+          description: "Design a distributed caching system that can scale to handle high traffic and provide fast access to frequently used data.",
+          estimatedTime: 45,
+          type: "coaching"
+        },
+        {
+          id: "url-shortener",
+          title: "Design a URL Shortener",
+          difficulty: "intermediate",
+          description: "Create a service that takes long URLs and creates unique short URLs, similar to TinyURL or bit.ly.",
+          estimatedTime: 40,
+          type: "coaching"
+        },
+        {
+          id: "chat-system",
+          title: "Design a Real-time Chat System",
+          difficulty: "advanced",
+          description: "Design a scalable real-time chat system that supports both one-on-one and group messaging.",
+          estimatedTime: 50,
+          type: "coaching"
+        }
+      ];
+
+      logger.info('Returning default problems as no problems found in DB');
+      return res.json({ problems: defaultProblems });
     }
-    console.log('No problems found in DB, falling back to markdown/JSON...');
-    const fallbackRoute = require('./problems');
-    fallbackRoute(req, res);
+
+    logger.info(`Found ${problems.length} problems`);
+    return res.json({ problems });
+
   } catch (error) {
-    console.error('Error fetching coaching problems:', error);
-    res.status(500).json({ error: 'Failed to fetch coaching problems' });
+    logger.error('Error fetching coaching problems:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch coaching problems',
+      details: error.message 
+    });
   }
 });
 
-// Start a new coaching session
+// Start new coaching session
 router.post('/start/:problemId', async (req, res) => {
-  const { problemId } = req.params;
-  const { userId } = req.body || {};
   try {
-    // Try to use coachEngine to start the session
-    let session = null;
-    try {
-      if (coachEngine && userId) {
-        session = await coachEngine.startSession(userId, problemId);
-      }
-    } catch (engineError) {
-      console.warn('Error starting session with coachEngine:', engineError);
-    }
+    const { problemId } = req.params;
     
-    // Fallback to manual session creation if engine fails
-    if (!session) {
-      const problem = await Problem.findOne({ id: problemId }) || {};
-      const welcomeMessage = (problem.promptSequence && problem.promptSequence[0])
-        ? problem.promptSequence[0].question
-        : `Welcome to your ${problem.title || 'System Design'} session! Let's get started.`;
-      
-      session = {
-        id: problemId,
-        problem: {
-          id: problemId,
-          title: problem.title || 'System Design Problem',
-          description: problem.description || ''
-        },
-        conversation: [{
-          role: 'assistant',
-          content: welcomeMessage,
-          timestamp: new Date().toISOString()
-        }],
-        createdAt: new Date().toISOString()
-      };
-      
-      // Store session in memory
-      sessions[problemId] = session;
-      
-      // If we have a userId, try to store in database
-      if (userId) {
-        try {
-          const dbSession = new Interview({
-            userId,
-            problemId,
-            status: 'in_progress',
-            currentStage: 'introduction',
-            type: 'coaching',
-            conversation: [{
-              role: 'coach',
-              content: welcomeMessage,
-              timestamp: new Date().toISOString()
-            }]
-          });
-          await dbSession.save();
-          session = dbSession;
-        } catch (dbError) {
-          console.warn('Error saving session to database:', dbError);
-        }
-      }
-    }
+    // Find the problem in the database
+    const problem = await Problem.findOne({ id: problemId });
+    
+    // If problem not found, use default configuration
+    const problemConfig = problem || {
+      id: problemId,
+      title: 'System Design Problem',
+      description: 'Design a scalable system architecture.'
+    };
+    
+    const session = {
+      id: Date.now().toString(), // Generate a unique session ID
+      problem: {
+        id: problemConfig.id,
+        title: problemConfig.title,
+        description: problemConfig.description
+      },
+      conversation: [{
+        role: 'assistant',
+        content: `Welcome to the ${problemConfig.title} design challenge! We'll work together to create a robust system design. Let's start by discussing the core requirements. What do you think are the essential features this system should have?`,
+        timestamp: new Date().toISOString()
+      }],
+      createdAt: new Date().toISOString()
+    };
+
+    logger.info('Session created:', {
+      id: session.id,
+      problemTitle: session.problem.title,
+      timestamp: session.createdAt
+    });
     
     return res.status(201).json(session);
   } catch (error) {
-    console.error('Error starting coaching session:', error);
-    res.status(500).json({ error: 'Failed to start coaching session' });
+    logger.error('Error starting session:', error);
+    res.status(500).json({ error: 'Failed to start session' });
   }
 });
 
 // Get session by ID
 router.get('/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
-  console.log(`GET request for coaching session ${sessionId}`);
+  logger.info(`GET session request`, { sessionId });
+  
   try {
     // Look up the session in your database or in-memory
     let session = null;
@@ -155,175 +153,92 @@ router.get('/:sessionId', async (req, res) => {
       sessions[sessionId] = session;
     }
     
-    console.log(`Returning session for ${sessionId}`);
+    logger.info(`Session retrieved successfully`, { 
+      sessionId,
+      hasConversation: !!session?.conversation?.length
+    });
     res.json(session);
   } catch (error) {
-    console.error('Error in GET /:sessionId route:', error);
-    res.status(500).json({ 
-      error: 'Failed to get coaching session',
-      message: error.message
+    logger.error(`Error fetching session`, { 
+      sessionId, 
+      error: error.message 
     });
+    res.status(500).json({ error: 'Failed to get coaching session' });
   }
 });
 
-// Send message in session
+// Handle messages
 router.post('/:sessionId/message', async (req, res) => {
+  const { sessionId } = req.params;
+  const { message } = req.body;
+  const userId = req.user?.id; // Assuming you have auth middleware
+
+  logger.info('Message received', { sessionId, messageLength: message?.length });
+
   try {
-    const { sessionId } = req.params;
-    const { message, contextInfo } = req.body;
-    
-    console.log(`Message received for session ${sessionId}:`, message);
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ 
-        error: 'Message is required',
-        message: {
-          role: 'coach',
-          content: "I couldn't understand your message. Please try again.",
-          timestamp: new Date().toISOString()
-        }
-      });
-    }
-    
-    // Get session from database or memory
-    let session = null;
-    try {
-      if (sessionId.match(/^[0-9a-fA-F]{24}$/)) {
-        session = await Interview.findById(sessionId);
-      }
-      if (!session) {
-        session = await Interview.findOne({ id: sessionId });
-      }
-    } catch (findError) {
-      console.warn("Error finding session in database:", findError);
-    }
-    
-    // Use in-memory session if not found in database
+    // Find or create session
+    let session = await Session.findOne({ _id: sessionId });
     if (!session) {
-      session = sessions[sessionId];
-    }
-    
-    if (!session) {
-      return res.status(404).json({ 
-        error: 'Session not found',
-        message: {
-          role: 'coach',
-          content: "Session not found. Start a new session.",
-          timestamp: new Date().toISOString()
-        }
+      session = new Session({
+        userId,
+        problemId: req.body.problemId || 'default',
+        messages: []
       });
     }
-    
-    // Check if we can use the coach engine
-    let response = null;
-    try {
-      // Add user message to conversation
-      if (!session.conversation) {
-        session.conversation = [];
-      }
-      
-      session.conversation.push({
-        role: 'user',
-        content: message,
-        timestamp: new Date().toISOString()
-      });
-      
-      if (coachEngine) {
-        // Extract context information
-        const currentPage = contextInfo?.currentPage;
-        const currentSection = contextInfo?.currentSection;
-        const workbookContent = contextInfo?.workbookContent;
-        const userLevel = contextInfo?.userLevel;
-        const conciseMode = contextInfo?.conciseMode;
-        
-        // Process with coach engine
-        response = await coachEngine.processMessage(sessionId, message, {
-          currentPage,
-          currentSection,
-          workbookContent,
-          userLevel,
-          conciseMode
-        });
-      }
-    } catch (engineError) {
-      console.error("Error using coachEngine:", engineError);
-    }
-    
-    // If coachEngine fails, use Claude directly
-    if (!response) {
-      try {
-        // Create a fresh Claude instance with unique timestamp
-        const uniqueClaude = new ClaudeService({ timestamp: Date.now(), maxRetries: 5 });
-        const recentMessages = [{ role: 'user', content: message }];
-        
-        // Build system prompt from PersonaService if available
-        let systemPrompt = "You are a helpful System Design Coach.";
-        try {
-          const contextData = {
-            currentPage: contextInfo?.currentPage,
-            designData: { 
-              workbookContent: contextInfo?.workbookContent, 
-              currentSection: contextInfo?.currentSection 
-            }
-          };
-          
-          systemPrompt = PersonaService.getSystemPrompt(contextData);
-        } catch (personaError) {
-          console.warn('Error getting persona system prompt:', personaError);
-        }
-        
-        console.log("System Prompt (first 50 chars):", systemPrompt.substring(0, 50) + '...');
-        const aiResponse = await uniqueClaude.sendMessage(recentMessages, {
-          system: systemPrompt,
-          systemPrompt: systemPrompt,
-          temperature: 0.8,
-          conciseMode: contextInfo?.conciseMode
-        });
-        
-        console.log('Claude response received:', aiResponse ? aiResponse.substring(0, 50) + '...' : 'No response');
-        response = {
-          role: 'coach',
-          content: aiResponse,
-          timestamp: new Date().toISOString()
-        };
-      } catch (claudeError) {
-        console.error("Error using Claude directly:", claudeError);
-        response = {
-          role: 'coach',
-          content: "I'm having difficulty processing your request right now. Could you try again with a different question?",
-          timestamp: new Date().toISOString()
-        };
-      }
-    }
-    
-    // Add response to session
-    session.conversation.push(response);
-    
-    // Save to database if it's a database session
-    if (session.save) {
-      try {
-        await session.save();
-      } catch (saveError) {
-        console.warn("Error saving session to database:", saveError);
-      }
-    } else {
-      // Update in-memory session
-      sessions[sessionId] = session;
-    }
-    
-    // Send response
-    res.json({ message: response, diagramSuggestions: null });
-  } catch (error) {
-    console.error('Error processing message:', error);
-    res.status(500).json({ 
-      error: 'Failed to process message',
-      message: {
-        role: 'coach',
-        content: "There was an error processing your message. Please try again.",
-        timestamp: new Date().toISOString()
-      }
+
+    // Add user message
+    session.messages.push({
+      role: 'user',
+      content: message,
+      timestamp: new Date(),
+      metadata: { stage: req.body.stage || 0 }
     });
+
+    // Save session
+    await session.save();
+
+    // Process message and get AI response
+    const systemPrompt = await buildSystemPrompt(session);
+    const contextInfo = {
+      problemId: session.problem.id,
+      workbookContent: req.body.workbookContent || {},
+      currentSection: req.body.currentSection || ''
+    };
+
+    logger.coaching(sessionId, 'Processing message', {
+      systemPromptLength: systemPrompt.length
+    });
+
+    const response = await processMessage(message, systemPrompt, contextInfo);
+
+    // Add AI response to session
+    session.messages.push({
+      role: 'assistant',
+      content: response.content,
+      timestamp: new Date(),
+      metadata: { stage: req.body.stage || 0 }
+    });
+
+    // Save session again with AI response
+    await session.save();
+
+    logger.info('Message processed successfully', { sessionId });
+    res.json({ message: response });
+
+  } catch (error) {
+    logger.error('Message processing failed', {
+      sessionId,
+      error: error.message,
+      stack: error.stack
+    });
+    res.status(500).json({ error: 'Failed to process message' });
   }
 });
+
+function isGreeting(message) {
+  const greetings = ['hello', 'hi', 'hey', 'greetings'];
+  return greetings.some(g => message.toLowerCase().includes(g));
+}
 
 // Generate learning materials
 router.post('/:sessionId/materials', async (req, res) => {
@@ -410,79 +325,77 @@ router.post('/:sessionId/diagram', async (req, res) => {
 });
 
 // Save diagram
-router.post('/:sessionId/diagram/save', async (req, res) => {
+router.post('/api/coaching/:sessionId/diagram/save', async (req, res) => {
   try {
     const { sessionId } = req.params;
     const { diagram } = req.body;
-    
-    if (!diagram) {
-      return res.status(400).json({ error: 'Diagram data is required' });
-    }
-    
-    // Try to find the session
-    let session = null;
-    
-    try {
-      if (sessionId.match(/^[0-9a-fA-F]{24}$/)) {
-        session = await Interview.findById(sessionId);
-      }
-      if (!session) {
-        session = await Interview.findOne({ id: sessionId });
-      }
-    } catch (findError) {
-      console.warn("Error finding session in database:", findError);
-    }
-    
-    // Use in-memory session if not found in database
-    if (!session) {
-      session = sessions[sessionId];
-    }
-    
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    // Update diagram in session
-    if (!session.diagrams) {
-      session.diagrams = [];
-    }
-    
-    // Check if a diagram of this type already exists
-    const existingIndex = session.diagrams.findIndex(d => d.type === diagram.type);
-    
-    if (existingIndex >= 0) {
-      // Update existing diagram
-      session.diagrams[existingIndex] = {
-        ...session.diagrams[existingIndex],
-        mermaidCode: diagram.mermaidCode,
-        reactFlowData: diagram.reactFlowData,
-        updatedAt: new Date()
-      };
-    } else {
-      // Add new diagram
-      session.diagrams.push({
-        type: diagram.type || 'architecture',
-        mermaidCode: diagram.mermaidCode,
-        reactFlowData: diagram.reactFlowData,
-        name: diagram.name || 'System Design',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-    }
-    
-    // Save to database if it's a database session
-    if (session.save) {
-      await session.save();
-    } else {
-      // Update in-memory session
-      sessions[sessionId] = session;
-    }
-    
+    const userId = req.user.id; // Assuming you have authentication middleware
+
+    const diagramData = {
+      userId,
+      sessionId,
+      mermaidCode: diagram.mermaidCode,
+      reactFlowData: diagram.reactFlowData,
+      type: diagram.type || 'flowchart',
+      name: diagram.name || 'System Design',
+      version: diagram.version || 1
+    };
+
+    // Upsert the diagram
+    await Diagram.findOneAndUpdate(
+      { userId, sessionId },
+      diagramData,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error saving diagram:', error);
     res.status(500).json({ error: 'Failed to save diagram' });
   }
 });
+
+router.post('/api/coaching/:sessionId/next-step', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { currentStep, diagramData } = req.body;
+    const userId = req.user.id; // Assuming you have authentication middleware
+
+    // Save the current progress
+    await Diagram.findOneAndUpdate(
+      { userId, sessionId },
+      {
+        $set: {
+          currentStep,
+          mermaidCode: diagramData.mermaidCode,
+          reactFlowData: diagramData.reactFlowData,
+        }
+      },
+      { upsert: true }
+    );
+
+    // Determine the next step based on your workflow
+    const nextStep = await determineNextStep(sessionId, currentStep);
+
+    res.json({ 
+      success: true,
+      nextStep,
+      // Include any additional data needed for the next step
+    });
+  } catch (error) {
+    console.error('Error processing next step:', error);
+    res.status(500).json({ error: 'Failed to process next step' });
+  }
+});
+
+// Helper function to determine the next step
+async function determineNextStep(sessionId, currentStep) {
+  // Implement your logic to determine the next step
+  // This might involve checking the session type, progress, etc.
+  return {
+    step: currentStep + 1,
+    // Add any additional step-specific data
+  };
+}
 
 module.exports = router;

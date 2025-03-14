@@ -1,117 +1,60 @@
-// client/utils/api.js (with fixed createDefaultSession)
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-// Create an Axios instance with a base URL
-const API_URL = typeof window !== 'undefined' ? 
-  (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000') : 
-  'http://localhost:5000';
-
 const api = axios.create({
-  baseURL: API_URL,
-  timeout: 60000, // Increase timeout to 60 seconds
-  retries: 3,
-  retryDelay: 1000,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// Add retry logic to axios
-api.interceptors.response.use(null, async (error) => {
-  const { config } = error;
-  if (!config || !config.retries) return Promise.reject(error);
-  
-  config.retryCount = config.retryCount || 0;
-  
-  if (config.retryCount >= config.retries) {
-    return Promise.reject(error);
+// Add auth token to requests if it exists
+api.interceptors.request.use(config => {
+  const token = Cookies.get('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  
-  config.retryCount += 1;
-  console.log(`Retrying request (${config.retryCount}/${config.retries})`);
-  
-  // Wait before retrying
-  await new Promise(resolve => setTimeout(resolve, config.retryDelay));
-  return api(config);
+  return config;
 });
 
-// Attach the auth token to every request if present
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get('auth_token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Add response interceptor for better error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Log detailed error information
-    if (error.response) {
-      console.error('API Error Response:', {
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers,
-      });
-    } else if (error.request) {
-      console.error('API Error Request:', error.request);
-    } else {
-      console.error('API Error Message:', error.message);
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Helper to create a default session for development/fallback
-function createDefaultSession(id = 'default') {
-  return {
-    id,
-    problem: { 
-      id: 'mock-problem',
-      title: 'System Design Coaching Session'
-    },
-    conversation: [{
-      role: 'assistant',
-      content: "Welcome to your system design coaching session! I'm here to help you work through design challenges and improve your system architecture skills. What would you like to focus on today?",
-      timestamp: new Date().toISOString()
-    }],
-    currentStage: 'introduction',
-    status: 'in_progress',
-    startedAt: new Date().toISOString()
-  };
-}
-
-// === Authentication APIs ===
 export const loginUser = async (email, password) => {
   try {
-    const response = await api.post('/api/auth/login', { email, password });
-    return response.data;
+    const response = await api.post('/auth/login', { email, password });
+    
+    if (response.data.success) {
+      // Store token in cookie
+      Cookies.set('auth_token', response.data.token, { expires: 7 });
+      return response.data;
+    } else {
+      throw new Error(response.data.error || 'Login failed');
+    }
   } catch (error) {
-    console.error('Login error:', error);
+    if (error.response) {
+      throw new Error(error.response.data.error || 'Login failed');
+    }
     throw error;
   }
 };
 
-export const registerUser = async (name, email, password, experience) => {
+export const registerUser = async (userData) => {
   try {
-    const response = await api.post('/api/auth/register', { name, email, password, experience });
+    console.log('Attempting registration:', userData);
+    const response = await api.post('/auth/register', userData);
+    console.log('Registration response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error.response?.data || error.message);
     throw error;
   }
 };
 
-export const getMe = async () => {
+export const getCurrentUser = async () => {
   try {
-    const response = await api.get('/api/auth/me');
-    return response.data;
+    const response = await api.get('/auth/me');
+    return response.data.user;
   } catch (error) {
-    console.error('Get user profile error:', error);
-    throw error;
+    throw error.response?.data || error;
   }
 };
 
@@ -255,103 +198,72 @@ export const getCoachingProblems = async () => {
   }
 };
 
+const logPrefix = '[Client API]';
+
+// Simplified logging helper
+const logApi = {
+  info: (msg, data) => console.log(`${logPrefix} ${msg}`, data),
+  error: (msg, data) => console.error(`${logPrefix} ${msg}`, data)
+};
+
 export const startCoachingSession = async (problemId, options = {}) => {
   try {
-    console.log('API: Starting coaching session for:', problemId);
-    
-    const payload = { };
-    
-    // Add optional parameters if provided
-    if (options.userLevel) payload.userLevel = options.userLevel;
-    if (options.conciseMode !== undefined) payload.conciseMode = options.conciseMode;
-    
-    const response = await api.post(`/api/coaching/start/${problemId}`, payload);
-    console.log('API: Session start response:', JSON.stringify(response.data, null, 2));
+    logApi.info('Starting session', { problemId });
+    // Changed from /api/coaching/start/${problemId} to /coaching/start/${problemId}
+    const response = await api.post(`/coaching/start/${problemId}`, options);
+    logApi.info('Session created', { 
+      id: response.data.id,
+      problem: response.data.problem.title 
+    });
     return response.data;
   } catch (error) {
-    console.error('API: Error starting coaching session:', error);
+    logApi.error('Session creation failed', { problemId, error: error.message });
     throw error;
   }
 };
 
 export const getCoachingSession = async (id) => {
   if (!id) {
-    console.log("No session ID provided, returning default session");
+    logApi.info('No session ID, returning default');
     return createDefaultSession();
   }
   
   try {
-    console.log(`Attempting to fetch coaching session with ID: ${id}`);
+    logApi.info('Fetching session', { id });
     const response = await api.get(`/api/coaching/${id}`);
-    console.log("Coaching session response:", response.data);
-    
-    // Ensure the response has the necessary structure
-    return {
-      ...response.data,
-      conversation: response.data.conversation && response.data.conversation.length > 0 
-        ? response.data.conversation 
-        : [{
-            role: 'assistant',
-            content: `Welcome to your ${response.data.problem?.title || 'system design'} coaching session!`,
-            timestamp: new Date().toISOString()
-          }]
-    };
+    return response.data;
   } catch (error) {
-    console.error(`Error fetching coaching session ${id}:`, error);
-    
-    // Create a mock session that will work for demo purposes
-    console.log("Creating mock session for demonstration");
+    logApi.error('Session fetch failed', { id, error: error.message });
     return createDefaultSession(id);
   }
 };
 
 export const sendCoachingMessage = async (sessionId, message, contextInfo = null) => {
+  console.log(`${logPrefix} Sending message`, {
+    sessionId,
+    messageLength: message?.length,
+    hasContextInfo: !!contextInfo
+  });
+  
   try {
-    if (!sessionId) {
-      console.error("No sessionId provided to sendCoachingMessage");
-      throw new Error("No sessionId provided");
-    }
+    const response = await api.post(`/api/coaching/${sessionId}/message`, { 
+      message,
+      contextInfo
+    });
     
-    if (!message || typeof message !== 'string' || message.trim() === '') {
-      console.error("Invalid message provided to sendCoachingMessage");
-      throw new Error("Invalid message format");
-    }
+    console.log(`${logPrefix} Message response`, {
+      role: response.data.message?.role,
+      contentPreview: response.data.message?.content?.substring(0, 50),
+      hasDiagramSuggestions: !!response.data.diagramSuggestions
+    });
     
-    // Make API call with error handling
-    try {
-      console.log(`Sending message for session ${sessionId}:`, message);
-      const response = await api.post(`/api/coaching/${sessionId}/message`, { 
-        message,
-        contextInfo // Include contextInfo which may contain userLevel and conciseMode
-      });
-      
-      console.log("Message response:", response.data);
-      return response.data;
-    } catch (apiError) {
-      console.error("API error in sendCoachingMessage:", apiError.response?.data || apiError.message);
-      
-      // Return a formatted error response instead of throwing
-      return {
-        message: {
-          role: 'coach',
-          content: "I'm having trouble connecting to the server. Please try again in a moment.",
-          timestamp: new Date().toISOString(),
-          error: true
-        }
-      };
-    }
+    return response.data;
   } catch (error) {
-    console.error("Error in sendCoachingMessage:", error);
-    
-    // Return a formatted error that matches the expected response structure
-    return {
-      message: {
-        role: 'coach',
-        content: "Error processing message. Please try again with a different question.",
-        timestamp: new Date().toISOString(),
-        error: true
-      }
-    };
+    console.error(`${logPrefix} Error`, {
+      sessionId,
+      error: error.message
+    });
+    throw error;
   }
 };
 

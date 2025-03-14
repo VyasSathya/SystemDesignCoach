@@ -16,6 +16,25 @@ class CoachEngine extends BaseEngine {
   
   async processMessage(sessionId, message, options = {}) {
     try {
+      console.log('💬 Processing message:', {
+        sessionId,
+        messageLength: message.length,
+        options: JSON.stringify(options)
+      });
+
+      // Get problem context from persona
+      const persona = require('../../data/persona/coachPersona');
+      const problemConfig = persona.problems[sessionId];
+      
+      // Handle new user greeting
+      if (message.toLowerCase().includes('new here')) {
+        return {
+          role: 'coach',
+          content: `I understand you're new here! ${problemConfig?.description || 'This is a system design coaching session'}. I'll guide you through the process step by step. Let's start with understanding the basic requirements. What do you think should be the core features of our parking lot system?`,
+          timestamp: new Date().toISOString()
+        };
+      }
+
       // Validate inputs
       if (!sessionId || !message) {
         console.error("Missing required parameters: sessionId or message");
@@ -89,6 +108,18 @@ class CoachEngine extends BaseEngine {
         content: msg.content
       }));
       
+      // Log conversation state
+      console.log('📝 Conversation state:', {
+        historyLength: session.conversation.length,
+        lastMessages: session.conversation.slice(-2)
+      });
+
+      // Log AI call
+      console.log('🤖 Calling AI with:', {
+        messagesCount: messagesForAI.length,
+        systemPromptLength: systemPrompt.length
+      });
+
       // Call the AI service with dynamic prompt and full conversation history
       const aiResponse = await this.aiService.sendMessage(messagesForAI, {
         system: systemPrompt,
@@ -96,7 +127,12 @@ class CoachEngine extends BaseEngine {
         temperature: options.temperature || 0.7,
         conciseMode: options.conciseMode
       });
-      
+
+      console.log('✨ AI Response received:', {
+        length: aiResponse.length,
+        preview: aiResponse.substring(0, 100)
+      });
+
       const responseMsg = {
         role: 'coach',
         content: aiResponse,

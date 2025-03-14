@@ -1,7 +1,6 @@
-// server/models/Problem.js
 const mongoose = require('mongoose');
 
-const problemSchema = new mongoose.Schema({
+const ProblemSchema = new mongoose.Schema({
   id: {
     type: String,
     required: true,
@@ -11,7 +10,6 @@ const problemSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // Add type field
   type: {
     type: String,
     enum: ['interview', 'coaching', 'both'],
@@ -28,54 +26,14 @@ const problemSchema = new mongoose.Schema({
   },
   estimatedTime: {
     type: Number,
-    default: 60
-  },
-  requirements: {
-    functional: [String],
-    nonFunctional: [String]
-  },
-  constraints: {
-    type: Map,
-    of: String
-  },
-  promptSequence: [{
-    id: String,
-    name: String,
-    question: String,
-    prompt: String,
-    expectedTopics: [String]
-  }],
-  referenceArchitecture: {
-    components: [Object]
+    required: true
   },
   createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Virtual for simplified view
-problemSchema.virtual('preview').get(function() {
-  return {
-    id: this.id,
-    title: this.title,
-    difficulty: this.difficulty,
-    description: this.description.substring(0, 100) + '...',
-    estimatedTime: this.estimatedTime,
-    type: this.type
-  };
-});
-
-// Update timestamps on save
-problemSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-const Problem = mongoose.model('Problem', problemSchema);
-
+// Create and export the model
+const Problem = mongoose.model('Problem', ProblemSchema);
 module.exports = Problem;

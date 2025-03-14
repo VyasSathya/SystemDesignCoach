@@ -5,7 +5,7 @@ const User = require('../models/User');
 async function setupDatabase() {
   try {
     // Hardcoded MongoDB URI - replace with your actual MongoDB URI
-    const mongoUri = "mongodb+srv://vyassathya:SanD%21eg0@system-design-db.24esv.mongodb.net/systemdesigncoach?retryWrites=true&w=majority";
+    const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/systemdesigncoach";
     
     // Connect to MongoDB
     await mongoose.connect(mongoUri);
