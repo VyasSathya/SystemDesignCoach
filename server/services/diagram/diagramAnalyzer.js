@@ -1,133 +1,130 @@
-const AIFactory = require('../ai/aiFactory');
-const aiConfig = require('../../config/aiConfig');
-const logger = require('../../utils/logger');
+const PatternLibrary = require('./patterns/PatternLibrary');
+const { calculateComplexity } = require('./utils/complexityCalculator');
 
 class DiagramAnalyzer {
   constructor() {
-    this.aiService = AIFactory.createService(
-      aiConfig.defaultProvider, 
-      aiConfig[aiConfig.defaultProvider]
-    );
+    this.patternLibrary = new PatternLibrary();
   }
 
-  async analyzeDiagram(nodes, edges, type) {
-    try {
-      const analysis = {
-        security: this._analyzeSecurityConcerns(nodes, edges),
-        scalability: this._analyzeScalability(nodes),
-        reliability: this._analyzeReliability(nodes, edges),
-        suggestions: await this._generateSuggestions(nodes, edges, type)
-      };
+  analyzeDiagram(nodes, edges, type) {
+    // Ensure nodes and edges are arrays
+    const nodeArray = Array.isArray(nodes) ? nodes : Object.values(nodes);
+    const edgeArray = Array.isArray(edges) ? edges : Object.values(edges);
 
-      return analysis;
-    } catch (error) {
-      logger.error('Error analyzing diagram:', error);
-      throw new Error('Failed to analyze diagram');
-    }
+    // Detect and analyze patterns
+    const patterns = this.patternLibrary.detectPatterns(nodeArray, edgeArray);
+    const patternSuggestions = this.patternLibrary.getPatternSuggestions(nodeArray, edgeArray);
+
+    // Calculate complexity metrics
+    const complexity = calculateComplexity(nodeArray, edgeArray);
+
+    // Analyze for critical issues
+    const criticalIssues = this._analyzeCriticalIssues(nodeArray, edgeArray, type);
+
+    // Generate overall score
+    const score = this._calculateScore(patterns, complexity, criticalIssues);
+
+    return {
+      patterns,
+      suggestions: patternSuggestions,
+      complexity,
+      criticalIssues,
+      score
+    };
   }
 
-  _analyzeSecurityConcerns(nodes, edges) {
-    const concerns = [];
-    
-    // Check for exposed databases
-    const databases = nodes.filter(n => n.type === 'database');
-    const directDbConnections = edges.filter(e => 
-      databases.some(db => db.id === e.target) &&
-      nodes.find(n => n.id === e.source)?.type === 'client'
-    );
-
-    if (directDbConnections.length > 0) {
-      concerns.push({
-        level: 'high',
-        message: 'Direct client-to-database connections detected. Consider adding an API layer.',
-        affected: directDbConnections.map(e => e.id)
-      });
-    }
-
-    // Check for missing authentication services
-    const hasAuthService = nodes.some(n => 
-      n.type === 'service' && 
-      n.data.label.toLowerCase().includes('auth')
-    );
-
-    if (!hasAuthService) {
-      concerns.push({
-        level: 'medium',
-        message: 'No authentication service detected. Consider adding user authentication.',
-        affected: []
-      });
-    }
-
-    return concerns;
-  }
-
-  _analyzeScalability(nodes) {
-    const recommendations = [];
-
-    // Check for load balancers
-    const hasLoadBalancer = nodes.some(n => n.type === 'loadBalancer');
-    if (!hasLoadBalancer && nodes.filter(n => n.type === 'service').length > 1) {
-      recommendations.push({
-        priority: 'high',
-        message: 'Multiple services detected without load balancer. Consider adding load balancing for better scalability.'
-      });
-    }
-
-    // Check for caching
-    const hasCache = nodes.some(n => n.type === 'cache');
-    if (!hasCache) {
-      recommendations.push({
-        priority: 'medium',
-        message: 'No caching layer detected. Consider adding caching to improve performance.'
-      });
-    }
-
-    return recommendations;
-  }
-
-  _analyzeReliability(nodes, edges) {
+  _analyzeCriticalIssues(nodes, edges, type) {
     const issues = [];
 
     // Check for single points of failure
-    const services = nodes.filter(n => n.type === 'service');
-    services.forEach(service => {
-      const connections = edges.filter(e => 
-        e.source === service.id || e.target === service.id
-      );
+    const spofComponents = this._checkSinglePointsOfFailure(nodes, edges);
+    if (spofComponents.length > 0) {
+      issues.push(`Single points of failure detected: ${spofComponents.join(', ')}`);
+    }
 
-      if (connections.length > 3) {
-        issues.push({
-          severity: 'medium',
-          message: `Service "${service.data.label}" has many dependencies. Consider breaking it down.`,
-          nodeId: service.id
-        });
-      }
-    });
+    // Check for security concerns
+    const securityIssues = this._checkSecurityConcerns(nodes, type);
+    issues.push(...securityIssues);
+
+    // Check for scalability issues
+    const scalabilityIssues = this._checkScalabilityIssues(nodes, edges);
+    issues.push(...scalabilityIssues);
 
     return issues;
   }
 
-  async _generateSuggestions(nodes, edges, type) {
-    const systemPrompt = `You are a system design expert. Analyze this system design diagram and provide specific, actionable improvements.
-    Focus on architectural patterns, best practices, and potential optimizations.
-    Provide 3-5 concrete suggestions.`;
+  _checkSinglePointsOfFailure(nodes, edges) {
+    const spofComponents = [];
+    const criticalTypes = ['database', 'cache', 'loadBalancer', 'apiGateway'];
 
-    const diagramDescription = nodes.map(n => 
-      `${n.data.label} (${n.type})`
-    ).join(', ');
-
-    const response = await this.aiService.sendMessage([
-      { 
-        role: "user", 
-        content: `Analyzing diagram of type: ${type}\nComponents: ${diagramDescription}`
+    nodes.forEach(node => {
+      if (criticalTypes.includes(node.type)) {
+        const redundantNodes = nodes.filter(n => 
+          n.type === node.type && n.id !== node.id
+        );
+        if (redundantNodes.length === 0) {
+          spofComponents.push(`${node.type} (${node.label || node.id})`);
+        }
       }
-    ], {
-      systemPrompt,
-      temperature: 0.7
     });
 
-    return response.split('\n').filter(line => line.trim());
+    return spofComponents;
+  }
+
+  _checkSecurityConcerns(nodes, type) {
+    const issues = [];
+    const hasLoadBalancer = nodes.some(n => n.type === 'loadBalancer');
+    const hasApiGateway = nodes.some(n => n.type === 'apiGateway');
+    const hasFirewall = nodes.some(n => n.type === 'firewall');
+
+    if (type === 'public' && !hasLoadBalancer) {
+      issues.push('Missing load balancer for public-facing services');
+    }
+    if (!hasApiGateway && nodes.filter(n => n.type === 'service').length > 2) {
+      issues.push('Consider adding API Gateway for multiple services');
+    }
+    if (type === 'public' && !hasFirewall) {
+      issues.push('Missing firewall protection');
+    }
+
+    return issues;
+  }
+
+  _checkScalabilityIssues(nodes, edges) {
+    const issues = [];
+    const services = nodes.filter(n => n.type === 'service');
+    const databases = nodes.filter(n => n.type === 'database');
+    const caches = nodes.filter(n => n.type === 'cache');
+
+    if (services.length > 3 && !nodes.some(n => n.type === 'loadBalancer')) {
+      issues.push('Multiple services without load balancing');
+    }
+    if (databases.length > 0 && caches.length === 0) {
+      issues.push('Database without caching layer');
+    }
+
+    return issues;
+  }
+
+  _calculateScore(patterns, complexity, criticalIssues) {
+    let score = 100;
+
+    // Deduct for missing essential patterns
+    const essentialPatterns = ['LoadBalancing', 'Caching', 'Security'];
+    const missingEssential = essentialPatterns.filter(
+      ep => !patterns.some(p => p.name === ep)
+    );
+    score -= missingEssential.length * 10;
+
+    // Deduct for complexity issues
+    if (complexity.score < 0.5) score -= 20;
+    if (complexity.score < 0.3) score -= 20;
+
+    // Deduct for critical issues
+    score -= criticalIssues.length * 15;
+
+    return Math.max(0, Math.min(100, score));
   }
 }
 
-module.exports = new DiagramAnalyzer();
+module.exports = DiagramAnalyzer;

@@ -5,14 +5,20 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "seed": "node scripts/seedDatabase.js",
+    "verify": "node scripts/verifyDatabase.js",
+    "init-db": "node scripts/initializeDatabase.js && npm run seed && npm run verify",
+    "test-diagram": "node scripts/testDiagramAnalysis.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
     "morgan": "^1.10.0",

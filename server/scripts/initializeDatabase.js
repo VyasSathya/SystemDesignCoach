@@ -1,92 +1,84 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
-const Session = require('../models/Session');
-const Workbook = require('../models/Workbook');
 const Problem = require('../models/Problem');
-const Diagram = require('../models/Diagram');
-const Evaluation = require('../models/Evaluation');
+const Workbook = require('../models/Workbook');
 const logger = require('../utils/logger');
+const problems = require('./seedData/problems');
 
 async function recreateIndexes() {
-  const models = [User, Session, Workbook, Problem, Diagram, Evaluation];
+  const models = [User, Problem, Workbook];
   
   for (const Model of models) {
     const collection = Model.collection;
     try {
-      // Drop existing indexes except _id
-      const indexes = await collection.indexes();
-      for (const index of indexes) {
-        if (index.name !== '_id_') {
-          await collection.dropIndex(index.name);
-          logger.info(`Dropped index ${index.name} from ${collection.collectionName}`);
-        }
-      }
-      
-      // Recreate indexes from schema
       await Model.syncIndexes();
       logger.info(`Recreated indexes for ${collection.collectionName}`);
     } catch (error) {
-      logger.warn(`Error handling indexes for ${collection.collectionName}:`, error);
+      logger.error(`Error syncing indexes for ${collection.collectionName}:`, error);
     }
   }
 }
 
+async function seedInitialData() {
+  // Create default admin if not exists
+  const adminExists = await User.findOne({ email: process.env.ADMIN_EMAIL });
+  if (!adminExists && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    await User.create({
+      name: 'Admin',
+      email: process.env.ADMIN_EMAIL,
+      password: process.env.ADMIN_PASSWORD,
+      experience: 'expert'
+    });
+    logger.info('Created admin user');
+  }
+
+  // Load and seed problems from seedData
+  await Problem.deleteMany({});
+  await Problem.insertMany(problems);
+  logger.info(`Seeded ${problems.length} problems`);
+}
+
+async function verifySetup() {
+  const collections = await mongoose.connection.db.listCollections().toArray();
+  const requiredCollections = ['users', 'problems', 'workbooks'];
+  
+  for (const required of requiredCollections) {
+    if (!collections.find(c => c.name === required)) {
+      logger.error(`Missing required collection: ${required}`);
+      throw new Error(`Missing required collection: ${required}`);
+    }
+  }
+  
+  logger.info('Database verification completed successfully');
+}
+
 async function initializeDatabase() {
   try {
-    // Verify MONGODB_URI is set
     if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI is not defined in environment variables');
+      throw new Error('MONGODB_URI is not defined');
     }
 
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
     logger.info('Connected to MongoDB');
 
-    // Recreate indexes
     await recreateIndexes();
-    logger.info('Indexes have been recreated');
+    await seedInitialData();
+    await verifySetup();
 
-    // Create collections if they don't exist
-    const collections = [
-      'users',
-      'sessions',
-      'workbooks',
-      'problems',
-      'diagrams',
-      'evaluations'
-    ];
-
-    for (const collectionName of collections) {
-      if (!(await mongoose.connection.db.listCollections({ name: collectionName }).hasNext())) {
-        await mongoose.connection.db.createCollection(collectionName);
-        logger.info(`Created collection: ${collectionName}`);
-      }
-    }
-
-    // Create default admin user if it doesn't exist
-    const adminExists = await User.findOne({ email: process.env.ADMIN_EMAIL });
-    if (!adminExists && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-      await User.create({
-        name: 'Admin',
-        email: process.env.ADMIN_EMAIL,
-        password: process.env.ADMIN_PASSWORD,
-        experience: 'expert'
-      });
-      logger.info('Created admin user');
-    }
-
-    logger.info('Database initialization completed');
+    logger.info('Database initialization completed successfully');
   } catch (error) {
     logger.error('Database initialization failed:', error);
-    process.exit(1);
+    throw error;
   } finally {
     await mongoose.connection.close();
   }
 }
 
-// Run if called directly
 if (require.main === module) {
-  initializeDatabase();
+  initializeDatabase()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
 }
+
 module.exports = initializeDatabase;

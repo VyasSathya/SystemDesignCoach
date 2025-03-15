@@ -1,32 +1,107 @@
 const mongoose = require('mongoose');
 
+const DiagramSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['sequence', 'component', 'deployment'],
+    required: true
+  },
+  content: String,
+  metadata: {
+    version: String,
+    lastUpdated: Date
+  }
+});
+
+const SectionSchema = new mongoose.Schema({
+  content: String,
+  status: {
+    type: String,
+    enum: ['not_started', 'in_progress', 'completed', 'reviewed'],
+    default: 'not_started'
+  },
+  feedback: [{
+    type: {
+      type: String,
+      enum: ['coach', 'system', 'manual'],
+      required: true
+    },
+    content: String,
+    timestamp: Date
+  }],
+  evaluation: {
+    score: Number,
+    strengths: [String],
+    improvements: [String],
+    timestamp: Date
+  }
+});
+
 const WorkbookSchema = new mongoose.Schema({
   sessionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Session',
-    required: true
+    type: String,
+    required: true,
+    unique: true,
+    index: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
-  title: {
+  problemId: {
     type: String,
-    required: true
+    required: true,
+    index: true
   },
-  description: String,
-  content: mongoose.Schema.Types.Mixed,
-  lastModified: {
-    type: Date,
-    default: Date.now
+  sections: {
+    requirements: {
+      functional: SectionSchema,
+      nonFunctional: SectionSchema
+    },
+    api: {
+      endpoints: SectionSchema,
+      documentation: SectionSchema
+    },
+    database: {
+      schema: SectionSchema,
+      queries: SectionSchema
+    },
+    architecture: {
+      highLevel: SectionSchema,
+      detailed: SectionSchema
+    }
+  },
+  diagrams: [DiagramSchema],
+  progress: {
+    overall: {
+      type: Number,
+      default: 0
+    },
+    sections: Map,
+    lastUpdated: Date
+  },
+  metadata: {
+    status: {
+      type: String,
+      enum: ['active', 'completed', 'archived'],
+      default: 'active'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
   }
-}, {
-  timestamps: true
 });
 
-WorkbookSchema.index({ sessionId: 1 });
-WorkbookSchema.index({ userId: 1 });
+WorkbookSchema.pre('save', function(next) {
+  this.metadata.updatedAt = new Date();
+  next();
+});
 
-const Workbook = mongoose.model('Workbook', WorkbookSchema);
-module.exports = Workbook;
+module.exports = mongoose.model('Workbook', WorkbookSchema);

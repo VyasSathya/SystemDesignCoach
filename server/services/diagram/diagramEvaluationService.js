@@ -1,162 +1,230 @@
-const mongoose = require('mongoose');
-const { Evaluation } = require('../../models/Evaluation');
-const { Session } = require('../../models/Session');
-const { mermaidToReactFlow } = require('../../../client/components/diagram/utils/conversion');
+const DiagramAnalyzer = require('./diagramAnalyzer');
+const PatternLibrary = require('./patterns/PatternLibrary');
+const { diagramStructure } = require('../../../data/diagram_structure');
 
 class DiagramEvaluationService {
-  static evaluationCriteria = {
-    componentStructure: {
-      weight: 0.25,
-      rules: [
-        'appropriate_component_types',
-        'logical_connections',
-        'component_granularity'
-      ]
-    },
-    scalability: {
-      weight: 0.2,
-      rules: [
-        'load_balancing',
-        'caching_strategy',
-        'database_partitioning'
-      ]
-    },
-    reliability: {
-      weight: 0.2,
-      rules: [
-        'fault_tolerance',
-        'redundancy',
-        'backup_systems'
-      ]
-    },
-    security: {
-      weight: 0.15,
-      rules: [
-        'authentication',
-        'authorization',
-        'data_encryption'
-      ]
-    },
-    clarity: {
-      weight: 0.2,
-      rules: [
-        'naming_conventions',
-        'diagram_organization',
-        'documentation'
-      ]
-    }
-  };
+  constructor() {
+    this.analyzer = new DiagramAnalyzer();
+    this.patternLibrary = new PatternLibrary();
+  }
 
-  static async evaluateDiagram(diagram, type, context) {
-    const normalizedDiagram = await this._normalizeDiagram(diagram, type);
-    const session = await Session.findById(context.sessionId);
+  async evaluateDiagram(diagram, type, context) {
+    const normalizedDiagram = this._normalizeDiagram(diagram, type);
     
     const evaluation = {
-      timestamp: new Date(),
+      diagramId: diagram.id,
+      timestamp: Date.now(),
       scores: {},
-      feedback: {},
-      suggestions: [],
-      criteria: this.evaluationCriteria
+      analysis: {},
+      recommendations: []
     };
 
-    // Evaluate each criterion
-    for (const [criterion, config] of Object.entries(this.evaluationCriteria)) {
-      const result = await this._evaluateCriterion(
-        normalizedDiagram,
-        criterion,
-        config,
+    // Evaluate different criteria
+    const criteria = this._getCriteriaForType(type);
+    for (const criterion of criteria) {
+      evaluation.scores[criterion] = await this._evaluateCriterion(
+        normalizedDiagram, 
+        criterion, 
+        this._getCriterionConfig(criterion),
         context
       );
-      
-      evaluation.scores[criterion] = result.score;
-      evaluation.feedback[criterion] = result.feedback;
-      evaluation.suggestions.push(...result.suggestions);
     }
 
-    // Calculate overall score
-    evaluation.overallScore = this._calculateOverallScore(evaluation.scores);
+    // Analyze components and patterns
+    evaluation.analysis = {
+      components: this._analyzeComponents(normalizedDiagram),
+      patterns: this._identifyPatterns(normalizedDiagram),
+      issues: await this.analyzer.analyzeDiagram(
+        normalizedDiagram.nodes, 
+        normalizedDiagram.edges, 
+        type
+      )
+    };
 
-    // Store evaluation
+    // Calculate overall score
+    evaluation.scores.overall = this._calculateOverallScore(evaluation.scores);
+
+    // Generate recommendations
+    evaluation.recommendations = this._generateRecommendations(
+      evaluation.analysis,
+      evaluation.scores,
+      context
+    );
+
+    // Store evaluation results
     await this._storeEvaluation(evaluation, context);
 
     return evaluation;
   }
 
-  static async _evaluateCriterion(diagram, criterion, config, context) {
-    const componentAnalysis = this._analyzeComponents(diagram);
-    const result = { score: 0, feedback: '', suggestions: [] };
-
-    switch (criterion) {
-      case 'componentStructure':
-        result.score = this._evaluateComponentStructure(componentAnalysis);
-        result.feedback = this._generateStructureFeedback(componentAnalysis);
-        break;
-      case 'scalability':
-        result.score = this._evaluateScalability(componentAnalysis);
-        result.feedback = this._generateScalabilityFeedback(componentAnalysis);
-        break;
-      // Add other criteria evaluations...
+  _getCriteriaForType(type) {
+    const commonCriteria = ['scalability', 'reliability', 'security'];
+    
+    switch (type) {
+      case 'system':
+        return [...commonCriteria, 'performance', 'maintainability'];
+      case 'sequence':
+        return [...commonCriteria, 'consistency', 'communication'];
+      default:
+        return commonCriteria;
     }
-
-    return result;
   }
 
-  static _analyzeComponents(diagram) {
-    const analysis = {
-      components: {
-        databases: diagram.nodes.filter(n => n.type === 'database'),
-        services: diagram.nodes.filter(n => n.type === 'service'),
-        loadBalancers: diagram.nodes.filter(n => n.type === 'loadBalancer'),
-        caches: diagram.nodes.filter(n => n.type === 'cache'),
-        clients: diagram.nodes.filter(n => n.type === 'client')
+  _getCriterionConfig(criterion) {
+    const configs = {
+      scalability: {
+        weight: 0.25,
+        checks: ['loadBalancing', 'horizontalScaling', 'caching']
       },
-      connections: diagram.edges,
-      patterns: this._identifyPatterns(diagram)
+      reliability: {
+        weight: 0.2,
+        checks: ['redundancy', 'failover', 'errorHandling']
+      },
+      security: {
+        weight: 0.25,
+        checks: ['authentication', 'authorization', 'dataEncryption']
+      },
+      performance: {
+        weight: 0.15,
+        checks: ['responseTime', 'throughput', 'resourceUtilization']
+      },
+      maintainability: {
+        weight: 0.15,
+        checks: ['modularity', 'coupling', 'cohesion']
+      }
     };
 
-    return analysis;
+    return configs[criterion] || { weight: 0.1, checks: [] };
   }
 
-  static _identifyPatterns(diagram) {
-    return {
-      hasLoadBalancing: diagram.nodes.some(n => n.type === 'loadBalancer'),
-      hasCaching: diagram.nodes.some(n => n.type === 'cache'),
-      hasRedundancy: this._checkRedundancy(diagram),
-      hasAuthentication: this._checkAuthenticationLayer(diagram)
+  async _evaluateCriterion(diagram, criterion, config, context) {
+    const score = {
+      value: 0,
+      details: [],
+      improvements: []
     };
-  }
 
-  static async _storeEvaluation(evaluation, context) {
-    const newEvaluation = new Evaluation({
-      sessionId: context.sessionId,
-      userId: context.userId,
-      timestamp: evaluation.timestamp,
-      scores: evaluation.scores,
-      overallScore: evaluation.overallScore,
-      feedback: evaluation.feedback,
-      suggestions: evaluation.suggestions
-    });
-
-    await newEvaluation.save();
-
-    // Update session with latest evaluation
-    await Session.findByIdAndUpdate(context.sessionId, {
-      $push: { evaluations: newEvaluation._id },
-      $set: { lastEvaluationScore: evaluation.overallScore }
-    });
-  }
-
-  static async _normalizeDiagram(diagram, type) {
-    if (type === 'mermaid') {
-      return mermaidToReactFlow(diagram.code);
+    for (const check of config.checks) {
+      const checkResult = await this._performCheck(diagram, check, context);
+      score.value += checkResult.score * config.weight;
+      score.details.push(checkResult);
+      
+      if (checkResult.improvements) {
+        score.improvements.push(...checkResult.improvements);
+      }
     }
-    return diagram;
+
+    return score;
   }
 
-  static _calculateOverallScore(scores) {
-    return Object.entries(scores).reduce((total, [criterion, score]) => {
-      return total + (score * this.evaluationCriteria[criterion].weight);
-    }, 0);
+  _analyzeComponents(diagram) {
+    return {
+      count: {
+        services: diagram.nodes.filter(n => n.type === 'service').length,
+        databases: diagram.nodes.filter(n => n.type === 'database').length,
+        queues: diagram.nodes.filter(n => n.type === 'queue').length,
+        caches: diagram.nodes.filter(n => n.type === 'cache').length,
+        gateways: diagram.nodes.filter(n => n.type === 'gateway').length,
+        loadBalancers: diagram.nodes.filter(n => n.type === 'loadBalancer').length
+      },
+      relationships: this._analyzeRelationships(diagram.nodes, diagram.edges),
+      complexity: this._calculateComplexity(diagram)
+    };
+  }
+
+  _identifyPatterns(diagram) {
+    return this.patternLibrary.detectPatterns({
+      nodes: diagram.nodes,
+      edges: diagram.edges
+    });
+  }
+
+  _calculateOverallScore(scores) {
+    const weights = {
+      scalability: 0.25,
+      reliability: 0.2,
+      security: 0.25,
+      performance: 0.15,
+      maintainability: 0.15
+    };
+
+    let totalScore = 0;
+    let totalWeight = 0;
+
+    for (const [criterion, score] of Object.entries(scores)) {
+      if (criterion !== 'overall') {
+        const weight = weights[criterion] || 0.1;
+        totalScore += score.value * weight;
+        totalWeight += weight;
+      }
+    }
+
+    return totalWeight > 0 ? totalScore / totalWeight : 0;
+  }
+
+  _normalizeDiagram(diagram, type) {
+    const structure = diagramStructure[type];
+    if (!structure) {
+      throw new Error(`Unsupported diagram type: ${type}`);
+    }
+
+    return {
+      ...diagram,
+      nodes: diagram.nodes.map(node => ({
+        ...node,
+        type: node.type.toLowerCase()
+      })),
+      edges: diagram.edges.map(edge => ({
+        ...edge,
+        type: edge.type?.toLowerCase() || 'default'
+      }))
+    };
+  }
+
+  async _storeEvaluation(evaluation, context) {
+    try {
+      // Store evaluation in database
+      const Diagram = require('../../models/Diagram');
+      await Diagram.findOneAndUpdate(
+        { diagramId: evaluation.diagramId },
+        {
+          $set: { currentScore: evaluation.scores.overall },
+          $push: { 
+            snapshots: {
+              timestamp: evaluation.timestamp,
+              scores: evaluation.scores,
+              analysis: evaluation.analysis
+            }
+          }
+        },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Failed to store evaluation:', error);
+    }
+  }
+
+  _analyzeRelationships(nodes, edges) {
+    return {
+      connectivity: this._calculateConnectivity(nodes, edges),
+      dependencies: this._analyzeDependencies(nodes, edges),
+      bottlenecks: this._identifyBottlenecks(nodes, edges)
+    };
+  }
+
+  _calculateComplexity(diagram) {
+    const nodeComplexity = diagram.nodes.length;
+    const edgeComplexity = diagram.edges.length;
+    const patternComplexity = this._identifyPatterns(diagram).length;
+
+    return {
+      value: (nodeComplexity * 0.4) + (edgeComplexity * 0.4) + (patternComplexity * 0.2),
+      details: {
+        nodes: nodeComplexity,
+        edges: edgeComplexity,
+        patterns: patternComplexity
+      }
+    };
   }
 }
 

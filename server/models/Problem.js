@@ -3,35 +3,60 @@ const mongoose = require('mongoose');
 const ProblemSchema = new mongoose.Schema({
   id: {
     type: String,
-    required: true
+    required: true,
+    unique: true,
+    index: true
   },
   title: {
     type: String,
     required: true
   },
-  type: {
-    type: String,
-    enum: ['interview', 'coaching', 'both'],
-    required: true
-  },
   difficulty: {
     type: String,
-    enum: ['beginner', 'intermediate', 'advanced'],
+    enum: ['easy', 'medium', 'hard'],
     required: true
   },
-  description: String,
-  estimatedTime: Number,
+  category: {
+    type: String,
+    required: true,
+    index: true
+  },
   requirements: {
     functional: [String],
     nonFunctional: [String]
+  },
+  constraints: {
+    scale: String,
+    storage: String,
+    bandwidth: String
+  },
+  expectedComponents: [String],
+  evaluation: {
+    criteria: [{
+      name: String,
+      weight: Number,
+      description: String
+    }],
+    rubric: {
+      excellent: String,
+      good: String,
+      fair: String,
+      poor: String
+    }
+  },
+  metadata: {
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
   }
-}, {
-  timestamps: true
 });
 
-ProblemSchema.index({ id: 1 }, { unique: true, name: 'problem_id_unique' });
-ProblemSchema.index({ type: 1 }, { name: 'problem_type' });
-ProblemSchema.index({ difficulty: 1 }, { name: 'problem_difficulty' });
+ProblemSchema.index({ difficulty: 1, category: 1 });
 
 const Problem = mongoose.model('Problem', ProblemSchema);
 module.exports = Problem;

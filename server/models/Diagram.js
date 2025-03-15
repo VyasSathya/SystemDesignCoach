@@ -2,33 +2,73 @@ const mongoose = require('mongoose');
 
 const DiagramSchema = new mongoose.Schema({
   sessionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Session',
-    required: true
+    type: String,
+    required: true,
+    index: true
   },
-  workbookId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workbook',
-    required: true
+  diagramId: {
+    type: String,
+    required: true,
+    index: true
   },
   type: {
     type: String,
-    required: true
+    required: true,
+    enum: ['system', 'sequence']
   },
-  content: {
-    nodes: [mongoose.Schema.Types.Mixed],
-    edges: [mongoose.Schema.Types.Mixed]
-  },
-  version: {
+  currentScore: {
     type: Number,
-    default: 1
-  }
-}, {
-  timestamps: true
+    default: 0
+  },
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  },
+  snapshots: [{
+    timestamp: Date,
+    scores: {
+      overall: Number,
+      scalability: {
+        value: Number,
+        factors: [String]
+      },
+      reliability: {
+        value: Number,
+        factors: [String]
+      },
+      security: {
+        value: Number,
+        factors: [String]
+      },
+      maintainability: {
+        value: Number,
+        factors: [String]
+      }
+    },
+    componentCounts: {
+      type: Map,
+      of: Number
+    },
+    complexity: {
+      nodes: Number,
+      edges: Number,
+      density: Number,
+      avgConnections: Number
+    },
+    patterns: {
+      loadBalancing: Boolean,
+      caching: Boolean,
+      messageQueue: Boolean,
+      apiGateway: Boolean,
+      serviceDiscovery: Boolean,
+      circuitBreaker: Boolean
+    }
+  }]
 });
 
-DiagramSchema.index({ sessionId: 1 }, { name: 'diagram_session_id' });
-DiagramSchema.index({ workbookId: 1 }, { name: 'diagram_workbook_id' });
+// Indexes for efficient querying
+DiagramSchema.index({ sessionId: 1, diagramId: 1 }, { unique: true });
+DiagramSchema.index({ lastUpdated: -1 });
+DiagramSchema.index({ currentScore: -1 });
 
-const Diagram = mongoose.model('Diagram', DiagramSchema);
-module.exports = Diagram;
+module.exports = mongoose.model('Diagram', DiagramSchema);

@@ -1,65 +1,91 @@
-const BaseEngine = require('./baseEngine');
-const skillEvaluationService = require('../skills/skillEvaluationService');
-const skillProgressService = require('../skills/skillProgressService');
+const PersonaManager = require('../persona/PersonaManager');
+const WorkbookService = require('../workbook/WorkbookService');
+const AIService = require('../ai/AIService');
+const logger = require('../../utils/logger');
 
-class CoachingEngine extends BaseEngine {
-  constructor(config = {}) {
-    super(config);
+class CoachingEngine {
+  constructor() {
+    this.personaManager = PersonaManager;
+    this.workbookService = WorkbookService;
+    this.ai = new AIService();
+    this.sessions = new Map();
   }
 
-  async processMessage(sessionId, message, options = {}) {
-    const response = await super.processMessage(sessionId, message, options);
+  async initialize() {
+    await this.personaManager.initialize();
+    await this.ai.initialize();
+    logger.info('CoachingEngine initialized');
+  }
 
-    // Evaluate skills if this is a significant interaction
-    if (this._shouldEvaluateSkills(message, response)) {
-      const evaluation = await skillEvaluationService.evaluateResponse(
-        options.focusArea?.category || 'technical',
-        options.focusArea?.skill || 'system_architecture',
-        {
-          userMessage: message,
-          aiResponse: response,
-          context: options.context
-        },
-        { type: 'dialogue' }
-      );
+  async startSession(userId, problemId) {
+    try {
+      const workbook = await this.workbookService.createWorkbook(userId, problemId);
+      const sessionContext = {
+        workbookId: workbook._id,
+        currentStage: 'requirements',
+        persona: 'coach',
+        history: []
+      };
+      
+      this.sessions.set(workbook.sessionId, sessionContext);
+      return workbook.sessionId;
+    } catch (error) {
+      logger.error('Failed to start coaching session:', error);
+      throw error;
+    }
+  }
 
-      // Update user's skill progress
-      if (options.userId) {
-        await skillProgressService.updateProgress(
-          options.userId,
-          sessionId,
-          { [options.focusArea?.skill]: evaluation }
+  async processMessage(sessionId, message) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    try {
+      const workbook = await this.workbookService.getWorkbook(session.workbookId);
+      const persona = this.personaManager.setActivePersona(session.persona);
+      
+      const context = {
+        stage: session.currentStage,
+        workbookState: workbook.sections[session.currentStage],
+        history: session.history
+      };
+
+      const response = await this.ai.generateResponse(message, {
+        persona: persona.getPrompt(context),
+        context: this.personaManager.getPersonaContext(session.persona, context)
+      });
+
+      // Update session history
+      session.history.push({ role: 'user', content: message });
+      session.history.push({ role: 'assistant', content: response });
+
+      // Update workbook if needed
+      if (response.workbookUpdates) {
+        await this.workbookService.updateSection(
+          workbook._id,
+          session.currentStage,
+          response.workbookUpdates
         );
       }
 
-      // Enhance response with skill feedback
-      response.evaluation = evaluation;
+      return response;
+    } catch (error) {
+      logger.error('Error processing message:', error);
+      throw error;
     }
-
-    return response;
   }
 
-  async startSession(userId, contentId, options = {}) {
-    const session = await super.startSession(userId, contentId, options);
-
-    // Get skill roadmap for personalized coaching
-    if (userId) {
-      const roadmap = await skillProgressService.getSkillRoadmap(userId);
-      if (roadmap) {
-        session.context.skillRoadmap = roadmap;
-      }
+  async switchPersona(sessionId, newPersona) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
     }
 
-    return session;
-  }
-
-  _shouldEvaluateSkills(message, response) {
-    // Evaluate if message contains significant technical content
-    return message.length > 100 || 
-           message.includes('```') || 
-           response.includes('diagram') ||
-           response.includes('architecture');
+    session.persona = newPersona;
+    session.history = []; // Clear history when switching personas
+    return true;
   }
 }
 
-module.exports = CoachingEngine;
+module.exports = new CoachingEngine();

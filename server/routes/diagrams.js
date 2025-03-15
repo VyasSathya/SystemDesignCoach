@@ -1,26 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const DiagramEvaluationService = require('../services/diagram/diagramEvaluationService');
-const auth = require('../middleware/auth');
+const DiagramAnalyzer = require('../services/diagram/diagramAnalyzer');
+const DiagramManager = require('../services/diagram/diagramManager');
 
-router.post('/evaluate', auth, async (req, res) => {
+const analyzer = new DiagramAnalyzer();
+const manager = new DiagramManager();
+
+router.post('/analyze', async (req, res) => {
   try {
-    const { sessionId, diagram, context } = req.body;
-    
-    const evaluation = await DiagramEvaluationService.evaluateDiagram(
-      diagram,
-      diagram.type,
-      {
-        ...context,
-        userId: req.user.id,
-        sessionId
-      }
-    );
-
-    res.json(evaluation);
+    const { nodes, edges } = req.body;
+    const analysis = await analyzer.analyzeDiagram(nodes, edges);
+    res.json(analysis);
   } catch (error) {
-    console.error('Diagram evaluation error:', error);
-    res.status(500).json({ error: 'Failed to evaluate diagram' });
+    console.error('Error analyzing diagram:', error);
+    res.status(500).json({ error: 'Failed to analyze diagram' });
   }
 });
 
