@@ -1,34 +1,51 @@
-export default function handler(req, res) {
+import { Anthropic } from '@anthropic-ai/sdk';
+import { AI_CONFIG } from '../../../../config/aiConfig';
+import { COACH_PERSONA } from '../../../../data/persona/coachPersona';
+import { problems } from '../../../../data/persona/coachPersona';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
   
-  const { message, contextInfo, sessionId } = req.body;
+  const { messages, options } = req.body;
   
-  // Log incoming request
-  console.log('Mock API Request:', {
-    message,
-    contextInfo,
-    sessionId
-  });
-  
-  const response = {
-    message: {
-      role: 'assistant',
-      content: `I understand you're asking about: "${message}". Let me help you with that. As a system design coach, I can guide you through the architectural considerations and trade-offs involved.`,
-      timestamp: new Date().toISOString()
-    }
-  };
+  try {
+    // Use the existing coach persona configuration
+    const systemPrompt = options?.contextInfo?.designContext 
+      ? `${COACH_PERSONA.systemPrompt}\n\nContext: ${options.contextInfo.designContext}`
+      : COACH_PERSONA.systemPrompt;
 
-  // If diagram suggestions were requested
-  if (contextInfo?.requestDiagramSuggestions) {
-    response.diagramSuggestions = {
-      mermaidCode: `graph TD
-    A[Client] --> B[Load Balancer]
-    B --> C[Web Server]
-    C --> D[Database]`
-    };
+    const response = await anthropic.messages.create({
+      model: AI_CONFIG.model,
+      max_tokens: AI_CONFIG.maxTokens,
+      messages: messages,
+      system: systemPrompt,
+      temperature: AI_CONFIG.temperature,
+    });
+
+    return res.status(200).json({
+      message: {
+        role: 'assistant',
+        content: response.content[0].text,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error processing message:', error);
+    return res.status(500).json({ 
+      error: 'Failed to process message',
+      details: error.message 
+    });
   }
+}
 
-  res.status(200).json(response);
+export const config = {
+  api: {
+    bodyParser: true,
+  },
 }

@@ -1,5 +1,6 @@
 const AIFactory = require('../ai/aiFactory');
 const logger = require('../../utils/logger');
+const { config } = require('../../config/aiConfig');
 
 class CoachingService {
   constructor() {
@@ -15,11 +16,19 @@ class CoachingService {
 
       // Add context to system prompt if available
       const systemPrompt = context.topic ? 
-        `You are an expert system design coach focusing on ${context.topic}. ${aiConfig.claude.defaultSystemPrompt}` :
-        aiConfig.claude.defaultSystemPrompt;
+        `You are an expert system design coach focusing on ${context.topic}. ${config.defaultSystemPrompt}` :
+        config.defaultSystemPrompt;
+
+      logger.info('Sending message to AI:', {
+        sessionId,
+        messageCount: messages.length,
+        hasContext: !!context
+      });
 
       const response = await this.ai.sendMessage(messages, {
         systemPrompt,
+        temperature: 0.7,
+        maxTokens: 1000,
         context
       });
 
@@ -46,14 +55,13 @@ class CoachingService {
     }
   }
 
-  async _logInteraction(sessionId, input, output) {
-    // Implement logging logic here
-    logger.info('Coaching Interaction', {
+  async _logInteraction(sessionId, message, response) {
+    logger.info('AI Interaction completed:', {
       sessionId,
-      input: input.substring(0, 100) + '...',
-      outputLength: output.length
+      messageLength: message.length,
+      responseLength: response.length
     });
   }
 }
 
-module.exports = new CoachingService();
+module.exports = { CoachingService };

@@ -1,4 +1,3 @@
-// client/pages/coaching/[id].js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';

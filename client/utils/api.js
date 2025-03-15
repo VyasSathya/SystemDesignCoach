@@ -106,34 +106,9 @@ export const loginUser = async (email, password) => {
 };
 
 export const getCoachingSession = async (sessionId) => {
-  if (isDevelopment) {
-    try {
-      // In development, try the Next.js API route first
-      const mockResponse = await api.get(`/api/mock/coaching/sessions/${sessionId}`);
-      return mockResponse.data.session || mockResponse.data;
-    } catch (mockError) {
-      console.warn('Mock API failed:', mockError);
-      // Return a default mock session
-      return {
-        _id: sessionId,
-        status: 'active',
-        startedAt: new Date().toISOString(),
-        problem: {
-          id: 'url-shortener',
-          title: 'Design a URL Shortening Service'
-        },
-        conversation: [{
-          role: 'assistant',
-          content: "Welcome to your system design coaching session! I'm here to help you work through design challenges and improve your system architecture skills. What would you like to focus on today?",
-          timestamp: new Date().toISOString()
-        }]
-      };
-    }
-  }
-
-  // If not in development or if development mock fails
   try {
-    const response = await api.get(`/coaching/sessions/${sessionId}`);
+    // Use the mock API path that matches our existing mock file structure
+    const response = await api.get(`/api/mock/coaching/sessions/${sessionId}`);
     return response.data.session || response.data;
   } catch (error) {
     console.error('Error fetching coaching session:', error);
@@ -141,54 +116,48 @@ export const getCoachingSession = async (sessionId) => {
   }
 };
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
 export const sendCoachingMessage = async (sessionId, message, contextInfo = null) => {
   try {
-    // First try the mock endpoint in development
-    if (isDevelopment) {
-      try {
-        // Use the correct path for Next.js API routes
-        const mockResponse = await api.post(`/api/mock/coaching/sessions/${sessionId}/message`, {
-          message,
-          contextInfo
-        });
-        return mockResponse.data;
-      } catch (mockError) {
-        console.warn('Mock API failed:', mockError);
-        // Return mock data instead of falling back to real endpoint in development
-        return {
-          message: {
-            role: 'assistant',
-            content: `I understand you're asking about: "${message}". Let me help you with that. As a system design coach, I can guide you through the architectural considerations and trade-offs involved.`,
-            timestamp: new Date().toISOString()
-          }
-        };
-      }
+    const response = await fetch(`/api/mock/coaching/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [{  // Changed to match the expected format
+          role: 'user',
+          content: message
+        }],
+        options: {  // Added options object
+          sessionId,
+          contextInfo,
+          timestamp: new Date().toISOString()
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
-    // If not in development, use the real endpoint
-    const response = await api.post(`/api/coaching/sessions/${sessionId}/message`, {
-      message,
-      contextInfo
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error in sendCoachingMessage:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
+    const data = await response.json();
     
-    // In development, return mock data even if real endpoint fails
-    if (isDevelopment) {
+    if (!data?.message?.content) {
       return {
         message: {
           role: 'assistant',
-          content: `[Mock Response] I understand you're asking about: "${message}". Let me help you with that.`,
+          content: 'I encountered an issue. Could you please rephrase your question?',
           timestamp: new Date().toISOString()
         }
       };
     }
-    
+
+    return data;
+  } catch (error) {
+    console.error('Error in sendCoachingMessage:', error);
     throw error;
   }
 };
@@ -215,8 +184,6 @@ export const startCoachingSession = async (problemId) => {
     throw error;
   }
 };
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export const sendMessage = async (sessionId, message, context = {}) => {
   const response = await fetch(`${API_BASE_URL}/ai/message`, {

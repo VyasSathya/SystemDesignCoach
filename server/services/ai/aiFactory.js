@@ -1,9 +1,9 @@
 const AIService = require('./aiService');
-const { config } = require('../../config/aiConfig');
+const aiConfig = require('../../config/aiConfig');
 
 class AIFactory {
   static createService() {
-    return new AIService(config);
+    return new AIService(aiConfig.config);
   }
 }
 

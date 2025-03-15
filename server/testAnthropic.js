@@ -1,5 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { default: Anthropic } = require('@anthropic-ai/sdk');
+const { config } = require('./config/aiConfig');
 
 async function testAnthropic() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -11,12 +13,14 @@ async function testAnthropic() {
   const client = new Anthropic({ apiKey });
   
   try {
+    model_name = 'claude-3-7-sonnet-latest'
+    console.log('Making API call with model:', model_name);
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-latest',
+      model: model_name,
       system: "You are a test assistant.",
       messages: [{ role: "user", content: "Hello, how are you?" }],
-      max_tokens: 100,
-      temperature: 0.7,
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
     });
     console.log("Anthropic API response:", response.content[0].text);
   } catch (error) {
