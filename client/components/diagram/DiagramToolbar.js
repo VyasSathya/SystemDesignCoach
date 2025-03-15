@@ -1,65 +1,107 @@
-// client/components/diagram/DiagramToolbar.js
 import React from 'react';
-import { Database, Server, Globe, Archive, Grid, Box, Share2 } from 'lucide-react';
+import { 
+  ToggleButtonGroup, 
+  ToggleButton, 
+  Tooltip, 
+  Divider,
+  Menu,
+  MenuItem,
+  Button
+} from '@mui/material';
+import {
+  Database,
+  Server,
+  Globe,
+  Share2,
+  Archive,
+  Box,
+  Gateway,
+  Edit2,
+  Eye,
+  Code
+} from 'lucide-react';
 
-const DiagramToolbar = () => {
-  const nodeTypes = [
-    {
-      type: 'client',
-      icon: <Globe className="h-5 w-5 text-blue-600" />,
-      label: "Client",
-    },
-    {
-      type: 'service',
-      icon: <Server className="h-5 w-5 text-green-600" />,
-      label: "Service",
-    },
-    {
-      type: 'database',
-      icon: <Database className="h-5 w-5 text-purple-600" />,
-      label: "Database",
-    },
-    {
-      type: 'cache',
-      icon: <Archive className="h-5 w-5 text-red-600" />,
-      label: "Cache",
-    },
-    {
-      type: 'loadBalancer',
-      icon: <Grid className="h-5 w-5 text-orange-600" />,
-      label: "Load Balancer",
-    },
-    {
-      type: 'microservice',
-      icon: <Box className="h-5 w-5 text-teal-600" />,
-      label: "Microservice",
-    },
-    {
-      type: 'queue',
-      icon: <Share2 className="h-5 w-5 text-indigo-600" />,
-      label: "Queue",
-    }
-  ];
+const DiagramToolbar = ({ mode, setMode, onAddNode, hideModes = false }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
-  // Handle dragging a node
-  const onDragStart = (event, nodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
+  const handleNodeMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
+  const handleNodeMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleNodeSelect = (type) => {
+    onAddNode(type);
+    handleNodeMenuClose();
+  };
+
+  const nodeTypes = [
+    { type: 'client', icon: Globe, label: 'Client' },
+    { type: 'service', icon: Server, label: 'Service' },
+    { type: 'database', icon: Database, label: 'Database' },
+    { type: 'loadBalancer', icon: Share2, label: 'Load Balancer' },
+    { type: 'cache', icon: Archive, label: 'Cache' },
+    { type: 'queue', icon: Box, label: 'Queue' },
+    { type: 'gateway', icon: Gateway, label: 'API Gateway' }
+  ];
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {nodeTypes.map((node) => (
-        <div
-          key={node.type}
-          className="flex flex-col items-center p-2 bg-white border border-gray-200 rounded shadow-sm hover:bg-blue-50 hover:border-blue-200 transition-colors w-24 h-24 cursor-grab"
-          onDragStart={(event) => onDragStart(event, node.type)}
-          draggable
-        >
-          {node.icon}
-          <span className="text-xs mt-2 text-center">{node.label}</span>
-        </div>
-      ))}
+    <div className="flex items-center gap-4">
+      {!hideModes && (
+        <>
+          <ToggleButtonGroup
+            value={mode}
+            exclusive
+            onChange={(_, newMode) => newMode && setMode(newMode)}
+            size="small"
+          >
+            <ToggleButton value="edit">
+              <Tooltip title="Edit Mode">
+                <Edit2 className="w-5 h-5" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="preview">
+              <Tooltip title="Preview Mode">
+                <Eye className="w-5 h-5" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="mermaid">
+              <Tooltip title="Mermaid View">
+                <Code className="w-5 h-5" />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <Divider orientation="vertical" flexItem />
+        </>
+      )}
+
+      <Button
+        variant="outlined"
+        onClick={handleNodeMenuClick}
+        startIcon={<Server />}
+      >
+        Add Component
+      </Button>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleNodeMenuClose}
+      >
+        {nodeTypes.map(({ type, icon: Icon, label }) => (
+          <MenuItem
+            key={type}
+            onClick={() => handleNodeSelect(type)}
+            className="gap-2"
+          >
+            <Icon className="w-5 h-5" />
+            <span>{label}</span>
+          </MenuItem>
+        ))}
+      </Menu>
     </div>
   );
 };

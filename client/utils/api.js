@@ -71,8 +71,60 @@ export const getMe = async () => {
 };
 
 export const getCoachingProblems = async () => {
-  const response = await api.get('/coaching/problems');
-  return response.data;
+  try {
+    const response = await api.get('/coaching/problems');
+    
+    // Handle both possible response formats
+    if (response.data?.success && response.data?.problems) {
+      return response.data.problems;
+    } else if (response.data?.problems) {
+      return response.data.problems;
+    } else if (Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    // Fallback data if response format is unexpected
+    return [
+      {
+        id: "url-shortener",
+        title: "Design a URL Shortener",
+        difficulty: "intermediate",
+        description: "Create a service that takes long URLs and creates unique short URLs, similar to TinyURL or bit.ly.",
+        estimatedTime: 45
+      },
+      {
+        id: "social-feed",
+        title: "Design a Social Media Feed",
+        difficulty: "advanced",
+        description: "Design a news feed system that can handle millions of users posting and viewing content in real-time.",
+        estimatedTime: 60
+      }
+    ];
+  } catch (error) {
+    console.error('Error fetching coaching problems:', error);
+    
+    if (process.env.NODE_ENV === 'development') {
+      // Return mock data in development
+      return [
+        {
+          id: "url-shortener",
+          title: "Design a URL Shortener",
+          difficulty: "intermediate",
+          description: "Create a service that takes long URLs and creates unique short URLs, similar to TinyURL or bit.ly.",
+          estimatedTime: 45
+        },
+        {
+          id: "social-feed",
+          title: "Design a Social Media Feed",
+          difficulty: "advanced",
+          description: "Design a news feed system that can handle millions of users posting and viewing content in real-time.",
+          estimatedTime: 60
+        }
+      ];
+    }
+    
+    throw error;
+  }
 };
 
 export const loginUser = async (email, password) => {

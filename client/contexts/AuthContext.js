@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
       const token = Cookies.get('auth_token');
       console.log('Auth Check:', {
         hasToken: !!token,
-        tokenValue: token?.substring(0, 20) + '...',  // Log first 20 chars of token
+        tokenValue: token ? `${token.substring(0, 20)}...` : null,
         currentPath: router.pathname
       });
       
@@ -40,55 +40,72 @@ export const AuthProvider = ({ children }) => {
           Cookies.remove('auth_token');
           setIsAuthenticated(false);
           setUser(null);
+          
+          // Redirect to login if on protected route
+          if (router.pathname !== '/auth/login' && router.pathname !== '/auth/register') {
+            router.push('/auth/login');
+          }
         }
       } else {
         console.log('No auth token found');
         setIsAuthenticated(false);
         setUser(null);
+        
+        // Redirect to login if on protected route
+        if (router.pathname !== '/auth/login' && router.pathname !== '/auth/register') {
+          router.push('/auth/login');
+        }
       }
       
       setIsLoading(false);
     };
     
     initAuth();
-  }, []);
+  }, [router]);
   
   // Login function
   const login = async (email, password) => {
     try {
       console.log('Login attempt:', { email });
       const response = await loginUser(email, password);
-      console.log('API Response:', response);
+      console.log('Login API Response:', {
+        success: response.success,
+        hasToken: !!response.token,
+        hasUser: !!response.user
+      });
       
       if (response.success && response.token) {
-        // Store token in cookie with explicit domain and path
+        // Store token in cookie
         Cookies.set('auth_token', response.token, {
           expires: 7,
           path: '/',
-          domain: 'localhost',
-          secure: false, // Set to true in production
+          secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax'
         });
         
-        console.log('Token stored in cookie:', response.token.substring(0, 20) + '...');
-        console.log('Cookie verification:', {
-          stored: Cookies.get('auth_token') ? 'yes' : 'no',
-          value: Cookies.get('auth_token')?.substring(0, 20) + '...'
+        console.log('Cookie check after setting:', {
+          hasAuthToken: !!Cookies.get('auth_token')
         });
         
         setUser(response.user);
         setIsAuthenticated(true);
         
+        // Redirect to dashboard or home
+        router.push('/coaching');
         return { success: true };
       } else {
-        console.error('Login failed:', response);
+        console.error('Login failed - Invalid response:', response);
         return {
           success: false,
-          error: response.error || 'Login failed'
+          error: response.error || 'Invalid login response'
         };
       }
     } catch (error) {
-      console.error('Login error details:', error);
+      console.error('Login error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       return {
         success: false,
         error: error.response?.data?.error || 'Login failed'
@@ -99,15 +116,29 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (name, email, password, experience) => {
     try {
-      const data = await registerUser(name, email, password, experience);
+      const response = await registerUser(name, email, password, experience);
       
-      // Store token in cookie
-      Cookies.set('auth_token', data.token, { expires: 7 });
-      
-      setUser(data.user);
-      setIsAuthenticated(true);
-      
-      return { success: true };
+      if (response.success && response.token) {
+        // Store token in cookie
+        Cookies.set('auth_token', response.token, {
+          expires: 7,
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+        
+        setUser(response.user);
+        setIsAuthenticated(true);
+        
+        // Redirect to dashboard or home
+        router.push('/coaching');
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          error: response.error || 'Registration failed'
+        };
+      }
     } catch (error) {
       console.error('Register error:', error);
       return {
@@ -119,7 +150,7 @@ export const AuthProvider = ({ children }) => {
   
   // Logout function
   const logout = () => {
-    Cookies.remove('auth_token');
+    Cookies.remove('auth_token', { path: '/' });
     setUser(null);
     setIsAuthenticated(false);
     router.push('/auth/login');

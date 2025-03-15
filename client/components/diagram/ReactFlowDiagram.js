@@ -8,7 +8,7 @@ import ReactFlow, {
   addEdge,
   Panel
 } from 'reactflow';
-import { Database, Server, Globe, Archive, Grid, Share2, Box } from 'lucide-react';
+import { Database, Server, Globe, Archive, Grid, Share2, Box, Gateway } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
 // Import custom node types
@@ -19,6 +19,7 @@ import LoadBalancerNode from './NodeTypes/LoadBalancerNode';
 import CacheNode from './NodeTypes/CacheNode';
 import QueueNode from './NodeTypes/QueueNode';
 import CustomNode from './NodeTypes/CustomNode';
+import GatewayNode from './NodeTypes/GatewayNode';
 
 // Define nodeTypes outside the component to prevent re-creation on each render
 const nodeTypes = {
@@ -28,7 +29,8 @@ const nodeTypes = {
   loadBalancer: LoadBalancerNode,
   cache: CacheNode,
   queue: QueueNode,
-  custom: CustomNode
+  custom: CustomNode,
+  gateway: GatewayNode
 };
 
 const Flow = ({ 

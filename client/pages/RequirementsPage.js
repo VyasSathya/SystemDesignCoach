@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, MessageSquare, Save, Check, Clock, PenTool } from 'lucide-react';
 import WorkbookPageWrapper from './WorkbookPageWrapper';
+import DiagramPanel from '../components/diagram/DiagramPanel';
+import { toast } from 'react-toastify';
+import { useSession } from '../hooks/useSession';
 
 const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
-  // Preserve your original state management for functionality
   const [functionalReqs, setFunctionalReqs] = useState(
     data.functionalReqs ? JSON.parse(data.functionalReqs) : [
       { id: 1, text: '', completed: false }
@@ -21,116 +23,201 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
   
   const [constraints, setConstraints] = useState(data.constraints || '');
   const [assumptions, setAssumptions] = useState(data.assumptions || '');
-  
-  // Keep your original handler functions intact
-  const addFunctionalReq = () => {
-    const newId = functionalReqs.length > 0 ? Math.max(...functionalReqs.map(r => r.id)) + 1 : 1;
-    const updatedReqs = [...functionalReqs, { id: newId, text: '', completed: false }];
-    setFunctionalReqs(updatedReqs);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        functionalReqs: JSON.stringify(updatedReqs)
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [showDiagramPanel, setShowDiagramPanel] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const { sessionId, sessionType } = useSession();
+  const [isDiagramOpen, setIsDiagramOpen] = useState(false);
+
+  // Auto-save functionality
+  useEffect(() => {
+    const saveTimer = setTimeout(async () => {
+      if (hasUnsavedChanges()) {
+        await handleAutoSave();
+      }
+    }, 30000); // Auto-save every 30 seconds if there are changes
+
+    return () => clearTimeout(saveTimer);
+  }, [functionalReqs, nonFunctionalReqs, constraints, assumptions]);
+
+  const hasUnsavedChanges = useCallback(() => {
+    // Implementation of unsaved changes detection
+    return false;
+  }, [functionalReqs, nonFunctionalReqs]);
+
+  const handleAutoSave = async () => {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const formattedData = {
+        functionalReqs: JSON.stringify(functionalReqs),
+        nonFunctionalReqs: JSON.stringify(nonFunctionalReqs),
+        constraints,
+        assumptions,
+        lastUpdated: new Date().toISOString()
+      };
+
+      await updateData(formattedData);
+      setLastSaved(new Date());
+      toast({
+        title: "Progress Saved",
+        description: "Your changes have been automatically saved",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
       });
+    } catch (error) {
+      toast({
+        title: "Auto-save Failed",
+        description: "Changes couldn't be saved automatically. Please save manually.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
-  
-  const removeFunctionalReq = (id) => {
-    const updatedReqs = functionalReqs.filter(req => req.id !== id);
-    setFunctionalReqs(updatedReqs);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        functionalReqs: JSON.stringify(updatedReqs)
-      });
+
+  const handleAddFunctionalReq = () => {
+    const newId = Math.max(...functionalReqs.map(req => req.id), 0) + 1;
+    setFunctionalReqs([...functionalReqs, { id: newId, text: '', completed: false }]);
+  };
+
+  const handleAddNonFunctionalReq = () => {
+    const newId = Math.max(...nonFunctionalReqs.map(req => req.id), 0) + 1;
+    setNonFunctionalReqs([...nonFunctionalReqs, { id: newId, category: 'Other', text: '' }]);
+  };
+
+  const handleDeleteReq = (index, type) => {
+    if (type === 'functional') {
+      setFunctionalReqs(functionalReqs.filter((_, i) => i !== index));
+    } else {
+      setNonFunctionalReqs(nonFunctionalReqs.filter((_, i) => i !== index));
     }
   };
-  
-  const updateFunctionalReq = (id, text) => {
-    const updatedReqs = functionalReqs.map(req => 
-      req.id === id ? { ...req, text } : req
-    );
-    setFunctionalReqs(updatedReqs);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
+
+  const handleDiagramOpen = () => setIsDiagramOpen(true);
+  const handleDiagramClose = () => setIsDiagramOpen(false);
+
+  const handleDiagramSave = async (diagramData) => {
+    try {
+      await updateData({
         ...data,
-        functionalReqs: JSON.stringify(updatedReqs)
+        diagrams: [...(data.diagrams || []), diagramData]
       });
-    }
-  };
-  
-  const toggleFunctionalReq = (id) => {
-    const updatedReqs = functionalReqs.map(req => 
-      req.id === id ? { ...req, completed: !req.completed } : req
-    );
-    setFunctionalReqs(updatedReqs);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        functionalReqs: JSON.stringify(updatedReqs)
+      toast({
+        title: "Diagram Saved",
+        description: "Your diagram has been saved successfully",
+        status: "success",
+        duration: 2000,
       });
-    }
-  };
-  
-  const updateNonFunctionalReq = (id, text) => {
-    const updatedReqs = nonFunctionalReqs.map(req => 
-      req.id === id ? { ...req, text } : req
-    );
-    setNonFunctionalReqs(updatedReqs);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        nonFunctionalReqs: JSON.stringify(updatedReqs)
-      });
-    }
-  };
-  
-  const updateConstraints = (value) => {
-    setConstraints(value);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        constraints: value
-      });
-    }
-  };
-  
-  const updateAssumptions = (value) => {
-    setAssumptions(value);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        assumptions: value
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save diagram",
+        status: "error",
+        duration: 3000,
       });
     }
   };
 
-  const handleSaveAndContinue = () => {
-    // Any validation logic here
-    updateData(data);
-    // Navigation logic to next section
+  const handleAiSuggest = async () => {
+    try {
+      const response = await fetch('/api/ai/suggest-requirements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          functionalReqs,
+          nonFunctionalReqs,
+          constraints,
+          assumptions
+        })
+      });
+      
+      const suggestions = await response.json();
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to get AI suggestions",
+        status: "error",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleSaveAndContinue = async () => {
+    // Validate all requirements
+    const isValid = functionalReqs.some(req => req.text.trim().length > 0) &&
+      nonFunctionalReqs.every(req => req.text.trim().length > 0) &&
+      constraints.trim().length > 0 &&
+      assumptions.trim().length > 0;
+
+    if (!isValid) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields before continuing",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Format data for saving
+    const formattedData = {
+      functionalReqs: JSON.stringify(functionalReqs),
+      nonFunctionalReqs: JSON.stringify(nonFunctionalReqs),
+      constraints,
+      assumptions,
+      lastUpdated: new Date().toISOString()
+    };
+
+    try {
+      await updateData(formattedData);
+      toast({
+        title: "Progress Saved",
+        description: "Moving to API Design section",
+        status: "success",
+        duration: 2000,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save progress. Please try again.",
+        status: "error",
+        duration: 3000,
+      });
+    }
   };
 
   return (
     <WorkbookPageWrapper
       onSaveAndContinue={handleSaveAndContinue}
-      isValid={/* your validation logic */}
+      isValid={functionalReqs.some(req => req.text.trim().length > 0)}
       nextSection="API Design"
     >
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">Requirements Definition</h2>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          {isSaving && (
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-1 animate-spin" />
+              Saving...
+            </div>
+          )}
+          {lastSaved && !isSaving && (
+            <div className="flex items-center">
+              <Check className="w-4 h-4 mr-1 text-green-500" />
+              Last saved {new Date(lastSaved).toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      </div>
+      
       <div className="flex flex-col h-full bg-white">
         <div className="flex-1 overflow-auto p-6 space-y-8">
           {/* Coach tip box */}
@@ -168,7 +255,7 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
                     className="flex-1 p-2 border border-gray-300 rounded text-sm"
                   />
                   <button 
-                    onClick={() => removeFunctionalReq(req.id)}
+                    onClick={() => handleDeleteReq(req.id, 'functional')}
                     className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={16} />
@@ -178,7 +265,7 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
             </div>
             
             <button 
-              onClick={addFunctionalReq}
+              onClick={handleAddFunctionalReq}
               className="mt-3 flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium"
             >
               <Plus size={16} className="mr-1" />

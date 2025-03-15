@@ -28,6 +28,10 @@
 |   |   |   |   |   |-- module:FixedLifelineNode.js
 |   |   |   |   |   |-- component:FixedLifelineNode [internal]
 |   |   |   |   |   |-- component:FIXED_TOP_POSITION [internal]
+|   |   |   |   |-- GatewayNode.js
+|   |   |   |   |   |-- module:GatewayNode.js
+|   |   |   |   |   |-- fn: GatewayNode({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:GatewayNode [internal]
 |   |   |   |   |-- LoadBalancerNode.js
 |   |   |   |   |   |-- module:LoadBalancerNode.js
 |   |   |   |   |   |-- fn: LoadBalancerNode({ data, isConnectable }) [internal]
@@ -61,6 +65,7 @@
 |   |   |   |       |-- module:ServiceNode.js
 |   |   |   |       |-- fn: ServiceNode({ data, isConnectable }) [internal]
 |   |   |   |       |-- component:ServiceNode [internal]
+|   |   |   |-- styles
 |   |   |   |-- utils
 |   |   |   |   |-- conversion.js
 |   |   |   |   |   |-- module:conversion.js
@@ -73,6 +78,14 @@
       
       if (edge.label)
 |   |   |   |   |   |-- component:MERMAID_NODE_TYPES [internal]
+|   |   |   |   |-- nodePositioning.js
+|   |   |   |   |   |-- module:nodePositioning.js
+|   |   |   |   |   |-- fn: getNodePositionForType(type, bounds, existingNodes) [exported]
+|   |   |   |   |   |-- fn: getLoadBalancerPosition(bounds, existingNodes) [internal]
+|   |   |   |   |   |-- fn: getCachePosition(bounds, existingNodes) [internal]
+|   |   |   |   |   |-- fn: getApiGatewayPosition(bounds, existingNodes) [internal]
+|   |   |   |   |   |-- fn: getDatabasePosition(bounds, existingNodes) [internal]
+|   |   |   |   |   |-- fn: getDefaultPosition(bounds, existingNodes) [internal]
 |   |   |   |   |-- nodePresets.js
 |   |   |   |   |   |-- module:nodePresets.js
 |   |   |   |   |   |-- fn: createNode(type, position, label = '', notes = '') [exported]
@@ -95,12 +108,39 @@
 |   |   |   |       |-- method: map(node => {
       // Fix participant positions
       if (node.type === 'actor' || node.type === 'participant')
+|   |   |   |-- AiSuggestionsPanel.js
+|   |   |   |   |-- module:AiSuggestionsPanel.js
+|   |   |   |   |-- fn: AiSuggestionsPanel({
+  diagram,
+  onClose,
+  onApplySuggestion,
+  sessionId
+}) [internal]
+|   |   |   |   |-- fn: handleApplySuggestion(change) [internal]
+|   |   |   |   |-- fn: renderImmediateActions(actions) [internal]
+|   |   |   |   |-- fn: renderAiSuggestions(aiSuggestions) [internal]
+|   |   |   |   |-- fn: renderProposedChanges(changes) [internal]
+|   |   |   |   |-- component:AiSuggestionsPanel [internal]
 |   |   |   |-- DiagramAnalysis.js
 |   |   |   |   |-- module:DiagramAnalysis.js
 |   |   |   |   |-- fn: AnalysisSection({ title, items, icon: Icon }) [internal]
-|   |   |   |   |-- fn: DiagramAnalysis({ analysis, onClose }) [internal]
+|   |   |   |   |-- fn: DiagramAnalysis({ analysis, onClose, onApplySuggestion }) [internal]
+|   |   |   |   |-- fn: renderSuggestionCard(suggestion) [internal]
 |   |   |   |   |-- component:AnalysisSection [internal]
 |   |   |   |   |-- component:DiagramAnalysis [internal]
+|   |   |   |-- DiagramAnalysisPanel.js
+|   |   |   |   |-- module:DiagramAnalysisPanel.js
+|   |   |   |   |-- fn: DiagramAnalysisPanel({ 
+  nodes, 
+  edges, 
+  updateNodes, 
+  updateEdges,
+  onClose,
+  sessionId 
+}) [internal]
+|   |   |   |   |-- fn: renderSuggestionCard(suggestion) [internal]
+|   |   |   |   |-- fn: renderAnalysisSection(title, items, icon) [internal]
+|   |   |   |   |-- component:DiagramAnalysisPanel [internal]
 |   |   |   |-- DiagramEvaluation.js
 |   |   |   |   |-- module:DiagramEvaluation.js
 |   |   |   |   |-- fn: CriterionCard({ title, score, previousScore, feedback, suggestions }) [internal]
@@ -115,6 +155,19 @@
 |   |   |   |   |-- component:Arrow [internal]
 |   |   |   |   |-- component:ProgressChart [internal]
 |   |   |   |   |-- component:DiagramEvaluation [internal]
+|   |   |   |-- DiagramEvaluationPanel.js
+|   |   |   |   |-- module:DiagramEvaluationPanel.js
+|   |   |   |   |-- fn: DiagramEvaluationPanel({
+  diagram,
+  onClose,
+  sessionId
+}) [internal]
+|   |   |   |   |-- fn: renderScoreCard(criterion, score) [internal]
+|   |   |   |   |-- fn: getScoreColor(score) [internal]
+|   |   |   |   |-- fn: getScoreIcon(criterion) [internal]
+|   |   |   |   |-- fn: renderPatterns(patterns) [internal]
+|   |   |   |   |-- fn: renderRecommendations(recommendations) [internal]
+|   |   |   |   |-- component:DiagramEvaluationPanel [internal]
 |   |   |   |-- DiagramPanel.js
 |   |   |   |   |-- module:DiagramPanel.js
 |   |   |   |   |-- fn: DiagramPanel({
@@ -126,21 +179,36 @@
   onSave,
   onRefresh,
   onAiSuggest,
-  onSaveAndContinue, // Add this prop
+  onSaveAndContinue,
 }) [internal]
-|   |   |   |   |-- fn: handleCustomRequest(e) [internal]
-|   |   |   |   |-- fn: onDragStart(event, nodeType) [internal]
-|   |   |   |   |-- fn: handleInsertNode(type) [internal]
 |   |   |   |   |-- fn: getSaveButtonUI() [internal]
-|   |   |   |   |-- fn: createNode(type, position, data = {}) [internal]
-|   |   |   |   |-- fn: handleAddNode(type, position) [internal]
-|   |   |   |   |-- component:MermaidRenderer [internal]
-|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
 |   |   |   |   |-- component:DiagramPanel [internal]
+|   |   |   |-- DiagramProgressView.js
+|   |   |   |   |-- module:DiagramProgressView.js
+|   |   |   |   |-- fn: DiagramProgressView({ sessionId, diagramId }) [internal]
+|   |   |   |   |-- fn: formatSnapshotData(snapshots) [internal]
+|   |   |   |   |-- fn: renderScoresChart() [internal]
+|   |   |   |   |-- fn: renderPatternProgress() [internal]
+|   |   |   |   |-- fn: renderComplexityMetrics() [internal]
+|   |   |   |   |-- fn: renderRecommendations() [internal]
+|   |   |   |   |-- component:DiagramProgressView [internal]
+|   |   |   |-- DiagramSuggestionManager.js
+|   |   |   |   |-- class:DiagramSuggestionManager [exported]
+|   |   |   |   |-- method: constructor(nodes, edges, updateNodes, updateEdges)
+|   |   |   |   |-- method: applySuggestion(suggestion)
+|   |   |   |   |-- method: applyComponentSuggestion(suggestion)
+|   |   |   |   |-- method: applyPatternSuggestion(suggestion)
+|   |   |   |   |-- method: applyScalabilitySuggestion(suggestion)
+|   |   |   |   |-- method: applySecuritySuggestion(suggestion)
+|   |   |   |   |-- method: calculateOptimalPosition(componentType)
+|   |   |   |   |-- method: calculateDiagramBounds()
+|   |   |   |   |-- method: getComponentTypeFromSuggestion(suggestion)
 |   |   |   |-- DiagramToolbar.js
 |   |   |   |   |-- module:DiagramToolbar.js
-|   |   |   |   |-- fn: DiagramToolbar() [internal]
-|   |   |   |   |-- fn: onDragStart(event, nodeType) [internal]
+|   |   |   |   |-- fn: DiagramToolbar({ mode, setMode, onAddNode, hideModes = false }) [internal]
+|   |   |   |   |-- fn: handleNodeMenuClick(event) [internal]
+|   |   |   |   |-- fn: handleNodeMenuClose() [internal]
+|   |   |   |   |-- fn: handleNodeSelect(type) [internal]
 |   |   |   |   |-- component:DiagramToolbar [internal]
 |   |   |   |-- ElementTypeIndicator.js
 |   |   |   |   |-- module:ElementTypeIndicator.js
@@ -151,6 +219,11 @@
 |   |   |   |   |-- fn: MermaidRenderer({ code, onError }) [internal]
 |   |   |   |   |-- fn: cleanup() [internal]
 |   |   |   |   |-- component:MermaidRenderer [internal]
+|   |   |   |-- PatternVisualizer.js
+|   |   |   |   |-- module:PatternVisualizer.js
+|   |   |   |   |-- fn: PatternVisualizer({ patterns, suggestions }) [internal]
+|   |   |   |   |-- fn: getPatternStatus(pattern) [internal]
+|   |   |   |   |-- component:PatternVisualizer [internal]
 |   |   |   |-- ReactFlowDiagram.js
 |   |   |   |   |-- module:ReactFlowDiagram.js
 |   |   |   |   |-- fn: Flow({ 
@@ -166,6 +239,11 @@
       if (n.id === selectedNode.id)
 |   |   |   |   |-- component:Flow [internal]
 |   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |-- ScorePanel.js
+|   |   |   |   |-- module:ScorePanel.js
+|   |   |   |   |-- fn: ScorePanel({ scores, improvements }) [internal]
+|   |   |   |   |-- fn: formatScoreData() [internal]
+|   |   |   |   |-- component:ScorePanel [internal]
 |   |   |   |-- SequenceDiagram.js
 |   |   |   |   |-- module:SequenceDiagram.js
 |   |   |   |   |-- fn: generateMermaidCode(nodes, edges) [internal]
@@ -357,14 +435,12 @@
 |   |   |-- RequirementsPage.js
 |   |   |   |-- module:RequirementsPage.js
 |   |   |   |-- fn: EnhancedRequirementsPage({ data = {}, updateData }) [internal]
-|   |   |   |-- fn: addFunctionalReq() [internal]
-|   |   |   |-- fn: removeFunctionalReq(id) [internal]
-|   |   |   |-- fn: updateFunctionalReq(id, text) [internal]
-|   |   |   |-- fn: toggleFunctionalReq(id) [internal]
-|   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
-|   |   |   |-- fn: updateConstraints(value) [internal]
-|   |   |   |-- fn: updateAssumptions(value) [internal]
-|   |   |   |-- fn: handleSaveAndContinue() [internal]
+|   |   |   |-- fn: hasUnsavedChanges() [internal]
+|   |   |   |-- fn: handleAddFunctionalReq() [internal]
+|   |   |   |-- fn: handleAddNonFunctionalReq() [internal]
+|   |   |   |-- fn: handleDeleteReq(index, type) [internal]
+|   |   |   |-- fn: handleDiagramOpen() [internal]
+|   |   |   |-- fn: handleDiagramClose() [internal]
 |   |   |   |-- component:EnhancedRequirementsPage [internal]
 |   |   |-- ScalingStrategyPage.js
 |   |   |   |-- module:ScalingStrategyPage.js
@@ -408,6 +484,10 @@
 |   |       |-- fn: getActivePageComponent() [internal]
 |   |       |-- component:WorkbookLayout [internal]
 |   |-- public
+|   |-- src
+|   |   +-- config
+|   |       +-- api.js
+|   |           |-- module:api.js
 |   |-- styles
 |   |-- utils
 |   |   |-- api.js
@@ -470,24 +550,23 @@
 |   |-- models
 |   |   |-- Diagram.js
 |   |   |   |-- module:Diagram.js
-|   |   |   |-- method: pre('save', function(next)
 |   |   |-- Evaluation.js
 |   |   |   |-- module:Evaluation.js
-|   |   |   |-- method: get(function()
 |   |   |-- Interview.js
 |   |   |   |-- module:Interview.js
 |   |   |-- Problem.js
 |   |   |   |-- module:Problem.js
 |   |   |-- Session.js
 |   |   |   |-- module:Session.js
-|   |   |   |-- method: pre('save', function(next)
-|   |   |   |-- method: get(function()
 |   |   |-- User.js
 |   |   |   |-- module:User.js
-|   |   |   |-- method: pre('save', async function(next)
 |   |   +-- Workbook.js
 |   |       |-- module:Workbook.js
+|   |       |-- method: pre('save', function(next)
 |   |-- routes
+|   |   |-- api
+|   |   |   +-- coaching.js
+|   |   |       |-- module:coaching.js
 |   |   |-- ai.js
 |   |   |   |-- module:ai.js
 |   |   |-- auth.js
@@ -514,6 +593,11 @@
 |   |       |-- component:Workbook [internal]
 |   |       |-- component:Diagram [internal]
 |   |-- scripts
+|   |   |-- seedData
+|   |   |   |-- problems.js
+|   |   |   |   |-- module:problems.js
+|   |   |   +-- workbookTemplate.js
+|   |   |       |-- module:workbookTemplate.js
 |   |   |-- checkConnection.js
 |   |   |   |-- module:checkConnection.js
 |   |   |   |-- fn: checkConnection() [exported]
@@ -523,8 +607,20 @@
 |   |   |   |-- method: checkDatabase()
 |   |   |-- initializeDatabase.js
 |   |   |   |-- module:initializeDatabase.js
+|   |   |   |-- fn: recreateIndexes() [internal]
+|   |   |   |-- fn: seedInitialData() [internal]
+|   |   |   |-- fn: verifySetup() [internal]
 |   |   |   |-- fn: initializeDatabase() [exported]
+|   |   |   |-- method: recreateIndexes()
+|   |   |   |-- method: seedInitialData()
+|   |   |   |-- method: verifySetup()
 |   |   |   |-- method: initializeDatabase()
+|   |   |-- seedDatabase.js
+|   |   |   |-- module:seedDatabase.js
+|   |   |   |-- fn: seedProblems() [internal]
+|   |   |   |-- fn: seedDatabase() [exported]
+|   |   |   |-- method: seedProblems()
+|   |   |   |-- method: seedDatabase()
 |   |   |-- seedProblems.js
 |   |   |   |-- fn: seedDatabase() [internal]
 |   |   |   |-- method: seedDatabase()
@@ -532,9 +628,23 @@
 |   |   |   |-- module:setupDatabase.js
 |   |   |   |-- fn: setupDatabase() [exported]
 |   |   |   |-- method: setupDatabase()
-|   |   +-- testWorkbook.js
-|   |       |-- fn: createTestWorkbook() [internal]
-|   |       |-- method: createTestWorkbook()
+|   |   |-- testDiagramAnalysis.js
+|   |   |   |-- module:testDiagramAnalysis.js
+|   |   |   |-- fn: testDiagramAnalysis() [exported]
+|   |   |   |-- method: testDiagramAnalysis()
+|   |   |-- testWorkbook.js
+|   |   |   |-- fn: createTestWorkbook() [internal]
+|   |   |   |-- method: createTestWorkbook()
+|   |   +-- verifyDatabase.js
+|   |       |-- module:verifyDatabase.js
+|   |       |-- fn: verifyCollections() [internal]
+|   |       |-- fn: verifyIndexes() [internal]
+|   |       |-- fn: verifyData() [exported]
+|   |       |-- fn: verifyDatabase() [exported]
+|   |       |-- method: verifyCollections()
+|   |       |-- method: verifyIndexes()
+|   |       |-- method: verifyData()
+|   |       |-- method: verifyDatabase()
 |   |-- services
 |   |   |-- ai
 |   |   |   |-- base
@@ -573,33 +683,116 @@
 |   |   |   +-- index.js
 |   |   |       |-- module:index.js
 |   |   |-- coaching
-|   |   |   +-- coachingService.js
-|   |   |       |-- module:coachingService.js
-|   |   |       |-- class:CoachingService [internal]
-|   |   |       |-- method: constructor()
-|   |   |       |-- method: processMessage(sessionId, message, context = {})
-|   |   |       |-- method: analyzeDiagram(sessionId, diagram)
-|   |   |       |-- method: _logInteraction(sessionId, input, output)
+|   |   |   |-- coachingService.js
+|   |   |   |   |-- module:coachingService.js
+|   |   |   |   |-- class:CoachingService [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: processMessage(sessionId, message, context = {})
+|   |   |   |   |-- method: analyzeDiagram(sessionId, diagram)
+|   |   |   |   |-- method: _logInteraction(sessionId, input, output)
+|   |   |   +-- WorkbookService.js
+|   |   |       |-- module:WorkbookService.js
+|   |   |       |-- class:WorkbookService [internal]
+|   |   |       |-- method: createWorkbook(userId, problemId)
+|   |   |       |-- method: getWorkbook(sessionId)
+|   |   |       |-- method: updateSection(sessionId, sectionPath, content)
+|   |   |       |-- method: _initializeSections(problem)
+|   |   |       |-- method: _getNestedSection(sections, path)
 |   |   |-- diagram
+|   |   |   |-- NodeTypes
+|   |   |   |   +-- nodePresets.js
+|   |   |   |       |-- module:nodePresets.js
+|   |   |   |-- patterns
+|   |   |   |   |-- PatternAnalyzer.js
+|   |   |   |   |   |-- module:PatternAnalyzer.js
+|   |   |   |   |   |-- class:PatternAnalyzer [internal]
+|   |   |   |   |   |-- method: constructor()
+|   |   |   |   |   |-- method: analyzePatterns(diagram)
+|   |   |   |   |   |-- method: _performDetailedAnalysis(diagram, patternResults)
+|   |   |   |   |   |-- method: _analyzePatternImplementation(diagram, pattern)
+|   |   |   |   |   |-- method: _analyzeLBImplementation(diagram, pattern, analysis)
+|   |   |   |   |   |-- method: _analyzeCachingImplementation(diagram, pattern, analysis)
+|   |   |   |   |   |-- method: _analyzeQueueImplementation(diagram, pattern, analysis)
+|   |   |   |   |   |-- method: _analyzePatternGap(diagram, missingPattern)
+|   |   |   |   |   |-- method: _identifyOpportunities(diagram, patternResults)
+|   |   |   |   |   |-- method: _calculateQualityMetrics(diagram, patternResults)
+|   |   |   |   |   |-- method: _calculatePatternCoverage(patternResults)
+|   |   |   |   |   |-- method: _calculateImplementationQuality(patternResults)
+|   |   |   |   |   |-- method: _calculateArchitecturalFitness(diagram, patternResults)
+|   |   |   |   |-- PatternLibrary.js
+|   |   |   |   |   |-- module:PatternLibrary.js
+|   |   |   |   |   |-- class:PatternLibrary [internal]
+|   |   |   |   |   |-- method: constructor()
+|   |   |   |   |   |-- method: getPatternSuggestions(nodes, edges)
+|   |   |   |   |   |-- method: detectPatterns(nodes, edges)
+|   |   |   |   |   |-- method: analyzePatternImplementation(pattern, nodes, edges)
+|   |   |   |   |   |-- method: checkRequirements(requirements, nodes, edges)
+|   |   |   |   |   |-- method: findMissingElements(optimal, nodes, edges)
+|   |   |   |   |   |-- method: prioritizeSuggestions(suggestions)
+|   |   |   |   |   |-- method: _identifyMissingPatterns(nodes, edges)
+|   |   |   |   |   |-- method: _analyzeSystemCharacteristics(nodes, edges)
+|   |   |   |   |   |-- method: _hasDistributedArchitecture(nodes, edges)
+|   |   |   |   |   |-- method: _hasAsyncOperations(edges)
+|   |   |   |   |   |-- method: _calculatePatternPriority(pattern, nodes, edges)
+|   |   |   |   |   |-- method: _generatePatternSuggestions(pattern, nodes, edges)
+|   |   |   |   |-- PatternRegistry.js
+|   |   |   |   |   |-- module:PatternRegistry.js
+|   |   |   |   |   |-- class:PatternRegistry [internal]
+|   |   |   |   |   |-- method: constructor()
+|   |   |   |   |   |-- method: getPattern(patternId)
+|   |   |   |   |   |-- method: getAllPatterns()
+|   |   |   |   |   |-- method: getPatternsByCategory(category)
+|   |   |   |   |   |-- method: detectPatterns(diagram)
+|   |   |   |   |   |-- method: _matchesPattern(diagram, detection)
+|   |   |   |   |   |-- method: _findPatternMatches(diagram, detection)
+|   |   |   |   |   |-- method: _findMatchingNodeGroups(nodes, requirements)
+|   |   |   |   |   |-- method: _validateConnections(nodes, edges, requiredConnections)
+|   |   |   |   |   |-- method: _getRelevantEdges(nodes, edges)
+|   |   |   |   |   |-- method: _analyzeImplementationQuality(diagram, pattern, matches)
+|   |   |   |   |   |-- method: _matchesMetadata(edges, requiredMetadata)
+|   |   |   |   +-- PatternTemplates.js
+|   |   |   |       |-- module:PatternTemplates.js
+|   |   |   |-- diagramAiSuggester.js
+|   |   |   |   |-- module:diagramAiSuggester.js
+|   |   |   |   |-- class:DiagramAiSuggester [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: generateSuggestions(diagram, context)
+|   |   |   |   |-- method: _identifyMissingPatterns(diagram)
+|   |   |   |   |-- method: _buildPrompt(diagram, analysis, patterns, context)
+|   |   |   |   |-- method: _generateImmediateActions(analysis, patterns)
+|   |   |   |   |-- method: _generateProposedChanges(diagram, patterns)
+|   |   |   |   |-- method: forEach(pattern => {
+      switch (pattern)
+|   |   |   |   |-- method: _calculateCenterX(nodes)
+|   |   |   |   |-- method: _calculateCenterY(nodes)
+|   |   |   |   |-- method: _findServiceNodes(nodes)
+|   |   |   |   |-- method: _findDatabaseNodes(nodes)
 |   |   |   |-- diagramAnalyzer.js
 |   |   |   |   |-- module:diagramAnalyzer.js
 |   |   |   |   |-- class:DiagramAnalyzer [internal]
 |   |   |   |   |-- method: constructor()
 |   |   |   |   |-- method: analyzeDiagram(nodes, edges, type)
-|   |   |   |   |-- method: _analyzeSecurityConcerns(nodes, edges)
-|   |   |   |   |-- method: _analyzeScalability(nodes)
-|   |   |   |   |-- method: _analyzeReliability(nodes, edges)
-|   |   |   |   |-- method: _generateSuggestions(nodes, edges, type)
+|   |   |   |   |-- method: _detectPatterns(nodes, edges)
+|   |   |   |   |-- method: _checkSecurity(nodes, edges)
+|   |   |   |   |-- method: _checkScalability(nodes)
+|   |   |   |   |-- method: _checkReliability(nodes, edges)
+|   |   |   |   |-- method: _calculatePatternConfidence(nodes, edges, patternType)
+|   |   |   |   |-- method: _calculateScore(analysis)
 |   |   |   |-- diagramEvaluationService.js
 |   |   |   |   |-- module:diagramEvaluationService.js
 |   |   |   |   |-- class:DiagramEvaluationService [internal]
+|   |   |   |   |-- method: constructor()
 |   |   |   |   |-- method: evaluateDiagram(diagram, type, context)
+|   |   |   |   |-- method: _getCriteriaForType(type)
+|   |   |   |   |-- method: _getCriterionConfig(criterion)
 |   |   |   |   |-- method: _evaluateCriterion(diagram, criterion, config, context)
 |   |   |   |   |-- method: _analyzeComponents(diagram)
 |   |   |   |   |-- method: _identifyPatterns(diagram)
-|   |   |   |   |-- method: _storeEvaluation(evaluation, context)
-|   |   |   |   |-- method: _normalizeDiagram(diagram, type)
 |   |   |   |   |-- method: _calculateOverallScore(scores)
+|   |   |   |   |-- method: _normalizeDiagram(diagram, type)
+|   |   |   |   |-- method: _storeEvaluation(evaluation, context)
+|   |   |   |   |-- method: _analyzeRelationships(nodes, edges)
+|   |   |   |   |-- method: _calculateComplexity(diagram)
 |   |   |   |-- diagramManager.js
 |   |   |   |   |-- module:diagramManager.js
 |   |   |   |   |-- class:DiagramManager [internal]
@@ -613,6 +806,45 @@
             if (item.id)
 |   |   |   |   |-- method: getDiagram(diagramId)
 |   |   |   |   |-- method: deleteDiagram(diagramId)
+|   |   |   |-- diagramProgressTracker.js
+|   |   |   |   |-- module:diagramProgressTracker.js
+|   |   |   |   |-- class:DiagramProgressTracker [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: trackProgress(sessionId, diagramId, currentDiagram)
+|   |   |   |   |-- method: _createSnapshot(diagram)
+|   |   |   |   |-- method: _countComponents(diagram)
+|   |   |   |   |-- method: _calculateComplexity(diagram)
+|   |   |   |   |-- method: _identifyPatterns(diagram)
+|   |   |   |   |-- method: _saveSnapshot(sessionId, diagramId, snapshot)
+|   |   |   |   |-- method: _analyzeProgress(sessionId, diagramId)
+|   |   |   |   |-- method: _getNewPatterns(previous, current)
+|   |   |   |   |-- method: _getComplexityChange(previous, current)
+|   |   |   |   |-- method: _calculateTrends(snapshots)
+|   |   |   |   |-- method: _calculateScoreTrends(snapshots)
+|   |   |   |   |-- method: _calculatePatternTrends(snapshots)
+|   |   |   |   |-- method: _calculateComplexityTrends(snapshots)
+|   |   |   |   |-- method: _calculateTrendMetrics(values)
+|   |   |   |   |-- method: _calculateVolatility(values)
+|   |   |   |   |-- method: _generateRecommendations(latest, trends)
+|   |   |   |-- diagramScoringService.js
+|   |   |   |   |-- module:diagramScoringService.js
+|   |   |   |   |-- class:DiagramScoringService [internal]
+|   |   |   |   |-- fn: calculateNodeDepth(nodeId, depth = 0) [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: evaluateAndScore(diagram)
+|   |   |   |   |-- method: _scorePatterns(detectedPatterns)
+|   |   |   |   |-- method: _scoreComplexity(diagram)
+|   |   |   |   |-- method: _scoreBestPractices(diagram, detectedPatterns)
+|   |   |   |   |-- method: _scoreAnalysis(analysis)
+|   |   |   |   |-- method: _calculateRangeScore(value, min, max)
+|   |   |   |   |-- method: _calculateGraphDepth(diagram)
+|   |   |   |   |-- method: _calculateTotalScore(scores)
+|   |   |   |   |-- method: _generateRecommendations(scores, diagram)
+|   |   |   |   |-- method: _findMissingCriticalPatterns(diagram)
+|   |   |   |   |-- method: _findMissingBestPractices(diagram)
+|   |   |   |   |-- method: filter(check => {
+      switch (check)
+|   |   |   |   |-- method: _hasRedundancy(diagram)
 |   |   |   |-- diagramService.js
 |   |   |   |   |-- module:diagramService.js
 |   |   |   |   |-- class:DiagramService [internal]
@@ -621,6 +853,17 @@
 |   |   |   |   |-- method: evaluateDiagram(diagram, sessionId, type)
 |   |   |   |   |-- method: extractMermaidCode(text)
 |   |   |   |   |-- method: _buildGenerationPrompt(type, problem, context)
+|   |   |   |-- patternDetector.js
+|   |   |   |   |-- module:patternDetector.js
+|   |   |   |   |-- class:PatternDetector [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: detectPatterns(nodes, edges)
+|   |   |   |   |-- method: _analyzePattern(patternName, pattern, nodes, edges)
+|   |   |   |   |-- method: _detectLoadBalancing(nodes, edges, requirements)
+|   |   |   |   |-- method: _detectMicroservices(nodes, edges, requirements)
+|   |   |   |   |-- method: _detectCaching(nodes, edges, requirements)
+|   |   |   |   |-- method: _detectMessageQueue(nodes, edges, requirements)
+|   |   |   |   |-- method: _detectApiGateway(nodes, edges, requirements)
 |   |   |   +-- templates.js
 |   |   |       |-- module:templates.js
 |   |   |-- engines
@@ -643,11 +886,12 @@
 |   |   |   |   |-- method: evaluateDesign(sessionId, options = {})
 |   |   |   |-- coachingEngine.js
 |   |   |   |   |-- module:coachingEngine.js
-|   |   |   |   |-- class:CoachingEngine extends BaseEngine [internal]
-|   |   |   |   |-- method: constructor(config = {})
-|   |   |   |   |-- method: processMessage(sessionId, message, options = {})
-|   |   |   |   |-- method: startSession(userId, contentId, options = {})
-|   |   |   |   |-- method: _shouldEvaluateSkills(message, response)
+|   |   |   |   |-- class:CoachingEngine [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: initialize()
+|   |   |   |   |-- method: startSession(userId, problemId)
+|   |   |   |   |-- method: processMessage(sessionId, message)
+|   |   |   |   |-- method: switchPersona(sessionId, newPersona)
 |   |   |   |-- graderEngine.js
 |   |   |   |   |-- module:graderEngine.js
 |   |   |   |   |-- class:GraderEngine extends BaseEngine [internal]
@@ -719,6 +963,16 @@
 |   |   |   +-- vector_store.py
 |   |   |       |-- fn: initialize_vector_store() [public]
 |   |   |       |-- fn: query_knowledge(query, company="facebook") [public]
+|   |   |-- persona
+|   |   |   +-- PersonaManager.js
+|   |   |       |-- module:PersonaManager.js
+|   |   |       |-- class:PersonaManager [internal]
+|   |   |       |-- method: constructor()
+|   |   |       |-- method: initialize()
+|   |   |       |-- method: loadKnowledgeBase()
+|   |   |       |-- method: setActivePersona(type)
+|   |   |       |-- method: getPersonaContext(type, additionalContext = {})
+|   |   |       |-- method: getRelevantKnowledge(topic)
 |   |   |-- progress
 |   |   |   +-- progressTrackingService.js
 |   |   |       |-- module:progressTrackingService.js
@@ -763,6 +1017,7 @@
 |   |       |-- module:coaching.js
 |   |       |-- fn: logMessageProcessing(sessionId, message, systemPrompt, projectDetails) [internal]
 |   |       |-- fn: formatSystemPrompt(prompt) [internal]
+|   |-- tempresults
 |   |-- tests
 |   |   +-- ai.test.js
 |   |-- utils
@@ -780,6 +1035,8 @@
 |   +-- testAnthropic.js
 |       |-- fn: testAnthropic() [internal]
 |       |-- method: testAnthropic()
+|-- tests
+|   +-- diagram.test.js
 |-- advanced_tree_structure.txt
 |-- all_source_code.txt
 |-- folders.txt
@@ -787,4 +1044,5 @@
 |-- md_files.txt
 |-- project_overview.txt
 |-- README.md
-+-- sysdesignsummarydata.txt
+|-- sysdesignsummarydata.txt
++-- todolist-phase1.md

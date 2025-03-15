@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Scale, Activity, Lightbulb } from 'lucide-react';
+import { Shield, TrendingUp, CheckCircle, Lightbulb } from 'lucide-react';
 
 const AnalysisSection = ({ title, items, icon: Icon }) => (
   <div className="mb-6">
@@ -31,53 +31,79 @@ const AnalysisSection = ({ title, items, icon: Icon }) => (
   </div>
 );
 
-const DiagramAnalysis = ({ analysis, onClose }) => {
-  if (!analysis) return null;
+const DiagramAnalysis = ({ analysis, onClose, onApplySuggestion }) => {
+  const { suggestions, security, scalability, reliability } = analysis;
+
+  const renderSuggestionCard = (suggestion) => (
+    <div className={`suggestion-card priority-${suggestion.priority}`}>
+      <div className="suggestion-header">
+        <span className="suggestion-type">{suggestion.type}</span>
+        <span className="suggestion-priority">{suggestion.priority}</span>
+      </div>
+      
+      <p className="suggestion-text">{suggestion.suggestion}</p>
+      
+      {suggestion.details && (
+        <div className="suggestion-details">
+          <p>{suggestion.details}</p>
+        </div>
+      )}
+
+      {suggestion.benefits && (
+        <div className="suggestion-benefits">
+          <h4>Benefits:</h4>
+          <ul>
+            {suggestion.benefits.map((benefit, idx) => (
+              <li key={idx}>{benefit}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <Button
+        onClick={() => onApplySuggestion(suggestion)}
+        className="apply-suggestion-btn"
+      >
+        Apply Suggestion
+      </Button>
+    </div>
+  );
 
   return (
-    <div className="fixed right-4 top-20 w-96 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold text-gray-800">Diagram Analysis</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="diagram-analysis">
+      <div className="analysis-header">
+        <h2>Diagram Analysis</h2>
+        <Button onClick={onClose} variant="ghost">
+          <X size={16} />
+        </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="analysis-sections">
         <AnalysisSection
           title="Security Concerns"
-          items={analysis.security}
+          items={security}
           icon={Shield}
         />
         <AnalysisSection
-          title="Scalability"
-          items={analysis.scalability}
-          icon={Scale}
+          title="Scalability Analysis"
+          items={scalability}
+          icon={TrendingUp}
         />
         <AnalysisSection
-          title="Reliability"
-          items={analysis.reliability}
-          icon={Activity}
+          title="Reliability Assessment"
+          items={reliability}
+          icon={CheckCircle}
         />
-        
-        <div className="mt-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Lightbulb className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-800">AI Suggestions</h3>
-          </div>
-          <ul className="space-y-2">
-            {analysis.suggestions.map((suggestion, index) => (
-              <li 
-                key={index}
-                className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg"
-              >
-                {suggestion}
-              </li>
-            ))}
-          </ul>
+      </div>
+
+      <div className="suggestions-section">
+        <h3>Suggested Improvements</h3>
+        <div className="suggestions-grid">
+          {suggestions.map((suggestion, idx) => (
+            <div key={idx} className="suggestion-wrapper">
+              {renderSuggestionCard(suggestion)}
+            </div>
+          ))}
         </div>
       </div>
     </div>

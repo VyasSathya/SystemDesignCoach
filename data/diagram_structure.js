@@ -39,7 +39,7 @@ const diagramStructure = {
     components: {
       nodes: [{
         id: String,
-        type: 'service' | 'database' | 'cache' | 'loadbalancer',
+        type: 'service' | 'database' | 'cache' | 'loadbalancer' | 'gateway' | 'queue',
         label: String,
         position: { x: Number, y: Number }
       }],

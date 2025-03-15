@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.12",
+    "@mui/material": "^5.15.12",
     "axios": "^1.8.1",
     "dagre": "^0.8.5",
     "js-cookie": "^3.0.5",
@@ -19,6 +23,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
+    "react-toastify": "^11.0.5",
     "reactflow": "^11.11.4",
     "recharts": "^2.15.1",
     "rehype-raw": "^7.0.0",
