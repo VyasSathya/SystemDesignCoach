@@ -7,7 +7,7 @@ const NodePalette = ({ onNodeAdd }) => {
   const nodeCategories = [
     {
       category: 'Users & Clients',
-      icon: <Users className="w-5 h-5" />,
+      icon: Users,
       color: 'border-blue-500',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
@@ -15,7 +15,7 @@ const NodePalette = ({ onNodeAdd }) => {
     },
     {
       category: 'Network & Delivery',
-      icon: <Network className="w-5 h-5" />,
+      icon: Network,
       color: 'border-green-500',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600',
@@ -23,7 +23,7 @@ const NodePalette = ({ onNodeAdd }) => {
     },
     {
       category: 'Backend & Compute',
-      icon: <Server className="w-5 h-5" />,
+      icon: Server,
       color: 'border-purple-500',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
@@ -31,7 +31,7 @@ const NodePalette = ({ onNodeAdd }) => {
     },
     {
       category: 'Data & Storage',
-      icon: <Database className="w-5 h-5" />,
+      icon: Database,
       color: 'border-yellow-500',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600',
@@ -39,7 +39,7 @@ const NodePalette = ({ onNodeAdd }) => {
     },
     {
       category: 'Security & Identity',
-      icon: <Shield className="w-5 h-5" />,
+      icon: Shield,
       color: 'border-red-500',
       bgColor: 'bg-red-50',
       textColor: 'text-red-600',
@@ -47,51 +47,63 @@ const NodePalette = ({ onNodeAdd }) => {
     },
   ];
 
+  const handleNodeAdd = (nodeType, categoryData) => {
+    const nodeData = {
+      type: 'custom', // This will use our CustomNode component
+      data: {
+        nodeType: nodeType,
+        categoryIcon: categoryData.icon,
+        style: {
+          borderColor: categoryData.color.replace('border-', ''),
+          backgroundColor: categoryData.bgColor.replace('bg-', ''),
+          color: categoryData.textColor.replace('text-', '')
+        }
+      }
+    };
+    onNodeAdd(nodeData);
+  };
+
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-10">
       {/* Main menu */}
       <div className="flex justify-center gap-2 p-2">
-        {nodeCategories.map(({ category, icon, color, bgColor, textColor }) => (
+        {nodeCategories.map((categoryData) => (
           <div
-            key={category}
+            key={categoryData.category}
             className="relative cursor-pointer"
-            onClick={() => setExpandedCategory(expandedCategory === category ? null : category)}
+            onClick={() => setExpandedCategory(expandedCategory === categoryData.category ? null : categoryData.category)}
           >
             <div className={`
               flex items-center gap-2 p-2 
-              border-2 rounded-md ${color}
-              ${expandedCategory === category ? bgColor : 'hover:' + bgColor}
+              border-2 rounded-md ${categoryData.color}
+              ${expandedCategory === categoryData.category ? categoryData.bgColor : 'hover:' + categoryData.bgColor}
               transition-colors duration-150
             `}>
-              <div className={textColor}>{icon}</div>
-              <span className="text-sm font-medium">{category}</span>
+              <div className={categoryData.textColor}><categoryData.icon className="w-5 h-5" /></div>
+              <span className="text-sm font-medium">{categoryData.category}</span>
             </div>
 
             {/* Expandable submenu */}
-            {expandedCategory === category && (
+            {expandedCategory === categoryData.category && (
               <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-2">
                 <div className="flex flex-wrap gap-1">
-                  {nodeCategories
-                    .find(cat => cat.category === category)
-                    .nodes.map((nodeLabel) => (
-                      <div
-                        key={nodeLabel}
-                        className={`
-                          px-3 py-1 text-sm rounded cursor-pointer
-                          border-2 ${color} ${bgColor} hover:${bgColor}
-                          w-full truncate transition-colors duration-150
-                        `}
-                        draggable
-                        onDragStart={(e) => e.dataTransfer.setData('application/reactflow', nodeLabel)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNodeAdd && onNodeAdd(nodeLabel);
-                          setExpandedCategory(null);
-                        }}
-                      >
-                        {nodeLabel}
-                      </div>
-                    ))}
+                  {categoryData.nodes.map((nodeType) => (
+                    <div
+                      key={nodeType}
+                      className={`
+                        px-3 py-1 text-sm rounded cursor-pointer
+                        border-2 ${categoryData.color} ${categoryData.bgColor} hover:${categoryData.bgColor}
+                        w-full truncate transition-colors duration-150
+                      `}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNodeAdd(nodeType, categoryData);
+                        setExpandedCategory(null);
+                      }}
+                    >
+                      {nodeType}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

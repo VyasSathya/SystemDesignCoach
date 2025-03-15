@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -9,71 +9,69 @@ import ReactFlow, {
   applyEdgeChanges,
   applyNodeChanges
 } from 'reactflow';
-import { Trash2 } from 'lucide-react';
 import NodePalette from './NodePalette';
-import { NODE_TYPES, getNodeConfig } from './utils/nodePresets';
 import CustomNode from './NodeTypes/CustomNode';
 import 'reactflow/dist/style.css';
 
-// Define nodeTypes outside of the component
 const nodeTypes = {
-  // Client/User nodes
-  user: CustomNode,
-  webapp: CustomNode,
-  mobile: CustomNode,
-  iot: CustomNode,
-
-  // Networking & Delivery nodes
-  loadbalancer: CustomNode,
-  cdn: CustomNode,
-  gateway: CustomNode,
-  proxy: CustomNode,
-
-  // Backend Services nodes
-  service: CustomNode,
-  serverless: CustomNode,
-  queue: CustomNode,
-  container: CustomNode,
-
-  // Database & Storage nodes
-  database: CustomNode,
-  storage: CustomNode,
-  cache: CustomNode,
-  file: CustomNode,
-
-  // Security & External nodes
-  auth: CustomNode,
-  firewall: CustomNode,
-  security: CustomNode,
-  external: CustomNode
+  custom: CustomNode
 };
 
-function SystemArchitectureDiagram({ initialNodes, initialEdges, onNodesChange, onEdgesChange, onConnect }) {
+const SystemArchitectureDiagram = () => {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedElements, setSelectedElements] = useState([]);
+  const [showNodeEditor, setShowNodeEditor] = useState(false);
+  const [nodeToEdit, setNodeToEdit] = useState(null);
+  const [nodeName, setNodeName] = useState('');
 
-  const handleAddNode = useCallback((type) => {
-    const position = { x: Math.random() * 500, y: Math.random() * 300 };
-    const nodeConfig = getNodeConfig(type);
+  const onNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
+
+  const handleAddNode = useCallback((nodeData) => {
+    const position = { x: 100, y: 100 };
     const newNode = {
-      id: `${type}-${Date.now()}`,
-      type,
+      id: `${nodeData.type}_${Date.now()}`,
+      type: 'custom',
       position,
-      data: { 
-        label: nodeConfig.label || type,
-        type 
+      data: {
+        ...nodeData.data,
+        label: '', // This will be set via the popup
       },
     };
-    setNodes((nds) => [...nds, newNode]);
+    
+    setNodeToEdit(newNode);
+    setShowNodeEditor(true);
   }, []);
 
-  const handleDelete = useCallback(() => {
-    if (selectedElements.length > 0) {
-      setNodes((nds) => nds.filter((node) => !selectedElements.includes(node)));
-      setEdges((eds) => eds.filter((edge) => !selectedElements.includes(edge)));
-    }
-  }, [selectedElements]);
+  const handleNodeNameSubmit = useCallback(() => {
+    if (!nodeToEdit || !nodeName.trim()) return;
+    
+    const newNode = {
+      ...nodeToEdit,
+      data: {
+        ...nodeToEdit.data,
+        label: nodeName.trim(),
+      },
+    };
+    
+    setNodes((nds) => [...nds, newNode]);
+    setShowNodeEditor(false);
+    setNodeToEdit(null);
+    setNodeName('');
+  }, [nodeToEdit, nodeName]);
 
   return (
     <div className="h-full w-full relative">
@@ -86,32 +84,56 @@ function SystemArchitectureDiagram({ initialNodes, initialEdges, onNodesChange, 
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           onSelectionChange={setSelectedElements}
-          deleteKeyCode={['Backspace', 'Delete']}
           fitView
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-            animated: true
-          }}
         >
           <Background />
           <Controls />
           <MiniMap />
-          <Panel position="top-right" className="bg-white p-2 rounded-lg shadow-lg m-2">
-            <button
-              onClick={handleDelete}
-              className="p-2 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
-              disabled={selectedElements.length === 0}
-            >
-              <Trash2 size={20} />
-            </button>
-          </Panel>
         </ReactFlow>
-        <div className="absolute bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-          <NodePalette onNodeAdd={handleAddNode} />
-        </div>
+        <NodePalette onNodeAdd={handleAddNode} />
+        
+        {/* Node Name Editor Popup */}
+        {showNodeEditor && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h3 className="text-lg font-medium mb-4">Name your node</h3>
+              <input
+                type="text"
+                className="border rounded px-2 py-1 w-full mb-4"
+                placeholder="Enter node name"
+                value={nodeName}
+                onChange={(e) => setNodeName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleNodeNameSubmit();
+                  }
+                }}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-200 rounded"
+                  onClick={() => {
+                    setShowNodeEditor(false);
+                    setNodeToEdit(null);
+                    setNodeName('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                  onClick={handleNodeNameSubmit}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </ReactFlowProvider>
     </div>
   );
-}
+};
 
 export default SystemArchitectureDiagram;

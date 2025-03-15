@@ -1,0 +1,30 @@
+.react-flow__node-custom {
+  padding: 0;
+  border-radius: 8px;
+  min-width: 150px;
+}
+
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background-color: #555;
+  border-radius: 50%;
+}
+
+.react-flow__handle-top {
+  top: -4px;
+}
+
+.react-flow__handle-bottom {
+  bottom: -4px;
+}
+
+/* Custom animations for node interactions */
+.react-flow__node:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px #1a192b;
+}
