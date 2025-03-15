@@ -4,59 +4,12 @@ import Cookies from 'js-cookie';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const api = axios.create({
-  // Use relative URL in development to avoid CORS issues
-  baseURL: isDevelopment ? '/api' : 'http://localhost:5000/api',
+  baseURL: isDevelopment ? '' : process.env.NEXT_PUBLIC_API_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
-// Add request/response logging
-api.interceptors.request.use(request => {
-  console.log('API Request:', {
-    url: request.url,
-    method: request.method,
-    data: request.data
-  });
-  return request;
-});
-
-api.interceptors.response.use(
-  response => {
-    console.log('API Response:', {
-      url: response.config.url,
-      status: response.status,
-      data: response.data
-    });
-    return response;
+    'Content-Type': 'application/json',
   },
-  error => {
-    // Improved error logging
-    console.error('API Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.message,
-      data: typeof error.response?.data === 'string' 
-        ? 'HTML Error Page Received' 
-        : error.response?.data
-    });
+});
 
-    // In development, fall back to mock data
-    if (isDevelopment && error.response?.status === 404) {
-      const mockUrl = error.config.url.replace('/api', '/api/mock');
-      return axios.get(mockUrl)
-        .then(mockResponse => mockResponse)
-        .catch(mockError => {
-          console.error('Mock API Error:', mockError);
-          throw mockError;
-        });
-    }
-    
-    return Promise.reject(error);
-  }
-);
-
-// Add token to requests
 api.interceptors.request.use((config) => {
   const token = Cookies.get('auth_token');
   if (token) {
@@ -66,8 +19,18 @@ api.interceptors.request.use((config) => {
 });
 
 export const getMe = async () => {
-  const response = await api.get('/auth/me');
-  return response.data;
+  try {
+    // In development, use the mock API route
+    const response = await api.get('/api/auth/me');
+    return response.data;
+  } catch (error) {
+    console.error('Get Me API Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw error;
+  }
 };
 
 export const getCoachingProblems = async () => {
@@ -128,25 +91,35 @@ export const getCoachingProblems = async () => {
 };
 
 export const loginUser = async (email, password) => {
-  const response = await api.post('/auth/login', { email, password });
-  return response.data;
+  try {
+    // Always use the Next.js API route in development
+    const response = await api.post('/api/auth/login', { email, password });
+    return response.data;
+  } catch (error) {
+    console.error('Login API Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw error;
+  }
 };
 
 export const getCoachingSession = async (sessionId) => {
   if (isDevelopment) {
     try {
       // In development, try the Next.js API route first
-      const mockResponse = await axios.get(`/api/mock/coaching/sessions/${sessionId}`);
+      const mockResponse = await api.get(`/api/mock/coaching/sessions/${sessionId}`);
       return mockResponse.data.session || mockResponse.data;
     } catch (mockError) {
       console.warn('Mock API failed:', mockError);
-      // Return a default mock session using data from your problems.js
+      // Return a default mock session
       return {
         _id: sessionId,
         status: 'active',
         startedAt: new Date().toISOString(),
         problem: {
-          id: 'url-shortener', // Using a known problem ID from your data
+          id: 'url-shortener',
           title: 'Design a URL Shortening Service'
         },
         conversation: [{
@@ -170,7 +143,30 @@ export const getCoachingSession = async (sessionId) => {
 
 export const sendCoachingMessage = async (sessionId, message, contextInfo = null) => {
   try {
-    const response = await api.post(`/coaching/sessions/${sessionId}/message`, {
+    // First try the mock endpoint in development
+    if (isDevelopment) {
+      try {
+        // Use the correct path for Next.js API routes
+        const mockResponse = await api.post(`/api/mock/coaching/sessions/${sessionId}/message`, {
+          message,
+          contextInfo
+        });
+        return mockResponse.data;
+      } catch (mockError) {
+        console.warn('Mock API failed:', mockError);
+        // Return mock data instead of falling back to real endpoint in development
+        return {
+          message: {
+            role: 'assistant',
+            content: `I understand you're asking about: "${message}". Let me help you with that. As a system design coach, I can guide you through the architectural considerations and trade-offs involved.`,
+            timestamp: new Date().toISOString()
+          }
+        };
+      }
+    }
+
+    // If not in development, use the real endpoint
+    const response = await api.post(`/api/coaching/sessions/${sessionId}/message`, {
       message,
       contextInfo
     });
@@ -182,12 +178,12 @@ export const sendCoachingMessage = async (sessionId, message, contextInfo = null
       message: error.message
     });
     
-    // In development, return mock data
-    if (process.env.NODE_ENV === 'development') {
+    // In development, return mock data even if real endpoint fails
+    if (isDevelopment) {
       return {
         message: {
           role: 'assistant',
-          content: 'This is a mock response while the server is being fixed.',
+          content: `[Mock Response] I understand you're asking about: "${message}". Let me help you with that.`,
           timestamp: new Date().toISOString()
         }
       };

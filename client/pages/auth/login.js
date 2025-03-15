@@ -1,39 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { Layout } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Layout } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { login, isAuthenticated } = useAuth();
-  const router = useRouter();
-  
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, router]);
-  
+  const { login } = useAuth();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
-    
+
     try {
-      console.log('Attempting login with:', email); // Debug log
       const result = await login(email, password);
-      console.log('Login result:', result); // Debug log
+      console.log('Login result:', result);
       
-      if (result.success) {
-        router.push('/dashboard');
-      } else {
+      if (!result.success) {
         setError(result.error || 'Login failed');
       }
+      // Successful login is handled by AuthContext (redirect)
+      
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'An error occurred during login');
@@ -99,9 +88,9 @@ export default function Login() {
         
         <div className="mt-6 text-center text-sm">
           <span className="text-slate-600">Don't have an account?</span>{' '}
-          <Link href="/auth/register" className="text-indigo-600 hover:text-indigo-800 font-medium">
+          <a href="/auth/register" className="text-indigo-600 hover:text-indigo-800 font-medium">
             Sign up
-          </Link>
+          </a>
         </div>
       </div>
     </div>
