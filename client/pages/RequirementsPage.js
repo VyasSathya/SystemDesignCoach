@@ -30,6 +30,51 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
   const { sessionId, sessionType } = useSession();
   const [isDiagramOpen, setIsDiagramOpen] = useState(false);
 
+  const updateFunctionalReq = (id, text) => {
+    const updatedReqs = functionalReqs.map(req =>
+      req.id === id ? { ...req, text } : req
+    );
+    setFunctionalReqs(updatedReqs);
+
+    // Update parent component's data
+    if (updateData) {
+      updateData({
+        ...data,
+        functionalReqs: JSON.stringify(updatedReqs)
+      });
+    }
+  };
+
+  const toggleFunctionalReq = (id) => {
+    const updatedReqs = functionalReqs.map(req =>
+      req.id === id ? { ...req, completed: !req.completed } : req
+    );
+    setFunctionalReqs(updatedReqs);
+
+    // Update parent component's data
+    if (updateData) {
+      updateData({
+        ...data,
+        functionalReqs: JSON.stringify(updatedReqs)
+      });
+    }
+  };
+
+  const updateNonFunctionalReq = (id, text) => {
+    const updatedReqs = nonFunctionalReqs.map(req =>
+      req.id === id ? { ...req, text } : req
+    );
+    setNonFunctionalReqs(updatedReqs);
+
+    // Update parent component's data
+    if (updateData) {
+      updateData({
+        ...data,
+        nonFunctionalReqs: JSON.stringify(updatedReqs)
+      });
+    }
+  };
+
   // Auto-save functionality
   useEffect(() => {
     const saveTimer = setTimeout(async () => {
