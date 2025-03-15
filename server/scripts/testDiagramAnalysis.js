@@ -80,15 +80,17 @@ async function testDiagramAnalysis() {
 
     console.log('\nAnalysis Suggestions:');
     analysis.suggestions.forEach(suggestion => {
-      console.log(`- ${suggestion}`);
+      console.log(`- Type: ${suggestion.type}`);
+      console.log(`  Message: ${suggestion.message}`);
+      console.log(`  Priority: ${suggestion.priority}`);
     });
 
-    if (analysis.criticalIssues.length > 0) {
-      console.log('\nCritical Issues:');
-      analysis.criticalIssues.forEach(issue => {
-        console.log(`- ${issue}`);
-      });
-    }
+    console.log('\nCritical Issues:');
+    analysis.criticalIssues.forEach(issue => {
+      console.log(`- Type: ${issue.type}`);
+      console.log(`  Description: ${issue.description}`);
+      console.log(`  Recommendation: ${issue.recommendation}`);
+    });
 
     return {
       success: true,

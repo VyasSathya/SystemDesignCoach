@@ -57,12 +57,16 @@ function calculateMaxDepth(nodes, edges) {
 function buildAdjacencyList(nodes, edges) {
   const adjacencyList = {};
   
+  // Initialize adjacency list for all nodes
   nodes.forEach(node => {
     adjacencyList[node.id] = [];
   });
 
+  // Add edges to adjacency list
   edges.forEach(edge => {
-    adjacencyList[edge.from].push(edge.to);
+    if (adjacencyList[edge.source]) {
+      adjacencyList[edge.source].push(edge.target);
+    }
   });
 
   return adjacencyList;

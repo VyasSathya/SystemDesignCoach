@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const Workbook = require('../models/Workbook');
+require('dotenv').config();
 
 async function createTestWorkbook() {
   try {
     const mongoUri = process.env.MONGODB_URI;
+    console.log('Attempting to connect with URI:', mongoUri ? 'URI found' : 'URI missing');
     
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');
@@ -12,6 +14,7 @@ async function createTestWorkbook() {
     const testWorkbook = new Workbook({
       sessionId: 'test-session-' + Date.now(),
       userId: new mongoose.Types.ObjectId(),
+      problemId: new mongoose.Types.ObjectId(),
       title: "Test Workbook",
       description: "This is a test workbook",
       apis: {
@@ -32,8 +35,8 @@ async function createTestWorkbook() {
       }
     });
     
-    await testWorkbook.save();
-    console.log('Test workbook created');
+    const savedWorkbook = await testWorkbook.save();
+    console.log('Test workbook created with ID:', savedWorkbook._id);
     
     await mongoose.connection.close();
   } catch (error) {
