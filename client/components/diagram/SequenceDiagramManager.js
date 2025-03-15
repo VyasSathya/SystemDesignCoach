@@ -11,8 +11,36 @@ import SequenceDiagram from './SequenceDiagram';
  * by ensuring they always remain fixed relative to their participants.
  */
 const SequenceDiagramManager = ({ initialDiagram, onDiagramUpdate }) => {
-  // Store the actual node positions for lifelines
   const [participants, setParticipants] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [validationRules] = useState({
+    maxParticipants: 10,
+    requireResponse: true,
+    enforceSequentialOrder: true
+  });
+
+  const validateDiagram = useCallback(() => {
+    // Implement validation logic
+    const errors = [];
+    if (participants.length > validationRules.maxParticipants) {
+      errors.push('Too many participants');
+    }
+    // Add more validation rules
+    return errors;
+  }, [participants, validationRules]);
+
+  const updateDiagram = useCallback((newNodes, newEdges) => {
+    const errors = validateDiagram();
+    if (errors.length === 0) {
+      setDiagramState({ nodes: newNodes, edges: newEdges });
+      onDiagramUpdate({ nodes: newNodes, edges: newEdges });
+    }
+    return errors;
+  }, [validateDiagram, onDiagramUpdate]);
+
+  // Add more sequence-specific functionality
+
+  // Store the actual node positions for lifelines
   const [diagramState, setDiagramState] = useState(initialDiagram || { nodes: [], edges: [], mermaidCode: '' });
   
   // Reference to the current diagram for callbacks

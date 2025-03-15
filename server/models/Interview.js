@@ -46,7 +46,7 @@ const interviewSchema = new mongoose.Schema({
     diagrams: [{
         type: {
         type: String,
-        enum: ['architecture', 'sequence', 'flowchart', 'er', 'component'],
+        enum: ['architecture', 'sequence', 'systems', 'er', 'component'],
         default: 'architecture'
         },
         mermaidCode: {

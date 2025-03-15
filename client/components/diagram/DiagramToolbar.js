@@ -1,42 +1,10 @@
 import React from 'react';
 import { 
-  ToggleButtonGroup, 
-  ToggleButton, 
-  Tooltip, 
-  Divider,
-  Menu,
-  MenuItem,
-  Button
-} from '@mui/material';
-import {
-  Database,
-  Server,
-  Globe,
-  Share2,
-  Archive,
-  Box,
-  Gateway,
-  Edit2,
-  Eye,
-  Code
+  Globe, Server, Database, Share2, Archive, Box, 
+  Gateway, Network, Trash2 
 } from 'lucide-react';
 
 const DiagramToolbar = ({ mode, setMode, onAddNode, hideModes = false }) => {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-
-  const handleNodeMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleNodeMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleNodeSelect = (type) => {
-    onAddNode(type);
-    handleNodeMenuClose();
-  };
-
   const nodeTypes = [
     { type: 'client', icon: Globe, label: 'Client' },
     { type: 'service', icon: Server, label: 'Service' },
@@ -44,64 +12,30 @@ const DiagramToolbar = ({ mode, setMode, onAddNode, hideModes = false }) => {
     { type: 'loadBalancer', icon: Share2, label: 'Load Balancer' },
     { type: 'cache', icon: Archive, label: 'Cache' },
     { type: 'queue', icon: Box, label: 'Queue' },
-    { type: 'gateway', icon: Gateway, label: 'API Gateway' }
+    { type: 'gateway', icon: Gateway, label: 'API Gateway' },
+    { type: 'network', icon: Network, label: 'Network' }
   ];
 
   return (
-    <div className="flex items-center gap-4">
-      {!hideModes && (
-        <>
-          <ToggleButtonGroup
-            value={mode}
-            exclusive
-            onChange={(_, newMode) => newMode && setMode(newMode)}
-            size="small"
-          >
-            <ToggleButton value="edit">
-              <Tooltip title="Edit Mode">
-                <Edit2 className="w-5 h-5" />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="preview">
-              <Tooltip title="Preview Mode">
-                <Eye className="w-5 h-5" />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="mermaid">
-              <Tooltip title="Mermaid View">
-                <Code className="w-5 h-5" />
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          <Divider orientation="vertical" flexItem />
-        </>
-      )}
-
-      <Button
-        variant="outlined"
-        onClick={handleNodeMenuClick}
-        startIcon={<Server />}
+    <div className="flex items-center justify-center gap-2 p-3 bg-white border-t border-gray-200">
+      {nodeTypes.map((item) => (
+        <button
+          key={item.type}
+          onClick={() => onAddNode(item.type)}
+          className="flex items-center gap-2 px-4 py-2 rounded bg-white hover:bg-gray-50"
+        >
+          <item.icon className="w-5 h-5 text-gray-600" />
+          <span>{item.label}</span>
+        </button>
+      ))}
+      
+      <button
+        onClick={() => onAddNode('delete')}
+        className="flex items-center gap-2 px-4 py-2 rounded bg-white hover:bg-red-50 text-red-600"
       >
-        Add Component
-      </Button>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleNodeMenuClose}
-      >
-        {nodeTypes.map(({ type, icon: Icon, label }) => (
-          <MenuItem
-            key={type}
-            onClick={() => handleNodeSelect(type)}
-            className="gap-2"
-          >
-            <Icon className="w-5 h-5" />
-            <span>{label}</span>
-          </MenuItem>
-        ))}
-      </Menu>
+        <Trash2 className="w-5 h-5" />
+        <span>Delete</span>
+      </button>
     </div>
   );
 };

@@ -29,9 +29,20 @@ class AIService {
   }
 
   async analyzeDiagram(diagramData, context = {}) {
+    const analysis = {
+      diagramType: diagramData.type,
+      components: this._analyzeComponents(diagramData.nodes),
+      patterns: this._detectPatterns(diagramData.nodes, diagramData.edges),
+      metrics: {
+        complexity: this._calculateComplexity(diagramData),
+        coverage: this._calculateCoverage(diagramData),
+        bestPractices: this._evaluateBestPractices(diagramData)
+      }
+    };
+
     const messages = [{
       role: 'user',
-      content: `Analyze this system design diagram:\n${JSON.stringify(diagramData, null, 2)}\nContext: ${JSON.stringify(context)}`
+      content: `Analyze this system design diagram:\n${JSON.stringify(analysis, null, 2)}\nContext: ${JSON.stringify(context)}`
     }];
 
     return this.sendMessage(messages, {

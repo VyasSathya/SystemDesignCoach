@@ -3,13 +3,35 @@ const mongoose = require('mongoose');
 const DiagramSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['sequence', 'component', 'deployment'],
+    enum: ['system', 'sequence'],
     required: true
   },
-  content: String,
+  nodes: [{
+    id: String,
+    type: String,
+    position: {
+      x: Number,
+      y: Number
+    },
+    data: mongoose.Schema.Types.Mixed
+  }],
+  edges: [{
+    id: String,
+    source: String,
+    target: String,
+    type: String,
+    data: mongoose.Schema.Types.Mixed
+  }],
+  mermaidCode: String,
   metadata: {
-    version: String,
-    lastUpdated: Date
+    lastUpdated: {
+      type: Date,
+      default: Date.now
+    },
+    version: {
+      type: Number,
+      default: 1
+    }
   }
 });
 
@@ -73,7 +95,10 @@ const WorkbookSchema = new mongoose.Schema({
       detailed: SectionSchema
     }
   },
-  diagrams: [DiagramSchema],
+  diagrams: {
+    system: DiagramSchema,
+    sequence: DiagramSchema
+  },
   progress: {
     overall: {
       type: Number,

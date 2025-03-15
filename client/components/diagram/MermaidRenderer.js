@@ -6,7 +6,7 @@ mermaid.initialize({
   startOnLoad: true,
   theme: 'neutral',
   securityLevel: 'loose',
-  flowchart: {
+  systems: {
     useMaxWidth: false,
     htmlLabels: true,
     curve: 'linear'

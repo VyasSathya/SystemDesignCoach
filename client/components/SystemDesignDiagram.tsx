@@ -2,9 +2,9 @@ import React, { useCallback, useState, useEffect } from 'react';
 import ReactFlow, {
   Controls,
   Background,
-  addEdge,
   Connection,
   NodeTypes,
+  addEdge,
   applyNodeChanges,
   applyEdgeChanges,
   Node,
@@ -13,10 +13,17 @@ import ReactFlow, {
   EdgeChange
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import mermaid from 'mermaid';
 import { Server, Database, CloudLightning, Router, Lock } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { mermaidToReactFlow } from './diagram/utils/systemDiagramUtils';
+import SystemDesignPalette from './diagram/SystemDesignPalette';
 
-// Custom Node Types with Detailed Rendering
+const MermaidRenderer = dynamic(() => import('./diagram/MermaidRenderer'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-100 h-full w-full"></div>
+});
+
+// Define node types outside the component for better performance
 const nodeTypes: NodeTypes = {
   infrastructureNode: ({ data }) => (
     <div className="bg-blue-100 p-2 rounded border border-blue-300 flex items-center">
@@ -38,160 +45,219 @@ const nodeTypes: NodeTypes = {
   ),
 };
 
-// Sidebar Component for Adding System Design Components
-const SystemDesignSidebar: React.FC<{ onAddNode: (type: string, label: string) => void }> = ({ onAddNode }) => {
-  const componentTypes = [
-    { 
-      type: 'infrastructureNode', 
-      label: 'Load Balancer', 
-      icon: <Router className="h-5 w-5 text-blue-600" />,
-      category: 'Infrastructure'
-    },
-    { 
-      type: 'computationNode', 
-      label: 'Web Server', 
-      icon: <Server className="h-5 w-5 text-green-600" />,
-      category: 'Computation'
-    },
-    { 
-      type: 'dataNode', 
-      label: 'Database', 
-      icon: <Database className="h-5 w-5 text-purple-600" />,
-      category: 'Data'
-    },
-    { 
-      type: 'infrastructureNode', 
-      label: 'API Gateway', 
-      icon: <CloudLightning className="h-5 w-5 text-blue-600" />,
-      category: 'Infrastructure'
-    },
-    { 
-      type: 'infrastructureNode', 
-      label: 'Authentication', 
-      icon: <Lock className="h-5 w-5 text-blue-600" />,
-      category: 'Infrastructure'
-    }
-  ];
+interface ComponentType {
+  type: string;
+  label: string;
+  icon: React.ReactNode;
+  category: string;
+}
 
-  return (
-    <div className="w-64 p-4 bg-gray-50 border-r">
-      <h2 className="text-lg font-bold mb-4">Components</h2>
-      {componentTypes.map((component, index) => (
-        <button
-          key={index}
-          onClick={() => onAddNode(component.type, component.label)}
-          className="flex items-center w-full p-2 hover:bg-gray-100 rounded mb-2"
-        >
-          {component.icon}
-          <span className="ml-2 text-sm">{component.label}</span>
-          <span className="ml-auto text-xs text-gray-500">{component.category}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
+const componentTypes: ComponentType[] = [
+  { 
+    type: 'infrastructureNode', 
+    label: 'Load Balancer', 
+    icon: <Router className="h-5 w-5 text-blue-600" />,
+    category: 'Infrastructure'
+  },
+  { 
+    type: 'computationNode', 
+    label: 'Web Server', 
+    icon: <Server className="h-5 w-5 text-green-600" />,
+    category: 'Computation'
+  },
+  { 
+    type: 'dataNode', 
+    label: 'Database', 
+    icon: <Database className="h-5 w-5 text-purple-600" />,
+    category: 'Data'
+  },
+  { 
+    type: 'infrastructureNode', 
+    label: 'API Gateway', 
+    icon: <CloudLightning className="h-5 w-5 text-blue-600" />,
+    category: 'Infrastructure'
+  },
+  { 
+    type: 'infrastructureNode', 
+    label: 'Authentication', 
+    icon: <Lock className="h-5 w-5 text-blue-600" />,
+    category: 'Infrastructure'
+  }
+];
 
-const SystemDesignDiagram: React.FC = () => {
-  // State management for nodes and edges using regular useState
+interface SystemDesignDiagramProps {
+  initialMermaidCode?: string;
+  onDiagramChange?: (mermaidCode: string) => void;
+}
+
+const SystemDesignDiagram: React.FC<SystemDesignDiagramProps> = ({ 
+  initialMermaidCode,
+  onDiagramChange 
+}) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [mermaidCode, setMermaidCode] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'flow' | 'mermaid'>('flow');
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
-  // Handler for node changes
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => {
-      setNodes(nds => applyNodeChanges(changes, nds));
-    },
-    []
-  );
+  useEffect(() => {
+    if (initialMermaidCode) {
+      setMermaidCode(initialMermaidCode);
+      // Convert initial Mermaid code to ReactFlow
+      try {
+        const { nodes: initialNodes, edges: initialEdges } = mermaidToReactFlow(initialMermaidCode);
+        setNodes(initialNodes);
+        setEdges(initialEdges);
+      } catch (error) {
+        console.error('Failed to parse initial Mermaid code:', error);
+      }
+    }
+  }, [initialMermaidCode]);
 
-  // Handler for edge changes
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      setEdges(eds => applyEdgeChanges(changes, eds));
-    },
-    []
-  );
-
-  // Handle connections between nodes
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      const newEdge = { 
-        ...connection, 
-        id: `edge-${connection.source}-${connection.target}`,
-        type: 'default',
-        animated: true 
-      };
-
-      setEdges((eds) => addEdge(newEdge, eds));
-    },
-    []
-  );
-
-  // Add a new node to the diagram
-  const handleAddNode = useCallback((type: string, label: string) => {
-    const newNode = {
-      id: `node-${Date.now()}`,
-      type,
-      data: { 
-        label, 
-        icon: type === 'infrastructureNode' ? <Router className="h-5 w-5 text-blue-600" /> :
-               type === 'computationNode' ? <Server className="h-5 w-5 text-green-600" /> :
-               <Database className="h-5 w-5 text-purple-600" />
-      },
-      position: { 
-        x: Math.random() * 500, 
-        y: Math.random() * 500 
-      },
-    };
-
-    setNodes((prevNodes) => [...prevNodes, newNode]);
+  const generateMermaidCode = useCallback((nodes: Node[], edges: Edge[]): string => {
+    let code = 'graph TD\n';
+    
+    // Add nodes
+    nodes.forEach(node => {
+      code += `    ${node.id}[${node.data.label}]\n`;
+    });
+    
+    // Add edges
+    edges.forEach(edge => {
+      code += `    ${edge.source} --> ${edge.target}\n`;
+    });
+    
+    return code;
   }, []);
 
-  // Generate Mermaid code for the current diagram
-  const generateMermaidCode = useCallback(() => {
-    const nodeLines = nodes.map(
-      (node) => `${node.id}[${node.data.label}]`
-    );
-    const edgeLines = edges.map(
-      (edge) => `${edge.source} --> ${edge.target}`
-    );
-
-    return `graph TD\n${[...nodeLines, ...edgeLines].join('\n')}`;
-  }, [nodes, edges]);
-
-  // Render Mermaid diagram
-  const renderMermaidDiagram = useCallback(async () => {
-    try {
-      mermaid.initialize({ 
-        startOnLoad: false,
-        theme: 'default'
-      });
-
-      const { svg } = await mermaid.render('mermaid-diagram', generateMermaidCode());
-      return svg;
-    } catch (error) {
-      console.error('Mermaid rendering error', error);
-      return '';
+  const updateMermaidCode = useCallback(() => {
+    const newMermaidCode = generateMermaidCode(nodes, edges);
+    setMermaidCode(newMermaidCode);
+    if (onDiagramChange) {
+      onDiagramChange(newMermaidCode);
     }
-  }, [generateMermaidCode]);
+  }, [nodes, edges, generateMermaidCode, onDiagramChange]);
 
-  // Render the system design diagram
+  useEffect(() => {
+    updateMermaidCode();
+  }, [nodes, edges, updateMermaidCode]);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
+    []
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((eds) => addEdge({
+        ...connection,
+        type: 'smoothstep',
+        animated: true,
+      }, eds));
+    },
+    []
+  );
+
+  const handleNodeAdd = useCallback((type: string, label: string) => {
+    const newNode = {
+      id: `${type}-${Date.now()}`,
+      type,
+      position: { x: Math.random() * 500, y: Math.random() * 500 },
+      data: { label, type }
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
+
+  const handleNodeDelete = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    setEdges((eds) => eds.filter((edge) => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+    setSelectedNode(null);
+  }, []);
+
+  const handleNodeRename = useCallback((nodeId: string, newName: string) => {
+    setNodes((nds) => nds.map((node) => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: { ...node.data, label: newName }
+        };
+      }
+      return node;
+    }));
+  }, []);
+
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
+  }, []);
+
   return (
-    <div className="flex h-screen">
-      <SystemDesignSidebar onAddNode={handleAddNode} />
-      <div className="flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
+    <div className="flex flex-col h-screen">
+      <div className="flex gap-2 p-2 bg-gray-100">
+        <button
+          onClick={() => setViewMode('flow')}
+          className={`px-3 py-1 rounded ${viewMode === 'flow' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
         >
-          <Controls />
-          <Background color="#f0f0f0" />
-        </ReactFlow>
+          Flow Editor
+        </button>
+        <button
+          onClick={() => setViewMode('mermaid')}
+          className={`px-3 py-1 rounded ${viewMode === 'mermaid' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
+          Mermaid View
+        </button>
+      </div>
+      
+      <div className="flex-1 relative">
+        {viewMode === 'flow' ? (
+          <div className="flex h-full">
+            <SystemDesignPalette
+              onNodeAdd={handleNodeAdd}
+              onNodeDelete={handleNodeDelete}
+              onNodeRename={handleNodeRename}
+              selectedNode={selectedNode}
+            />
+            <div className="flex-1">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={onNodeClick}
+                nodeTypes={nodeTypes}
+                fitView
+                defaultEdgeOptions={{
+                  type: 'smoothstep',
+                  animated: true,
+                }}
+              >
+                <Controls />
+                <Background color="#f0f0f0" gap={16} />
+              </ReactFlow>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full">
+            <MermaidRenderer 
+              code={mermaidCode} 
+              onError={(error) => {
+                console.error('Mermaid rendering error:', error);
+                // Optionally handle the error in UI
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

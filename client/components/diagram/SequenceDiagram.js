@@ -813,153 +813,68 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
     <div className="w-full h-full flex flex-col">
       {/* Toolbar */}
       <div className="p-3 bg-white shadow-sm border-b border-gray-200">
-        <div className="flex flex-wrap justify-between items-center">
-          <div className="flex items-center">
-            <div className="flex items-center mr-2">
-              <Layout className="h-5 w-5 text-blue-600 mr-1" />
-              <span className="text-sm font-semibold text-blue-800">Sequence Diagram</span>
-            </div>
-          </div>
-          
-          <div className="flex space-x-2 items-center">
-            {selectedElement && (
-              <>
-                <button
-                  onClick={deleteSelected}
-                  className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 flex items-center shadow-sm"
-                  title="Delete selected element"
-                >
-                  <Trash2 size={16} className="mr-1" />
-                  Delete
-                </button>
-                {!isEditing && (
-                  <button
-                    onClick={startEditing}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center shadow-sm"
-                    title="Edit label"
-                  >
-                    <Edit size={16} className="mr-1" />
-                    Rename
-                  </button>
-                )}
-              </>
-            )}
-            <button
-              onClick={exportMermaid}
-              className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 flex items-center shadow-sm"
-              title="Export diagram as Mermaid code"
-            >
-              <Download size={16} className="mr-1" />
-              Export
-            </button>
-            <button
-              onClick={() => setShowHelp(!showHelp)}
-              className="ml-2 p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-              title="Show help"
-            >
-              <HelpCircle size={18} />
-            </button>
-          </div>
-        </div>
-        
-        {/* Second toolbar row for adding elements */}
-        <div className="flex mt-3 justify-between">
-          <div className="flex items-center space-x-1">
-            <span className="text-xs text-gray-500 mr-1">Add:</span>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
             <button
               onClick={addActor}
               className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center shadow-sm"
-              title="Add a human actor"
             >
               <User size={14} className="mr-1" />
-              Actor
+              Add Actor
             </button>
             <button
-              onClick={addParticipant}
-              className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 flex items-center shadow-sm"
-              title="Add a system component"
+              onClick={addSystem}
+              className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center shadow-sm"
             >
               <Server size={14} className="mr-1" />
-              System
+              Add System
             </button>
+            <select
+              onChange={(e) => setMessageType(e.target.value)}
+              className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md border-none shadow-sm"
+            >
+              <option value="sync">Sync Message</option>
+              <option value="async">Async Message</option>
+              <option value="return">Return Message</option>
+            </select>
           </div>
           
-          <div className="flex items-center space-x-3">
+          {selectedElement && (
             <div className="flex items-center space-x-2">
-              <label className="text-xs text-gray-600">Message Type:</label>
-              <select
-                value={messageType}
-                onChange={(e) => setMessageType(e.target.value)}
-                className="px-2 py-1 border border-gray-300 rounded text-sm bg-white shadow-sm text-xs"
-                title="Select message type"
+              <button
+                onClick={deleteSelected}
+                className="px-2 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 flex items-center"
               >
-                <option value="sync">Synchronous</option>
-                <option value="async">Asynchronous</option>
-                <option value="return">Return</option>
-              </select>
+                <Trash2 size={14} className="mr-1" />
+                Delete
+              </button>
+              <button
+                onClick={startEditing}
+                className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+              >
+                <Edit size={14} className="mr-1" />
+                Rename
+              </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
-      
-      {/* Help Panel (Slides in from the top when showHelp is true) */}
-      {showHelp && (
-        <div className="bg-white border-b border-gray-200 p-4 shadow-md">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-medium text-lg">Sequence Diagram Help</h3>
-            <button 
-              onClick={() => setShowHelp(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-          
-          <div className="text-sm text-gray-700 space-y-2">
-            <p className="font-medium">Creating Your Diagram:</p>
-            <ol className="list-decimal ml-5 space-y-1">
-              <li>Add actors (humans) and components (systems) using the toolbar buttons</li>
-              <li>Select a message type, then drag between lifelines (vertical lines) to create messages</li>
-              <li>Click on any element to select it, then use the rename button to edit its label</li>
-              <li>Messages flow from top to bottom, representing the sequence of events over time</li>
-            </ol>
-            
-            <p className="font-medium mt-3">Tips:</p>
-            <ul className="list-disc ml-5 space-y-1">
-              <li>Actors and components can only move horizontally</li>
-              <li>Each message should have a clear, descriptive label</li>
-              <li>Use synchronous messages for blocking calls</li>
-              <li>Use asynchronous messages for non-blocking operations</li>
-              <li>Use return messages to show responses</li>
-            </ul>
-          </div>
-        </div>
-      )}
 
       {/* Editing Panel */}
       {isEditing && selectedElement && (
         <div className="p-3 border-b border-gray-200 bg-blue-50">
           <div className="flex items-center">
-            <label className="mr-2 text-sm font-medium text-gray-700">Label:</label>
             <input
               type="text"
               value={editingLabel}
               onChange={(e) => setEditingLabel(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  saveLabel();
-                }
-              }}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter label..."
+              className="flex-1 px-2 py-1 border border-gray-300 rounded-md"
               autoFocus
             />
             <button
               onClick={saveLabel}
-              className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm flex items-center"
+              className="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
             >
-              <Save size={14} className="mr-1" />
               Save
             </button>
             <button
@@ -971,7 +886,7 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
           </div>
         </div>
       )}
-      
+
       {/* Diagram Area */}
       <div className="flex-1 h-full relative" style={{ touchAction: 'none' }}>
         <ReactFlow
@@ -993,9 +908,6 @@ const SequenceDiagram = ({ initialDiagram, onDiagramUpdate }) => {
         >
           <Controls />
           <Background variant="dots" size={1} gap={16} color="#f0f0f0" />
-          <Panel position="bottom-center" className="bg-white py-1 px-3 rounded-t-lg shadow-md text-xs text-gray-600 font-medium border border-gray-200">
-            Time flows downward
-          </Panel>
         </ReactFlow>
       </div>
     </div>

@@ -1,11 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import ReactFlow from 'reactflow';
-import { Panel, Button, Tooltip } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import SystemArchitectureDiagram from './SystemArchitectureDiagram';
+import { CircularProgress } from '@mui/material';
 import { Wand2, Save, RefreshCw, X } from 'lucide-react';
-
-import { nodeTypes } from './NodeTypes/SequenceDiagramNodeTypes';
-import MermaidRenderer from './MermaidRenderer';
-import DiagramToolbar from './DiagramToolbar';
 
 const DiagramPanel = ({
   hideModes = false,
@@ -18,138 +14,106 @@ const DiagramPanel = ({
   onAiSuggest,
   onSaveAndContinue,
 }) => {
-  const [nodes, setNodes] = useState(initialDiagram?.nodes || []);
-  const [edges, setEdges] = useState(initialDiagram?.edges || []);
-  const [mode, setMode] = useState('edit'); // edit, preview, mermaid
-  const [loading, setLoading] = useState(false);
-
-  const handleCustomRequest = useCallback(async (e) => {
-    setLoading(true);
-    try {
-      const result = await onAiSuggest(nodes, edges);
-      // Handle AI suggestions
-      if (result.proposedChanges) {
-        setNodes(result.proposedChanges.nodes);
-        setEdges(result.proposedChanges.edges);
-      }
-    } catch (error) {
-      console.error('AI suggestion error:', error);
+  // Initialize with default nodes if no initial diagram
+  const [nodes, setNodes] = useState([
+    {
+      id: '1',
+      type: 'service',
+      position: { x: 250, y: 100 },
+      data: { label: 'API Service', notes: 'Main service' }
+    },
+    {
+      id: '2',
+      type: 'database',
+      position: { x: 250, y: 250 },
+      data: { label: 'Database', notes: 'Primary storage' }
     }
-    setLoading(false);
-  }, [nodes, edges, onAiSuggest]);
+  ]);
+  
+  const [edges, setEdges] = useState([
+    {
+      id: 'e1-2',
+      source: '1',
+      target: '2',
+      type: 'default'
+    }
+  ]);
+  
+  const [isLoading, setIsLoading] = useState(false);
 
-  const onDragStart = useCallback((event, nodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
+  useEffect(() => {
+    if (initialDiagram) {
+      setNodes(initialDiagram.nodes || []);
+      setEdges(initialDiagram.edges || []);
+    }
+  }, [initialDiagram]);
+
+  const handleNodesChange = useCallback((changes) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
   }, []);
 
-  const handleInsertNode = useCallback((type) => {
-    const position = {
-      x: Math.random() * window.innerWidth * 0.5,
-      y: Math.random() * window.innerHeight * 0.5,
-    };
-    createNode(type, position);
+  const handleEdgesChange = useCallback((changes) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
   }, []);
 
-  const getSaveButtonUI = () => (
-    <div className="flex gap-2">
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => onSave(nodes, edges)}
-        startIcon={<Save />}
-      >
-        Save
-      </Button>
-      {onSaveAndContinue && (
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => onSaveAndContinue(nodes, edges)}
-        >
-          Save & Continue
-        </Button>
-      )}
-    </div>
-  );
-
-  const createNode = useCallback((type, position, data = {}) => {
-    const newNode = {
-      id: `${type}-${Date.now()}`,
-      type,
-      position,
-      data: { label: `New ${type}`, ...data },
-    };
-    setNodes((nds) => [...nds, newNode]);
-    return newNode;
+  const handleConnect = useCallback((params) => {
+    setEdges((eds) => addEdge(params, eds));
   }, []);
 
-  const handleAddNode = useCallback((type, position) => {
-    createNode(type, position);
-  }, [createNode]);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <CircularProgress />
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="flex justify-between items-center p-4 border-b">
-        <DiagramToolbar
-          mode={mode}
-          setMode={setMode}
-          onAddNode={handleAddNode}
-          hideModes={hideModes}
-        />
-        <div className="flex gap-2">
-          <Tooltip title="AI Suggestions">
-            <Button
-              variant="outlined"
-              onClick={handleCustomRequest}
-              disabled={loading}
-              startIcon={<Wand2 />}
-            >
-              Suggest Improvements
-            </Button>
-          </Tooltip>
-          {onRefresh && (
-            <Button
-              variant="outlined"
-              onClick={onRefresh}
-              startIcon={<RefreshCw />}
-            >
-              Refresh
-            </Button>
-          )}
-          {getSaveButtonUI()}
-          {onClose && (
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={onClose}
-              startIcon={<X />}
-            >
-              Close
-            </Button>
-          )}
+    <div className="flex flex-col h-full">
+      {/* Toolbar */}
+      <div className="flex justify-between items-center p-2 border-b">
+        <div className="flex space-x-2">
+          <button
+            onClick={onAiSuggest}
+            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 flex items-center"
+          >
+            <Wand2 className="w-4 h-4 mr-1" />
+            Ask Coach
+          </button>
+          <button
+            onClick={() => onSave({ nodes, edges })}
+            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center"
+          >
+            <Save className="w-4 h-4 mr-1" />
+            Save
+          </button>
+          <button
+            onClick={onRefresh}
+            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+          >
+            <RefreshCw className="w-4 h-4 mr-1" />
+            Refresh
+          </button>
         </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 relative">
-        {mode === 'mermaid' ? (
-          <MermaidRenderer nodes={nodes} edges={edges} />
-        ) : (
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={setNodes}
-            onEdgesChange={setEdges}
-            nodeTypes={nodeTypes}
-            fitView
-          >
-            <Panel position="top-left">
-              <div className="bg-white p-2 rounded shadow">
-                Drag nodes to reposition
-              </div>
-            </Panel>
-          </ReactFlow>
-        )}
+      {/* Diagram Area */}
+      <div className="flex-1 min-h-[500px]">
+        <SystemArchitectureDiagram
+          initialNodes={nodes}
+          initialEdges={edges}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
+          onConnect={handleConnect}
+        />
       </div>
     </div>
   );

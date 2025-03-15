@@ -1,14 +1,12 @@
 // client/components/diagram/ReactFlowDiagram.js
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   Controls,
   Background,
-  MiniMap,
-  addEdge,
   Panel
 } from 'reactflow';
-import { Database, Server, Globe, Archive, Grid, Share2, Box, Gateway } from 'lucide-react';
+import { Globe, Server, Database, Archive, Grid, Share2, Box } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
 // Import custom node types
@@ -49,6 +47,7 @@ const Flow = ({
   const [nodeName, setNodeName] = useState('');
   const [nodeNotes, setNodeNotes] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedElements, setSelectedElements] = useState([]);
   
   // Safely get nodes and edges with defaults
   const safeNodes = Array.isArray(initialNodes) && initialNodes.length > 0 
@@ -109,49 +108,37 @@ const Flow = ({
     (event) => {
       event.preventDefault();
 
-      if (!reactFlowInstance || !reactFlowWrapper.current) {
-        console.log("Can't handle drop - missing instance or wrapper");
-        return;
-      }
+      if (!reactFlowInstance || !reactFlowWrapper.current) return;
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const type = event.dataTransfer.getData('application/reactflow');
-
-      if (typeof type === 'undefined' || !type) {
-        console.log("Invalid drag data:", type);
-        return;
-      }
 
       const position = reactFlowInstance.project({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
 
-      const defaultLabel = type.charAt(0).toUpperCase() + type.slice(1);
-      const nodeId = `${type}_${Date.now()}`;
-      
       const newNode = {
-        id: nodeId,
+        id: `${type}_${Date.now()}`,
         type,
         position,
         data: { 
-          label: `${defaultLabel}`,
-          notes: ''
+          label: '',  // Empty label initially
+          notes: '',
+          type: type  // Store the type separately
         },
       };
 
-      const updatedNodes = [...safeNodes, newNode];
-      
+      // Show the label editor immediately
+      setSelectedNode(newNode);
+      setNodeName('');
+      setNodeNotes('');
+      setShowNodeEditor(true);
+
+      // Add node to diagram
       onNodesChange([{ type: 'add', item: newNode }]);
-      
-      if (onDiagramUpdate) {
-        onDiagramUpdate({
-          nodes: updatedNodes,
-          edges: safeEdges
-        });
-      }
     },
-    [reactFlowInstance, safeNodes, safeEdges, onNodesChange, onDiagramUpdate]
+    [reactFlowInstance]
   );
 
   const handleConnect = useCallback((params) => {
@@ -173,37 +160,25 @@ const Flow = ({
     }
   }, [safeNodes, safeEdges, onConnect, onDiagramUpdate]);
 
-  const addNode = useCallback((type) => {
-    const position = reactFlowInstance ? 
-      { 
-        x: Math.random() * 300 + 50, 
-        y: Math.random() * 300 + 50 
-      } : 
-      { x: 100, y: 100 };
-    
-    const defaultLabel = type.charAt(0).toUpperCase() + type.slice(1);
-    const nodeId = `${type}_${Date.now()}`;
-    
+  const handleAddNode = useCallback((type) => {
+    const name = prompt("Enter a name for this node:");
+    if (!name) return;
+
     const newNode = {
-      id: nodeId,
+      id: `${type}-${Date.now()}`,
       type,
-      position,
-      data: { 
-        label: `${defaultLabel}`,
-        notes: ''
-      },
+      position: { x: 100, y: 100 },
+      data: { label: name }
     };
     
-    const updatedNodes = [...safeNodes, newNode];
     onNodesChange([{ type: 'add', item: newNode }]);
-    
-    if (onDiagramUpdate) {
-      onDiagramUpdate({
-        nodes: updatedNodes,
-        edges: safeEdges
-      });
-    }
-  }, [reactFlowInstance, safeNodes, safeEdges, onNodesChange, onDiagramUpdate]);
+  }, [onNodesChange]);
+
+  const handleDelete = useCallback(() => {
+    selectedElements.forEach(element => {
+      onNodesChange([{ type: 'remove', id: element.id }]);
+    });
+  }, [selectedElements, onNodesChange]);
 
   return (
     <div className="w-full h-full relative" ref={reactFlowWrapper} style={{ minHeight: '300px' }}>
@@ -229,9 +204,9 @@ const Flow = ({
         snapGrid={[15, 15]}
         connectionLineStyle={{ strokeWidth: 2, stroke: '#999' }}
         connectionLineType="smoothstep"
+        onSelectionChange={(elements) => setSelectedElements(elements)}
       >
         <Controls />
-        <MiniMap />
         <Background variant="dots" gap={12} size={1} />
         <Panel position="top-right">
           <div className="bg-white p-2 rounded shadow-md flex flex-col space-y-2">
@@ -266,7 +241,7 @@ const Flow = ({
             ].map(({ type, icon, color, label }) => (
               <button
                 key={type}
-                onClick={() => addNode(type)}
+                onClick={() => handleAddNode(type)}
                 className="flex items-center px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
                 draggable
                 onDragStart={(event) => {

@@ -206,75 +206,61 @@ export const mermaidToReactFlow = (mermaidCode) => {
 // Convert ReactFlow nodes and edges to Mermaid diagram code
 export const reactFlowToMermaid = ({ nodes, edges }) => {
   if (!nodes || !edges) {
-    return 'graph TD\n    A[Empty Diagram]';
+    return { 
+      mermaidCode: 'graph TD\n    A[Empty Diagram]',
+      positions: [] 
+    };
   }
   
   try {
     let mermaidCode = 'graph TD\n';
+    let positionData = [];
     
-    // Define node shapes based on type
-    const nodeShapes = {
-      database: '[(Database)]',
-      service: '[Service]',
-      client: '>Client]',
-      cache: '((Cache))',
-      loadBalancer: '{Load Balancer}',
-      queue: '([Queue])',
-      custom: '[Custom]'
-    };
-    
-    // Add nodes
+    // Store positions for each node
     nodes.forEach(node => {
       const label = node.data.label || node.id;
       const type = node.type || 'service';
       
-      // Get the base shape for this node type
-      let shape = nodeShapes[type] || '[Node]';
-      
-      // Replace the default label with the custom label (but keep the brackets/shape)
-      const openBracket = shape.indexOf('[');
-      const closeBracket = shape.lastIndexOf(']');
-      
-      if (openBracket >= 0 && closeBracket > openBracket) {
-        shape = shape.substring(0, openBracket + 1) + label + shape.substring(closeBracket);
-      } else {
-        // For shapes that don't use square brackets
-        const openParen = shape.indexOf('(');
-        const closeParen = shape.lastIndexOf(')');
-        
-        if (openParen >= 0 && closeParen > openParen) {
-          shape = shape.substring(0, openParen + 1) + label + shape.substring(closeParen);
-        } else {
-          // For other shapes like diamond
-          const openBrace = shape.indexOf('{');
-          const closeBrace = shape.lastIndexOf('}');
-          
-          if (openBrace >= 0 && closeBrace > openBrace) {
-            shape = shape.substring(0, openBrace + 1) + label + shape.substring(closeBrace);
-          } else {
-            // Fallback: just add label in square brackets
-            shape = `[${label}]`;
-          }
+      // Store position data
+      positionData.push({
+        id: node.id,
+        position: node.position,
+        mermaidPosition: {
+          level: Math.floor(node.position.y / 100),
+          column: Math.floor(node.position.x / 150)
         }
-      }
-      
-      mermaidCode += `    ${node.id}${shape}\n`;
+      });
+
+      // Generate Mermaid code as before...
+      const shape = nodeShapes[type] || nodeShapes.custom;
+      mermaidCode += `    ${node.id}${shape.replace('[]', `[${label}]`)}\n`;
     });
-    
-    // Add edges
+
+    // Add edges with position data
     edges.forEach(edge => {
-      const arrow = '-->'; // Use directed arrows
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
       
-      if (edge.label) {
-        mermaidCode += `    ${edge.source} ${arrow} |${edge.label}| ${edge.target}\n`;
-      } else {
-        mermaidCode += `    ${edge.source} ${arrow} ${edge.target}\n`;
+      if (sourceNode && targetNode) {
+        positionData.push({
+          id: edge.id,
+          sourcePosition: sourceNode.position,
+          targetPosition: targetNode.position
+        });
       }
+
+      // Add edge to Mermaid code
+      mermaidCode += `    ${edge.source} -->`;
+      if (edge.label) mermaidCode += `|${edge.label}|`;
+      mermaidCode += ` ${edge.target}\n`;
     });
-    
-    return mermaidCode;
+
+    return {
+      mermaidCode,
+      positions: positionData
+    };
   } catch (error) {
-    console.error('Error converting ReactFlow to Mermaid:', error);
-    throw new Error(`Failed to convert ReactFlow to Mermaid: ${error.message}`);
+    console.error('Error converting to Mermaid:', error);
+    throw error;
   }
 };

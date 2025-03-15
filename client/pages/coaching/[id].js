@@ -30,7 +30,7 @@ const MermaidRenderer = dynamic(() => import('../../components/diagram/MermaidRe
   loading: () => <div className="animate-pulse bg-gray-100 h-full w-full"></div>
 });
 
-const ReactFlowDiagramWithProvider = dynamic(() => import('../../components/diagram/ReactFlowDiagram'), {
+const SystemArchitectureDiagram = dynamic(() => import('../../components/diagram/SystemArchitectureDiagram'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-50">
@@ -39,7 +39,7 @@ const ReactFlowDiagramWithProvider = dynamic(() => import('../../components/diag
   )
 });
 
-const SequenceDiagram = dynamic(() => import('../../components/diagram/SequenceDiagram'), {
+const SystemSequenceDiagram = dynamic(() => import('../../components/diagram/SystemSequenceDiagram'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-gray-50">
@@ -116,7 +116,7 @@ const CoachingSessionPage = () => {
   
   // Define diagram tabs
   const [diagramTabs, setDiagramTabs] = useState([
-    { id: 'flowchart', label: 'Flow Diagram', active: true },
+    { id: 'systems', label: 'Systems Diagram', active: true },
     { id: 'sequence', label: 'Sequence Diagram', active: false }
   ]);
   
@@ -509,17 +509,44 @@ const CoachingSessionPage = () => {
   );
 
   const handleDiagramUpdate = (diagramData) => {
-    setCurrentDiagramState(diagramData);
+    const diagramType = activeDiagramTab === 'sequence' ? 'sequence' : 'system';
+    
+    setWorkbookState(prev => ({
+      ...prev,
+      diagrams: {
+        ...prev.diagrams,
+        [diagramType]: {
+          ...prev.diagrams?.[diagramType],
+          ...diagramData
+        }
+      }
+    }));
+  };
+
+  const handleDiagramSave = async () => {
+    if (!sessionId) return;
+    
+    const diagramType = activeDiagramTab === 'sequence' ? 'sequence' : 'system';
+    const currentDiagram = workbookState.diagrams?.[diagramType];
+    
+    try {
+      setIsSaving(true);
+      await saveDiagram(sessionId, diagramType, currentDiagram);
+      setIsSaving(false);
+    } catch (error) {
+      console.error('Error saving diagram:', error);
+      // Handle error
+    }
   };
 
   const renderDiagramEditor = () => {
     // Get active diagram tab
-    const activeDiagramTab = diagramTabs.find(tab => tab.active)?.id || 'flowchart';
+    const activeDiagramTab = diagramTabs.find(tab => tab.active)?.id || 'systems';
     
     if (activeDiagramTab === 'sequence') {
       return (
         <div className="relative h-full">
-          <SequenceDiagram 
+          <SystemSequenceDiagram 
             initialDiagram={currentDiagramState}
             onDiagramUpdate={handleDiagramUpdate}
           />
@@ -527,11 +554,11 @@ const CoachingSessionPage = () => {
       );
     }
     
-    // Default flowchart diagram
+    // Default systems diagram
     if (viewMode === 'edit') {
       return (
         <div className="relative h-full">
-          <ReactFlowDiagramWithProvider
+          <SystemArchitectureDiagram
             initialNodes={nodes}
             initialEdges={edges}
             onNodesChange={onNodesChange}
@@ -565,7 +592,7 @@ const CoachingSessionPage = () => {
                 </div>
               </div>
               <div className="flex-1 relative">
-                <ReactFlowDiagramWithProvider
+                <SystemArchitectureDiagram
                   initialNodes={diagramSuggestions.nodes}
                   initialEdges={diagramSuggestions.edges}
                   onNodesChange={() => {}}
