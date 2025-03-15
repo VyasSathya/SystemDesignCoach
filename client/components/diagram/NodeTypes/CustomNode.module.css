@@ -3,6 +3,7 @@
   border-radius: 0.5rem;
   min-width: 150px;
   transition: transform 0.2s ease;
+  position: relative;
 }
 
 .nodeContainer:hover {
@@ -26,6 +27,16 @@
   bottom: -4px !important;
 }
 
+.handleLeft {
+  composes: handle;
+  left: -4px !important;
+}
+
+.handleRight {
+  composes: handle;
+  right: -4px !important;
+}
+
 .contentWrapper {
   display: flex;
   flex-direction: column;
@@ -41,4 +52,24 @@
 .type {
   font-size: 0.875rem;
   text-align: center;
+}
+.deleteButton {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 4px;
+  border-radius: 4px;
+  background-color: white;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteButton:hover {
+  background-color: #ef4444;
+  color: white;
 }
