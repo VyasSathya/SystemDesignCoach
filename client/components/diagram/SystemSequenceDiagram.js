@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, { 
   Panel,
   Background, 
@@ -91,70 +91,9 @@ const MenuPanel = ({
   onMessageTypeChange = () => {},
   messageType = null,
   onAddFragment = () => {},
-  selectedNode = null,
-  onNodeDelete,
-  onNodeRename
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingLabel, setEditingLabel] = useState('');
-
-  const handleStartEdit = () => {
-    if (selectedNode) {
-      setEditingLabel(selectedNode.data.label);
-      setIsEditing(true);
-    }
-  };
-
-  const handleSaveEdit = () => {
-    if (selectedNode && onNodeRename) {
-      onNodeRename(selectedNode.id, editingLabel);
-      setIsEditing(false);
-    }
-  };
-
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-      {/* Node Operations Panel */}
-      {selectedNode && (
-        <div className="p-4 border-b bg-white">
-          <h3 className="font-semibold mb-2">Selected Node: {selectedNode.data.label}</h3>
-          <div className="flex gap-2">
-            {isEditing ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={editingLabel}
-                  onChange={(e) => setEditingLabel(e.target.value)}
-                  className="border px-2 py-1 rounded"
-                />
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Save
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleStartEdit}
-                className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
-              >
-                <Edit className="w-4 h-4" />
-                Rename
-              </button>
-            )}
-            <button
-              onClick={() => onNodeDelete && onNodeDelete(selectedNode.id)}
-              className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Existing MenuPanel content */}
       <div className="max-w-[1200px] mx-auto">
         <div className="grid grid-cols-3 gap-4 p-4">
           {/* Left Section: Add Participants */}
@@ -179,25 +118,36 @@ const MenuPanel = ({
 
           {/* Middle Section: Message Types */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Message Types</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {menuItems.messageTypes.map((item) => {
-                const Icon = iconMap[item.iconName];
-                return (
-                  <button
-                    key={item.type}
-                    onClick={() => onMessageTypeChange(item.type)}
-                    className={`flex flex-col items-center p-3 rounded-lg transition-colors ${
-                      messageType === item.type 
-                        ? `bg-${item.color}-50 border-${item.color}-200` 
-                        : 'hover:bg-gray-50 border-gray-200'
-                    } border`}
-                  >
-                    {Icon && <Icon className={`w-6 h-6 text-${item.color}-500 mb-2`} />}
-                    <span className="text-xs text-center text-gray-600">{item.label}</span>
-                  </button>
-                );
-              })}
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Message Type</h3>
+            <div className="relative h-[76px]">
+              <div className="absolute inset-0 grid grid-cols-2 gap-2 p-0.5 bg-gray-100 rounded-lg">
+                {/* Sliding selector */}
+                <div 
+                  className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] transition-transform duration-200 ease-in-out
+                    ${messageType === 'async' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}
+                    bg-white rounded-md border border-gray-200 shadow-sm`}
+                />
+                
+                {/* Clickable buttons */}
+                <button
+                  onClick={() => onMessageTypeChange('sync')}
+                  className="relative z-10 p-3 flex flex-col items-center transition-colors duration-200"
+                >
+                  <SolidArrow className={`w-6 h-6 ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
+                  <span className={`text-xs text-center font-medium ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'}`}>
+                    Synchronous
+                  </span>
+                </button>
+                <button
+                  onClick={() => onMessageTypeChange('async')}
+                  className="relative z-10 p-3 flex flex-col items-center transition-colors duration-200"
+                >
+                  <AsyncArrow className={`w-6 h-6 ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
+                  <span className={`text-xs text-center font-medium ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'}`}>
+                    Asynchronous
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -228,56 +178,38 @@ const MenuPanel = ({
 
 // Update the main component to handle node selection and operations
 const SystemSequenceDiagram = () => {
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [nodes, setNodes] = useState([]);
+  const [nodes, setNodes] = useState([
+    {
+      id: '1',
+      type: 'default',
+      data: { label: 'Test Node 1' },
+      position: { x: 100, y: 100 }
+    },
+    {
+      id: '2',
+      type: 'default',
+      data: { label: 'Test Node 2' },
+      position: { x: 300, y: 100 }
+    }
+  ]);
   const [edges, setEdges] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [messageType, setMessageType] = useState('sync'); // Initialize as 'sync'
   const [isEditing, setIsEditing] = useState(false);
   const [editingLabel, setEditingLabel] = useState('');
-  const [messageType, setMessageType] = useState('sync');
 
-  const onNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
-  );
-
-  const onEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
-
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    []
-  );
+  const onNodeClick = useCallback((event, node) => {
+    console.log('Node clicked:', node);
+    setSelectedNode(node);
+  }, []);
 
   const handleNodeDelete = useCallback((nodeId) => {
+    console.log('Deleting node:', nodeId);
     setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-    setEdges((eds) => eds.filter((edge) => 
-      edge.source !== nodeId && edge.target !== nodeId
+    setEdges((eds) => eds.filter(
+      (edge) => edge.source !== nodeId && edge.target !== nodeId
     ));
     setSelectedNode(null);
-  }, []);
-
-  const handleAddParticipant = useCallback((type) => {
-    const newNode = {
-      id: `node_${Date.now()}`,
-      type: type,
-      position: { x: Math.random() * 500, y: Math.random() * 300 },
-      data: { 
-        label: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-        type: type
-      }
-    };
-    setNodes((nds) => [...nds, newNode]);
-  }, []);
-
-  const handleMessageTypeChange = useCallback((type) => {
-    setMessageType(type);
-  }, []);
-
-  const handleAddFragment = useCallback((type) => {
-    // Implementation for adding fragments (loop, alt, etc.)
-    console.log('Adding fragment:', type);
   }, []);
 
   const handleStartEdit = () => {
@@ -289,92 +221,97 @@ const SystemSequenceDiagram = () => {
 
   const handleSaveEdit = () => {
     if (selectedNode) {
-      setNodes((nds) => nds.map((node) => {
-        if (node.id === selectedNode.id) {
-          const updatedNode = {
-            ...node,
-            data: { ...node.data, label: editingLabel }
-          };
-          setSelectedNode(updatedNode);
-          return updatedNode;
-        }
-        return node;
-      }));
+      handleNodeRename(selectedNode.id, editingLabel);
       setIsEditing(false);
     }
   };
 
-  const onNodeClick = useCallback((event, node) => {
-    setSelectedNode(node);
+  const handleNodeRename = useCallback((nodeId, newLabel) => {
+    console.log('Renaming node:', nodeId, 'to:', newLabel);
+    setNodes((nds) => 
+      nds.map((node) => 
+        node.id === nodeId 
+          ? { ...node, data: { ...node.data, label: newLabel } }
+          : node
+      )
+    );
+  }, []);
+
+  const handleAddParticipant = useCallback((type) => {
+    const newNode = {
+      id: `node-${Date.now()}`,
+      type: 'default',
+      data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
+      position: { x: Math.random() * 500, y: Math.random() * 300 }
+    };
+    console.log('Adding participant:', newNode);
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
+
+  const handleMessageTypeChange = useCallback((type) => {
+    console.log('Message type changed to:', type);
+    setMessageType(type);
+  }, []);
+
+  const handleAddFragment = useCallback((type) => {
+    console.log('Adding fragment:', type);
+    // TODO: Implement fragment addition logic
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="flex-grow relative">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          fitView
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-            animated: true,
-          }}
-        >
-          <Background color="#f0f0f0" gap={16} />
-          <Controls />
-          
-          {/* Node controls panel */}
-          {selectedNode && (
-            <Panel position="top-right" className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
-              <div className="flex flex-col gap-2">
-                <div className="text-sm font-medium text-gray-700 mb-2">
-                  Selected: {selectedNode.data.label}
-                </div>
-                
-                <div className="flex gap-2">
-                  {isEditing ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={editingLabel}
-                        onChange={(e) => setEditingLabel(e.target.value)}
-                        className="border px-2 py-1 rounded text-sm"
-                      />
-                      <button
-                        onClick={handleSaveEdit}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handleStartEdit}
-                      className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Rename
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleNodeDelete(selectedNode.id)}
-                    className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-sm"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </Panel>
-          )}
-        </ReactFlow>
-      </div>
+    <div className="flex flex-col h-full bg-white relative">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodeClick={onNodeClick}
+        fitView
+        deleteKeyCode={['Backspace', 'Delete']}
+        multiSelectionKeyCode={['Control', 'Meta']}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
+      >
+        <Background />
+        <Controls />
 
-      {/* Bottom Menu Panel */}
+        {/* Top-right controls */}
+        {selectedNode && (
+          <Panel position="top-right" className="flex gap-2 p-2">
+            {isEditing ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editingLabel}
+                  onChange={(e) => setEditingLabel(e.target.value)}
+                  className="border px-2 py-1 rounded"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartEdit}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md shadow-sm"
+              >
+                <Edit className="w-4 h-4" />
+                Rename
+              </button>
+            )}
+            <button
+              onClick={() => handleNodeDelete(selectedNode.id)}
+              className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md shadow-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          </Panel>
+        )}
+      </ReactFlow>
+
       <MenuPanel
         menuItems={defaultMenuItems}
         onAddParticipant={handleAddParticipant}
@@ -383,7 +320,7 @@ const SystemSequenceDiagram = () => {
         onAddFragment={handleAddFragment}
         selectedNode={selectedNode}
         onNodeDelete={handleNodeDelete}
-        onNodeRename={handleSaveEdit}
+        onNodeRename={handleNodeRename}
       />
     </div>
   );
