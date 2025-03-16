@@ -272,6 +272,9 @@ const SystemSequenceDiagram = () => {
   const [messageType, setMessageType] = useState('sync');
   const [copiedElements, setCopiedElements] = useState(null);
   const [selectedElements, setSelectedElements] = useState([]);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [pendingNodeType, setPendingNodeType] = useState(null);
+  const [newNodeName, setNewNodeName] = useState('');
 
   const { getNodes, getEdges, setNodes: setReactFlowNodes, setEdges: setReactFlowEdges } = useReactFlow();
 
@@ -320,14 +323,30 @@ const SystemSequenceDiagram = () => {
   }, [selectedNode, editingLabel]);
 
   const handleAddParticipant = useCallback((type) => {
+    setPendingNodeType(type);
+    setNewNodeName(`New ${type}`);
+    setShowNameDialog(true);
+  }, []);
+
+  const handleCreateNamedNode = useCallback(() => {
+    if (!newNodeName.trim() || !pendingNodeType) return;
+
     const newNode = {
       id: `node-${Date.now()}`,
-      type,
+      type: pendingNodeType,
       position: { x: nodes.length * 200, y: 0 },
-      data: { label: `New ${type}`, type }
+      data: { 
+        label: newNodeName.trim(),
+        type: pendingNodeType,
+        lifelineHeight: '400px'
+      }
     };
+
     setNodes((nds) => [...nds, newNode]);
-  }, [nodes]);
+    setShowNameDialog(false);
+    setPendingNodeType(null);
+    setNewNodeName('');
+  }, [nodes, pendingNodeType, newNodeName]);
 
   const handleMessageTypeChange = useCallback((type) => {
     setMessageType(type);
@@ -373,6 +392,91 @@ const SystemSequenceDiagram = () => {
             messageType={messageType}
             onAddFragment={handleAddFragment}
           />
+        </Panel>
+
+        {/* Name Input Dialog */}
+        {showNameDialog && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
+              <input
+                type="text"
+                value={newNodeName}
+                onChange={(e) => setNewNodeName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateNamedNode();
+                  }
+                }}
+                className="border px-3 py-2 rounded w-full mb-4"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowNameDialog(false);
+                    setPendingNodeType(null);
+                    setNewNodeName('');
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateNamedNode}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
+          {selectedNode && (
+            <div className="flex gap-2">
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editingLabel}
+                    onChange={(e) => setEditingLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleEditLabel();
+                      }
+                    }}
+                    className="border px-2 py-1 rounded"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleEditLabel}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Rename
+                  </button>
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </Panel>
       </ReactFlow>
     </div>

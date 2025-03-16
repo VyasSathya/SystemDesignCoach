@@ -14,7 +14,7 @@ export const createParticipantNode = (type, position) => {
     type,
     position,
     data: {
-      label: '', // Empty label initially - will be prompted
+      label: '', // Empty label initially - will be set by handleSaveNodeName
       type,
       lifelineHeight: STYLE_CONSTANTS.spacing.lifelineExtension,
       isConnectable: true

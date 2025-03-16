@@ -19,6 +19,10 @@ const SystemArchitectureDiagram = () => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [nodeName, setNodeName] = useState('');
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [pendingNodeType, setPendingNodeType] = useState(null);
+  const [newNodeName, setNewNodeName] = useState('');
+  const [nodeData, setNodeData] = useState(null);
 
   // Memoize nodeTypes
   const nodeTypes = useMemo(() => ({
@@ -60,15 +64,25 @@ const SystemArchitectureDiagram = () => {
   }, [selectedNode]);
 
   const handleAddNode = useCallback((nodeData) => {
-    console.log('Adding new node:', nodeData);
+    setPendingNodeType(nodeData.data.nodeType);
+    setNewNodeName(nodeData.data.nodeType);
+    // Store the style information
+    setNodeData(nodeData.data);
+    setShowNameDialog(true);
+  }, []);
+
+  const handleCreateNamedNode = useCallback(() => {
+    if (!newNodeName.trim() || !pendingNodeType || !nodeData) return;
+
     const position = { x: 100, y: 100 };
     const newNode = {
-      id: `${nodeData.data.nodeType}_${Date.now()}`,
+      id: `${pendingNodeType}_${Date.now()}`,
       type: 'custom',
       position,
       data: {
-        ...nodeData.data,
-        label: nodeData.data.nodeType,
+        ...nodeData,  // Spread all the original node data
+        nodeType: pendingNodeType,
+        label: newNodeName.trim(),
         isConnectable: true,
         sourcePosition: 'right',
         targetPosition: 'left',
@@ -76,15 +90,13 @@ const SystemArchitectureDiagram = () => {
       draggable: true,
       connectable: true,
     };
-    console.log('New node created:', newNode);
-    setNodes((nds) => {
-      console.log('Current nodes:', nds);
-      return [...nds, newNode];
-    });
-    setSelectedNode(newNode);
-    setNodeName(nodeData.data.nodeType);
-    setIsEditing(true);
-  }, []);
+
+    setNodes((nds) => [...nds, newNode]);
+    setShowNameDialog(false);
+    setPendingNodeType(null);
+    setNewNodeName('');
+    setNodeData(null);
+  }, [pendingNodeType, newNodeName, nodeData]);
 
   const handleSaveNodeName = useCallback(() => {
     if (!selectedNode) return;
@@ -112,7 +124,7 @@ const SystemArchitectureDiagram = () => {
   }, []);
 
   return (
-    <div className="h-full w-full relative">
+    <div style={{ width: '100%', height: '80vh' }} className="relative">
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
@@ -136,57 +148,95 @@ const SystemArchitectureDiagram = () => {
           <Controls />
           
           {/* Node controls panel */}
-          {selectedNode && (
-            <Panel position="top-right" className="flex gap-2 p-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md shadow-sm"
-              >
-                <Edit className="w-4 h-4" />
-                Rename
-              </button>
-              <button
-                onClick={handleDeleteSelected}
-                className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md shadow-sm"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-            </Panel>
-          )}
-
-          {/* Node name editor */}
-          {isEditing && selectedNode && (
-            <Panel position="top-center" className="bg-white p-4 rounded-lg shadow-lg">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-600">Node Name</label>
-                <input
-                  type="text"
-                  value={nodeName}
-                  onChange={(e) => setNodeName(e.target.value)}
-                  className="border rounded px-2 py-1"
-                  autoFocus
-                />
-                <div className="flex gap-2 justify-end mt-2">
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveNodeName}
-                    className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Save
-                  </button>
-                </div>
+          <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
+            {selectedNode && (
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={nodeName}
+                      onChange={(e) => setNodeName(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSaveNodeName();
+                        }
+                      }}
+                      className="border px-2 py-1 rounded"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveNodeName}
+                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Rename
+                    </button>
+                    <button
+                      onClick={handleDeleteSelected}
+                      className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </>
+                )}
               </div>
-            </Panel>
-          )}
+            )}
+          </Panel>
+
+          {/* Node name editor Panel removed as it's now integrated above */}
         </ReactFlow>
         <NodePalette onNodeAdd={handleAddNode} />
       </ReactFlowProvider>
+
+      {/* Name Input Dialog */}
+      {showNameDialog && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
+            <input
+              type="text"
+              value={newNodeName}
+              onChange={(e) => setNewNodeName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreateNamedNode();
+                }
+              }}
+              className="border px-3 py-2 rounded w-full mb-4"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowNameDialog(false);
+                  setPendingNodeType(null);
+                  setNewNodeName('');
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateNamedNode}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
