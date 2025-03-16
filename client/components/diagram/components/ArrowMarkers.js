@@ -1,12 +1,30 @@
 import React from 'react';
-import { CONSTANTS } from '../utils/sequenceDiagramConstants';
+
+// Define constants inline to avoid dependency issues
+const MESSAGE_TYPES = {
+  SYNC: 'sync',
+  ASYNC: 'async',
+  RETURN: 'return'
+};
+
+const STYLES = {
+  SYNC_MESSAGE: {
+    stroke: '#333'
+  },
+  ASYNC_MESSAGE: {
+    stroke: '#333'
+  },
+  RETURN_MESSAGE: {
+    stroke: '#666'
+  }
+};
 
 const ArrowMarkers = () => {
   return (
     <defs>
       {/* Synchronous Message Arrow */}
       <marker
-        id={`${CONSTANTS.MESSAGE_TYPES.SYNC}-arrow`}
+        id="sync-arrow"
         viewBox="0 0 10 10"
         refX="8"
         refY="5"
@@ -16,13 +34,13 @@ const ArrowMarkers = () => {
       >
         <path
           d="M 0 0 L 10 5 L 0 10 z"
-          fill={CONSTANTS.STYLES.SYNC_MESSAGE.stroke}
+          fill={STYLES.SYNC_MESSAGE.stroke}
         />
       </marker>
 
       {/* Asynchronous Message Arrow */}
       <marker
-        id={`${CONSTANTS.MESSAGE_TYPES.ASYNC}-arrow`}
+        id="async-arrow"
         viewBox="0 0 10 10"
         refX="8"
         refY="5"
@@ -33,14 +51,14 @@ const ArrowMarkers = () => {
         <path
           d="M 0 0 L 10 5 L 0 10"
           fill="none"
-          stroke={CONSTANTS.STYLES.ASYNC_MESSAGE.stroke}
+          stroke={STYLES.ASYNC_MESSAGE.stroke}
           strokeWidth="1"
         />
       </marker>
 
       {/* Return Message Arrow */}
       <marker
-        id={`${CONSTANTS.MESSAGE_TYPES.RETURN}-arrow`}
+        id="return-arrow"
         viewBox="0 0 10 10"
         refX="8"
         refY="5"
@@ -51,7 +69,7 @@ const ArrowMarkers = () => {
         <path
           d="M 0 0 L 10 5 L 0 10"
           fill="none"
-          stroke={CONSTANTS.STYLES.RETURN_MESSAGE.stroke}
+          stroke={STYLES.RETURN_MESSAGE.stroke}
           strokeWidth="1"
           strokeDasharray="2"
         />

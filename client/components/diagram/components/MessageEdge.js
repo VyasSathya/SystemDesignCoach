@@ -1,48 +1,51 @@
 import React from 'react';
-import { BaseEdge, getStraightPath } from 'reactflow';
 
 const MessageEdge = ({
   id,
-  source,
-  target,
   sourceX,
   sourceY,
   targetX,
   targetY,
   data,
-  style = {}
+  style = {},
 }) => {
-  const messageType = data?.type || 'sync';
+  // Force horizontal alignment
+  const adjustedTargetY = sourceY;
   
-  const [edgePath] = getStraightPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY
-  });
-
+  // Create horizontal-only path
+  const edgePath = `M${sourceX},${sourceY} L${targetX},${sourceY}`;
+  
+  // Determine message type and corresponding marker
+  const messageType = data?.type || 'sync';
+  const markerEnd = `url(#${messageType}-arrow)`;
+  
   return (
     <>
       <path
         id={id}
-        className="react-flow__edge-path"
-        d={edgePath}
         style={{
           ...style,
-          strokeDasharray: messageType === 'async' ? '5, 5' : 'none',
-          stroke: '#333',
-          strokeWidth: 2
+          strokeDasharray: messageType === 'async' ? '5,5' : 'none',
+          stroke: messageType === 'return' ? '#666' : '#333',
+          strokeWidth: 1.5
         }}
-        markerEnd={`url(#${messageType}-arrow)`}
+        className="react-flow__edge-path"
+        d={edgePath}
+        markerEnd={markerEnd}
       />
+      
       {data?.label && (
         <text
           x={(sourceX + targetX) / 2}
           y={sourceY - 10}
           textAnchor="middle"
-          style={{ fontSize: '12px', fill: '#666' }}
+          style={{ 
+            fontSize: '12px', 
+            fill: '#666',
+            userSelect: 'none'
+          }}
         >
-          {data?.label}
+          {data.label}
         </text>
       )}
     </>
