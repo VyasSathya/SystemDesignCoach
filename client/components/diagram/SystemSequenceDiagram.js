@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useContext } from 'react';
 import ReactFlow, { 
   ReactFlowProvider,
   Panel,
@@ -15,6 +15,9 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Server, Database, Globe, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit } from 'lucide-react';
+
+// Add this context at the top of your file
+const DiagramContext = React.createContext(null);
 
 // Node Types Definition
 const getNodeStyle = (type) => {
@@ -48,44 +51,66 @@ const getNodeStyle = (type) => {
 };
 
 const BaseNode = ({ data, selected }) => {
-  const style = getNodeStyle(data.type);
+  const { sourcePoint, setSourcePoint, messageType, setEdges } = useContext(DiagramContext);
   
   return (
     <div className="group relative" style={{ minWidth: '120px' }}>
+      {/* Participant header */}
       <div className={`
         px-4 py-3 rounded-lg shadow-sm border-2 transition-all
-        ${style.background}
-        ${selected ? style.selectedBorder : style.border}
-        ${style.hoverBg}
+        bg-white border-gray-200
         hover:shadow-md
       `}>
         <div className="flex items-center gap-2 justify-center">
-          <div className={`${style.iconColor}`}>
-            {style.icon}
-          </div>
+          {data.icon && <div>{data.icon}</div>}
           <div className="text-sm font-medium text-gray-700">
-            {data.label || 'Unnamed'}
+            {data.label}
           </div>
         </div>
       </div>
-      
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom"
-        className="!bottom-0 !bg-gray-400"
-      />
-      
-      <div 
-        className="absolute w-[2px] bg-gray-300"
-        style={{
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          height: data.lifelineHeight || '400px',
-          zIndex: -1
-        }}
-      />
+
+      {/* Lifeline with dots */}
+      <div className="relative">
+        <div
+          className="absolute left-1/2 top-full border-l-2 border-dashed border-gray-300"
+          style={{
+            height: '400px',
+            transform: 'translateX(-50%)',
+            zIndex: 1
+          }}
+        />
+        
+        {/* Connection dots */}
+        {Array.from({ length: 10 }).map((_, index) => (
+          <div
+            key={index}
+            className="absolute w-3 h-3 rounded-full bg-white border-2 border-gray-400 
+                       hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
+            style={{
+              left: '50%',
+              top: `${(index + 1) * 40}px`,
+              transform: 'translateX(-50%)',
+              zIndex: 2
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const yPos = (index + 1) * 40;
+              if (!sourcePoint) {
+                setSourcePoint({ nodeId: data.id, y: yPos });
+              } else if (sourcePoint.nodeId !== data.id) {
+                setEdges(prev => [...prev, {
+                  id: `edge-${Date.now()}`,
+                  source: sourcePoint.nodeId,
+                  target: data.id,
+                  type: messageType,
+                  data: { label: 'Message' }
+                }]);
+                setSourcePoint(null);
+              }
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -94,7 +119,9 @@ const BaseNode = ({ data, selected }) => {
 const NODE_TYPES = {
   user: BaseNode,
   system: BaseNode,
-  database: BaseNode
+  database: BaseNode,
+  service: BaseNode,
+  default: BaseNode
 };
 
 // Custom Arrow SVG Components
@@ -295,6 +322,7 @@ const SystemSequenceDiagram = () => {
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [pendingNodeType, setPendingNodeType] = useState(null);
   const [newNodeName, setNewNodeName] = useState('');
+  const [sourcePoint, setSourcePoint] = useState(null);
 
   const { getNodes, getEdges, setNodes: setReactFlowNodes, setEdges: setReactFlowEdges } = useReactFlow();
 
@@ -404,122 +432,129 @@ const SystemSequenceDiagram = () => {
   });
 
   return (
-    <div style={{ width: '100%', height: '80vh' }} className="relative">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={handleNodeClick}
-        nodeTypes={NODE_TYPES}
-        edgeTypes={customEdgeTypes}
-        fitView
-        deleteKeyCode={['Backspace', 'Delete']}
-        multiSelectionKeyCode={['Control', 'Meta']}
-        selectionKeyCode={['Shift']}
-        snapToGrid={true}
-        snapGrid={[15, 15]}
-      >
-        <Background />
-        <Controls />
-        
-        <Panel position="bottom" className="w-full">
-          <MenuPanel
-            menuItems={defaultMenuItems}
-            onAddParticipant={handleAddParticipant}
-            onMessageTypeChange={handleMessageTypeChange}
-            messageType={messageType}
-            onAddFragment={handleAddFragment}
-          />
-        </Panel>
+    <DiagramContext.Provider value={{
+      sourcePoint,
+      setSourcePoint,
+      messageType,
+      setEdges
+    }}>
+      <div style={{ width: '100%', height: '80vh' }} className="relative">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={handleNodeClick}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={customEdgeTypes}
+          fitView
+          deleteKeyCode={['Backspace', 'Delete']}
+          multiSelectionKeyCode={['Control', 'Meta']}
+          selectionKeyCode={['Shift']}
+          snapToGrid={true}
+          snapGrid={[15, 15]}
+        >
+          <Background />
+          <Controls />
+          
+          <Panel position="bottom" className="w-full">
+            <MenuPanel
+              menuItems={defaultMenuItems}
+              onAddParticipant={handleAddParticipant}
+              onMessageTypeChange={handleMessageTypeChange}
+              messageType={messageType}
+              onAddFragment={handleAddFragment}
+            />
+          </Panel>
 
-        {/* Name Input Dialog */}
-        {showNameDialog && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
-              <input
-                type="text"
-                value={newNodeName}
-                onChange={(e) => setNewNodeName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCreateNamedNode();
-                  }
-                }}
-                className="border px-3 py-2 rounded w-full mb-4"
-                autoFocus
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowNameDialog(false);
-                    setPendingNodeType(null);
-                    setNewNodeName('');
+          {/* Name Input Dialog */}
+          {showNameDialog && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-4 rounded-lg shadow-lg">
+                <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
+                <input
+                  type="text"
+                  value={newNodeName}
+                  onChange={(e) => setNewNodeName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleCreateNamedNode();
+                    }
                   }}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateNamedNode}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Create
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
-          {selectedNode && (
-            <div className="flex gap-2">
-              {isEditing ? (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={editingLabel}
-                    onChange={(e) => setEditingLabel(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleEditLabel();
-                      }
-                    }}
-                    className="border px-2 py-1 rounded"
-                    autoFocus
-                  />
+                  className="border px-3 py-2 rounded w-full mb-4"
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2">
                   <button
-                    onClick={handleEditLabel}
-                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={() => {
+                      setShowNameDialog(false);
+                      setPendingNodeType(null);
+                      setNewNodeName('');
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
                   >
-                    Save
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateNamedNode}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Create
                   </button>
                 </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Rename
-                  </button>
-                  <button
-                    onClick={handleDeleteSelected}
-                    className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </>
-              )}
+              </div>
             </div>
           )}
-        </Panel>
-      </ReactFlow>
-    </div>
+
+          <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
+            {selectedNode && (
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editingLabel}
+                      onChange={(e) => setEditingLabel(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleEditLabel();
+                        }
+                      }}
+                      className="border px-2 py-1 rounded"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleEditLabel}
+                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Rename
+                    </button>
+                    <button
+                      onClick={handleDeleteSelected}
+                      className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </Panel>
+        </ReactFlow>
+      </div>
+    </DiagramContext.Provider>
   );
 };
 
