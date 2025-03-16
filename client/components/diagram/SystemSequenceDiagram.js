@@ -52,17 +52,27 @@ const getNodeStyle = (type) => {
 
 const BaseNode = ({ data, selected }) => {
   const { sourcePoint, setSourcePoint, messageType, setEdges } = useContext(DiagramContext);
+  const style = getNodeStyle(data.type);
   
   return (
-    <div className="group relative" style={{ minWidth: '120px' }}>
-      {/* Participant header */}
+    <div 
+      className="group relative" 
+      style={{ minWidth: '120px' }}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
+    >
+      {/* Participant header - this part remains draggable for ReactFlow */}
       <div className={`
         px-4 py-3 rounded-lg shadow-sm border-2 transition-all
-        bg-white border-gray-200
+        ${style.background}
+        ${selected ? style.selectedBorder : style.border}
+        ${style.hoverBg}
         hover:shadow-md
       `}>
         <div className="flex items-center gap-2 justify-center">
-          {data.icon && <div>{data.icon}</div>}
+          <div className={`${style.iconColor}`}>
+            {style.icon}
+          </div>
           <div className="text-sm font-medium text-gray-700">
             {data.label}
           </div>
@@ -70,46 +80,84 @@ const BaseNode = ({ data, selected }) => {
       </div>
 
       {/* Lifeline with dots */}
-      <div className="relative">
+      <div 
+        className="relative" 
+        draggable={false}
+        onDragStart={(e) => e.preventDefault()}
+      >
         <div
-          className="absolute left-1/2 top-full border-l-2 border-dashed border-gray-300"
+          className="absolute left-1/2 top-full border-l-2 border-gray-300"
           style={{
-            height: '400px',
+            height: data.lifelineHeight || '400px',
             transform: 'translateX(-50%)',
             zIndex: 1
           }}
+          draggable={false}
         />
         
         {/* Connection dots */}
-        {Array.from({ length: 10 }).map((_, index) => (
-          <div
-            key={index}
-            className="absolute w-3 h-3 rounded-full bg-white border-2 border-gray-400 
-                       hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
-            style={{
-              left: '50%',
-              top: `${(index + 1) * 40}px`,
-              transform: 'translateX(-50%)',
-              zIndex: 2
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              const yPos = (index + 1) * 40;
-              if (!sourcePoint) {
-                setSourcePoint({ nodeId: data.id, y: yPos });
-              } else if (sourcePoint.nodeId !== data.id) {
-                setEdges(prev => [...prev, {
-                  id: `edge-${Date.now()}`,
-                  source: sourcePoint.nodeId,
-                  target: data.id,
-                  type: messageType,
-                  data: { label: 'Message' }
-                }]);
-                setSourcePoint(null);
-              }
-            }}
-          />
-        ))}
+        {Array.from({ length: 10 }).map((_, index) => {
+          const yPos = (index + 1) * 40;
+          const isSource = sourcePoint && 
+                          sourcePoint.nodeId === data.id && 
+                          sourcePoint.y === yPos;
+          
+          return (
+            <div
+              key={index}
+              className={`
+                absolute w-3 h-3 rounded-full 
+                ${isSource ? 'bg-blue-500 border-2 border-blue-600' : 'bg-white border-2 border-gray-400'}
+                hover:border-blue-500 hover:bg-blue-50
+                cursor-pointer transition-colors
+              `}
+              style={{
+                left: '50%',
+                top: `${yPos}px`,
+                transform: 'translateX(-50%)',
+                zIndex: 2,
+                pointerEvents: 'all'
+              }}
+              draggable={false}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!sourcePoint) {
+                  setSourcePoint({ nodeId: data.id, y: yPos });
+                } else if (sourcePoint.nodeId !== data.id) {
+                  setEdges(prev => [...prev, {
+                    id: `edge-${Date.now()}`,
+                    source: sourcePoint.nodeId,
+                    target: data.id,
+                    sourceHandle: `dot-${sourcePoint.y}`,
+                    targetHandle: `dot-${yPos}`,
+                    type: messageType,
+                    data: { 
+                      label: 'Message',
+                      type: messageType
+                    }
+                  }]);
+                  setSourcePoint(null);
+                } else {
+                  setSourcePoint(null);
+                }
+              }}
+            >
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={`dot-${yPos}`}
+                style={{ opacity: 0 }}
+              />
+              <Handle
+                type="target"
+                position={Position.Left}
+                id={`dot-${yPos}`}
+                style={{ opacity: 0 }}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
