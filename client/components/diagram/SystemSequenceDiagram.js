@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactFlow, { 
   ReactFlowProvider,
   Panel,
@@ -9,17 +9,12 @@ import ReactFlow, {
   applyNodeChanges,
   Handle,
   Position,
-  useReactFlow,
-  useKeyPress,
-  useOnSelectionChange
+  MarkerType
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Server, Database, Globe, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit } from 'lucide-react';
+import { Server, Database, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit } from 'lucide-react';
 
-// Add this context at the top of your file
-const DiagramContext = React.createContext(null);
-
-// Node Types Definition
+// Node styles definition
 const getNodeStyle = (type) => {
   const styles = {
     user: {
@@ -50,28 +45,12 @@ const getNodeStyle = (type) => {
   return styles[type] || styles.system;
 };
 
-const BaseNode = ({ data, selected }) => {
-  const { sourcePoint, setSourcePoint, messageType, setEdges } = useContext(DiagramContext);
+// Simplified BaseNode with ReactFlow native connection handles
+const BaseNode = ({ data, selected, id }) => {
   const style = getNodeStyle(data.type);
-  const [isDragging, setIsDragging] = useState(false);
   
-  // Prevent node dragging when drawing connections
-  useEffect(() => {
-    if (sourcePoint) {
-      setIsDragging(true);
-    } else {
-      setIsDragging(false);
-    }
-  }, [sourcePoint]);
-
   return (
-    <div 
-      className="group relative" 
-      style={{ 
-        minWidth: '120px',
-        pointerEvents: isDragging ? 'none' : 'all'
-      }}
-    >
+    <div className="group relative" style={{ minWidth: '120px' }}>
       {/* Participant header */}
       <div className={`
         px-4 py-3 rounded-lg shadow-sm border-2 transition-all
@@ -90,11 +69,8 @@ const BaseNode = ({ data, selected }) => {
         </div>
       </div>
 
-      {/* Lifeline with dots */}
-      <div 
-        className="relative"
-        style={{ pointerEvents: 'none' }}
-      >
+      {/* Lifeline with connection points */}
+      <div className="relative">
         <div
           className="absolute left-1/2 top-full border-l-2 border-gray-300"
           style={{
@@ -104,70 +80,44 @@ const BaseNode = ({ data, selected }) => {
           }}
         />
         
-        {/* Connection dots */}
+        {/* Connection points with native ReactFlow handles */}
         {Array.from({ length: 10 }).map((_, index) => {
           const yPos = (index + 1) * 40;
-          const isSource = sourcePoint && 
-                          sourcePoint.nodeId === data.id && 
-                          sourcePoint.y === yPos;
           
           return (
             <div
-              key={index}
-              className={`
-                absolute w-3 h-3 rounded-full 
-                ${isSource ? 'bg-blue-500 border-2 border-blue-600' : 'bg-white border-2 border-gray-400'}
-                hover:border-blue-500 hover:bg-blue-50
-                cursor-crosshair transition-colors
-              `}
+              key={`dot-${index}`}
+              className="absolute w-3 h-3 rounded-full bg-white border-2 border-gray-400 hover:border-blue-500 hover:bg-blue-50"
               style={{
                 left: '50%',
                 top: `${yPos}px`,
                 transform: 'translateX(-50%)',
-                zIndex: 2,
-                pointerEvents: 'all'
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                if (!sourcePoint) {
-                  setSourcePoint({ nodeId: data.id, y: yPos });
-                }
-              }}
-              onMouseUp={(e) => {
-                e.stopPropagation();
-                if (sourcePoint && sourcePoint.nodeId !== data.id) {
-                  setEdges(prev => [...prev, {
-                    id: `edge-${Date.now()}`,
-                    source: sourcePoint.nodeId,
-                    target: data.id,
-                    sourceHandle: `dot-${sourcePoint.y}`,
-                    targetHandle: `dot-${yPos}`,
-                    type: messageType,  // 'sync' or 'async'
-                    data: { 
-                      label: 'Message',
-                      type: messageType
-                    },
-                    style: {
-                      strokeDasharray: messageType === 'async' ? '5, 5' : 'none',
-                      stroke: '#333',
-                      strokeWidth: 2
-                    }
-                  }]);
-                  setSourcePoint(null);
-                }
+                zIndex: 2
               }}
             >
               <Handle
                 type="source"
                 position={Position.Right}
-                id={`dot-${yPos}`}
-                style={{ opacity: 0 }}
+                id={`${id}-source-${index}`}
+                style={{ 
+                  width: 10, 
+                  height: 10,
+                  right: -5,
+                  background: 'transparent',
+                  border: 'none'
+                }}
               />
               <Handle
                 type="target"
                 position={Position.Left}
-                id={`dot-${yPos}`}
-                style={{ opacity: 0 }}
+                id={`${id}-target-${index}`}
+                style={{ 
+                  width: 10, 
+                  height: 10,
+                  left: -5,
+                  background: 'transparent',
+                  border: 'none'
+                }}
               />
             </div>
           );
@@ -177,169 +127,107 @@ const BaseNode = ({ data, selected }) => {
   );
 };
 
-// Define nodeTypes outside the component
+// Node types definition
 const NODE_TYPES = {
   user: BaseNode,
   system: BaseNode,
   database: BaseNode,
-  service: BaseNode,
   default: BaseNode
 };
 
-// Custom Arrow SVG Components
-const SolidArrow = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path 
-      d="M4 12H20" 
-      stroke="currentColor" 
-      strokeWidth="2"
-    />
-    <path 
-      d="M13 6L20 12L13 18" 
-      stroke="currentColor" 
-      strokeWidth="2"
-      fill="none"
-    />
-  </svg>
-);
-
-const AsyncArrow = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Broken shaft with 2 gaps */}
-    <path 
-      d="M4 12H8" 
-      stroke="currentColor" 
-      strokeWidth="2"
-    />
-    <path 
-      d="M11 12H15" 
-      stroke="currentColor" 
-      strokeWidth="2"
-    />
-    <path 
-      d="M18 12H20" 
-      stroke="currentColor" 
-      strokeWidth="2"
-    />
-    {/* Solid arrowhead */}
-    <path 
-      d="M13 6L20 12L13 18" 
-      stroke="currentColor" 
-      strokeWidth="2"
-      fill="none"
-    />
-  </svg>
-);
-
-// Icon mapping object
-const iconMap = {
-  server: Server,
-  database: Database,
-  globe: Globe,
-  users: Users,
-  solidArrow: SolidArrow,
-  asyncArrow: AsyncArrow,
-  gitBranch: GitBranch,
-  gitMerge: GitMerge,
-  gitPullRequest: GitPullRequest
-};
-
-// Default menu items
-const defaultMenuItems = {
-  participants: [
-    { type: 'user', label: 'User', iconName: 'users', color: 'blue' },
-    { type: 'system', label: 'System', iconName: 'server', color: 'green' },
-    { type: 'database', label: 'Database', iconName: 'database', color: 'purple' }
-  ],
-  messageTypes: [
-    { type: 'sync', label: 'Synchronous', iconName: 'solidArrow', color: 'blue' },
-    { type: 'async', label: 'Asynchronous', iconName: 'asyncArrow', color: 'green' }
-  ],
-  fragments: [
-    { type: 'loop', label: 'Loop', iconName: 'gitMerge', color: 'purple' },
-    { type: 'alt', label: 'Alternative', iconName: 'gitPullRequest', color: 'orange' }
-  ]
-};
-
+// Menu panel component
 const MenuPanel = ({ 
-  menuItems = defaultMenuItems,
   onAddParticipant = () => {},
   onMessageTypeChange = () => {},
-  messageType = null,
+  messageType = 'sync',
   onAddFragment = () => {},
 }) => {
+  // Define menu items
+  const menuItems = {
+    participants: [
+      { type: 'user', label: 'User', icon: <Users className="w-6 h-6 text-blue-500" /> },
+      { type: 'system', label: 'System', icon: <Server className="w-6 h-6 text-green-500" /> },
+      { type: 'database', label: 'Database', icon: <Database className="w-6 h-6 text-purple-500" /> }
+    ],
+    fragments: [
+      { type: 'loop', label: 'Loop', icon: <GitMerge className="w-6 h-6 text-purple-500" /> },
+      { type: 'alt', label: 'Alternative', icon: <GitPullRequest className="w-6 h-6 text-orange-500" /> }
+    ]
+  };
+
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200">
       <div className="max-w-[1200px] mx-auto">
         <div className="grid grid-cols-3 gap-4 p-4">
-          {/* Left Section */}
+          {/* Left Section - Components */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">System Components</h3>
             <div className="grid grid-cols-3 gap-2">
-              {menuItems.participants.map((item) => {
-                const Icon = iconMap[item.iconName];
-                return (
-                  <button
-                    key={item.type}
-                    onClick={() => onAddParticipant(item.type)}
-                    className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
-                  >
-                    {Icon && <Icon className={`w-6 h-6 text-${item.color}-500 mb-2`} />}
-                    <span className="text-xs text-center text-gray-600">{item.label}</span>
-                  </button>
-                );
-              })}
+              {menuItems.participants.map((item) => (
+                <button
+                  key={item.type}
+                  onClick={() => onAddParticipant(item.type)}
+                  className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
+                >
+                  {item.icon}
+                  <span className="text-xs text-center text-gray-600 mt-2">{item.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Middle Section */}
+          {/* Middle Section - Message Types */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Communication Types</h3>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => onMessageTypeChange('sync')}
                 className={`p-3 flex flex-col items-center rounded-lg border transition-colors
-                  ${messageType === 'sync' 
-                    ? 'bg-blue-50 border-blue-300' 
-                    : 'border-gray-200 hover:bg-gray-50'}`}
+                  ${messageType === 'sync' ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'}`}
               >
-                <SolidArrow className={`w-6 h-6 ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
-                <span className={`text-xs text-center font-medium ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'}`}>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16">
+                    <path d="M1 8H12" stroke="currentColor" strokeWidth="2" />
+                    <path d="M8 4L12 8L8 12" stroke="currentColor" strokeWidth="2" fill="none" />
+                  </svg>
+                </div>
+                <span className={`text-xs text-center font-medium mt-2 ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'}`}>
                   Synchronous
                 </span>
               </button>
               <button
                 onClick={() => onMessageTypeChange('async')}
                 className={`p-3 flex flex-col items-center rounded-lg border transition-colors
-                  ${messageType === 'async' 
-                    ? 'bg-blue-50 border-blue-300' 
-                    : 'border-gray-200 hover:bg-gray-50'}`}
+                  ${messageType === 'async' ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'}`}
               >
-                <AsyncArrow className={`w-6 h-6 ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
-                <span className={`text-xs text-center font-medium ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'}`}>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16">
+                    <path d="M1 8H4" stroke="currentColor" strokeWidth="2" />
+                    <path d="M6 8H10" stroke="currentColor" strokeWidth="2" strokeDasharray="2 2" />
+                    <path d="M8 4L12 8L8 12" stroke="currentColor" strokeWidth="2" fill="none" />
+                  </svg>
+                </div>
+                <span className={`text-xs text-center font-medium mt-2 ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'}`}>
                   Asynchronous
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Right Section */}
+          {/* Right Section - Control Flow */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Control Flow</h3>
             <div className="grid grid-cols-2 gap-2">
-              {menuItems.fragments.map((item) => {
-                const Icon = iconMap[item.iconName];
-                return (
-                  <button
-                    key={item.type}
-                    onClick={() => onAddFragment(item.type)}
-                    className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
-                  >
-                    {Icon && <Icon className={`w-6 h-6 text-${item.color}-500 mb-2`} />}
-                    <span className="text-xs text-center text-gray-600">{item.label}</span>
-                  </button>
-                );
-              })}
+              {menuItems.fragments.map((item) => (
+                <button
+                  key={item.type}
+                  onClick={() => onAddFragment(item.type)}
+                  className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
+                >
+                  {item.icon}
+                  <span className="text-xs text-center text-gray-600 mt-2">{item.label}</span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -348,30 +236,7 @@ const MenuPanel = ({
   );
 };
 
-// Add these custom edge types
-const customEdgeTypes = {
-  sync: ({ id, source, target, data }) => (
-    <BaseEdge
-      id={id}
-      source={source}
-      target={target}
-      style={{ strokeWidth: 2, stroke: '#333' }}
-      markerEnd={<SolidArrow />}
-      label={data?.label}
-    />
-  ),
-  async: ({ id, source, target, data }) => (
-    <BaseEdge
-      id={id}
-      source={source}
-      target={target}
-      style={{ strokeWidth: 2, stroke: '#333', strokeDasharray: '5,5' }}
-      markerEnd={<AsyncArrow />}
-      label={data?.label}
-    />
-  )
-};
-
+// Main Sequence Diagram Component
 const SystemSequenceDiagram = () => {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -379,54 +244,55 @@ const SystemSequenceDiagram = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingLabel, setEditingLabel] = useState('');
   const [messageType, setMessageType] = useState('sync');
-  const [copiedElements, setCopiedElements] = useState(null);
-  const [selectedElements, setSelectedElements] = useState([]);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [pendingNodeType, setPendingNodeType] = useState(null);
   const [newNodeName, setNewNodeName] = useState('');
-  const [sourcePoint, setSourcePoint] = useState(null);
 
-  const { getNodes, getEdges, setNodes: setReactFlowNodes, setEdges: setReactFlowEdges } = useReactFlow();
-
+  // Handle node changes
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   );
 
+  // Handle edge changes
   const onEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
-  const onConnect = useCallback((params) => {
-    // Validate connection
-    const sourceNode = nodes.find(n => n.id === params.source);
-    const targetNode = nodes.find(n => n.id === params.target);
-    
-    if (!sourceNode || !targetNode) return;
-    
-    // Only allow connections between lifelines
-    if (!sourceNode.data.lifelineId || !targetNode.data.lifelineId) return;
-    
-    // Create edge with current message type
-    const newEdge = {
-      ...params,
-      type: messageType, // Using the messageType from state
-      data: {
-        label: 'Message',
-        type: messageType
-      },
-      animated: messageType === 'async'
-    };
-    
-    setEdges((eds) => addEdge(newEdge, eds));
-  }, [nodes, messageType]);
+  // Handle connections using ReactFlow's native connect mechanism
+  const onConnect = useCallback(
+    (params) => {
+      // Create edge with current message type
+      const newEdge = {
+        ...params,
+        animated: messageType === 'async',
+        style: {
+          strokeDasharray: messageType === 'async' ? '5, 5' : 'none',
+          strokeWidth: 2
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: '#000'
+        },
+        data: {
+          label: 'Message',
+          type: messageType
+        }
+      };
+      
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
+    [messageType]
+  );
 
+  // Handle node click
   const handleNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
     setEditingLabel(node.data.label || '');
   }, []);
 
+  // Handle delete selected node
   const handleDeleteSelected = useCallback(() => {
     if (selectedNode) {
       setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
@@ -437,6 +303,7 @@ const SystemSequenceDiagram = () => {
     }
   }, [selectedNode]);
 
+  // Handle edit label
   const handleEditLabel = useCallback(() => {
     if (selectedNode && editingLabel.trim() !== '') {
       setNodes((nds) =>
@@ -451,12 +318,14 @@ const SystemSequenceDiagram = () => {
     }
   }, [selectedNode, editingLabel]);
 
+  // Handle add participant
   const handleAddParticipant = useCallback((type) => {
     setPendingNodeType(type);
-    setNewNodeName(`New ${type}`);
+    setNewNodeName(`New ${type.charAt(0).toUpperCase() + type.slice(1)}`);
     setShowNameDialog(true);
   }, []);
 
+  // Handle create named node
   const handleCreateNamedNode = useCallback(() => {
     if (!newNodeName.trim() || !pendingNodeType) return;
 
@@ -468,7 +337,8 @@ const SystemSequenceDiagram = () => {
         label: newNodeName.trim(),
         type: pendingNodeType,
         lifelineHeight: '400px'
-      }
+      },
+      draggable: true
     };
 
     setNodes((nds) => [...nds, newNode]);
@@ -477,149 +347,149 @@ const SystemSequenceDiagram = () => {
     setNewNodeName('');
   }, [nodes, pendingNodeType, newNodeName]);
 
+  // Handle message type change
   const handleMessageTypeChange = useCallback((type) => {
     setMessageType(type);
   }, []);
 
+  // Handle add fragment
   const handleAddFragment = useCallback((type) => {
-    // Implement fragment addition logic
     console.log('Adding fragment:', type);
+    // Implement fragment logic
   }, []);
 
-  // Selection change handler
-  useOnSelectionChange({
-    onChange: ({ nodes, edges }) => {
-      setSelectedElements([...nodes.map(n => n.id), ...edges.map(e => e.id)]);
-    }
-  });
-
   return (
-    <DiagramContext.Provider value={{
-      sourcePoint,
-      setSourcePoint,
-      messageType,
-      setEdges
-    }}>
-      <div style={{ width: '100%', height: '80vh' }} className="relative">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={handleNodeClick}
-          nodeTypes={NODE_TYPES}
-          edgeTypes={customEdgeTypes}
-          fitView
-          deleteKeyCode={['Backspace', 'Delete']}
-          multiSelectionKeyCode={['Control', 'Meta']}
-          selectionKeyCode={['Shift']}
-          snapToGrid={true}
-          snapGrid={[15, 15]}
-        >
-          <Background />
-          <Controls />
-          
-          <Panel position="bottom" className="w-full">
-            <MenuPanel
-              menuItems={defaultMenuItems}
-              onAddParticipant={handleAddParticipant}
-              onMessageTypeChange={handleMessageTypeChange}
-              messageType={messageType}
-              onAddFragment={handleAddFragment}
-            />
-          </Panel>
+    <div style={{ width: '100%', height: '80vh' }} className="relative">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={handleNodeClick}
+        nodeTypes={NODE_TYPES}
+        fitView
+        deleteKeyCode={['Backspace', 'Delete']}
+        multiSelectionKeyCode={['Control', 'Meta']}
+        selectionKeyCode={['Shift']}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
+        connectionMode="strict"
+        // Set to true to show connection lines while dragging
+        connectionLineStyle={{ stroke: '#0096FF', strokeWidth: 2 }}
+        connectionLineType="bezier"
+      >
+        <Background />
+        <Controls />
+        
+        {/* Menu Panel */}
+        <Panel position="bottom" className="w-full">
+          <MenuPanel
+            onAddParticipant={handleAddParticipant}
+            onMessageTypeChange={handleMessageTypeChange}
+            messageType={messageType}
+            onAddFragment={handleAddFragment}
+          />
+        </Panel>
 
-          {/* Name Input Dialog */}
-          {showNameDialog && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-4 rounded-lg shadow-lg">
-                <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
-                <input
-                  type="text"
-                  value={newNodeName}
-                  onChange={(e) => setNewNodeName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleCreateNamedNode();
-                    }
+        {/* Name Input Dialog */}
+        {showNameDialog && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
+              <input
+                type="text"
+                value={newNodeName}
+                onChange={(e) => setNewNodeName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateNamedNode();
+                  }
+                }}
+                className="border px-3 py-2 rounded w-full mb-4"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowNameDialog(false);
+                    setPendingNodeType(null);
+                    setNewNodeName('');
                   }}
-                  className="border px-3 py-2 rounded w-full mb-4"
-                  autoFocus
-                />
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => {
-                      setShowNameDialog(false);
-                      setPendingNodeType(null);
-                      setNewNodeName('');
-                    }}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateNamedNode}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Create
-                  </button>
-                </div>
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateNamedNode}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Create
+                </button>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
-            {selectedNode && (
-              <div className="flex gap-2">
-                {isEditing ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={editingLabel}
-                      onChange={(e) => setEditingLabel(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleEditLabel();
-                        }
-                      }}
-                      className="border px-2 py-1 rounded"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleEditLabel}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Rename
-                    </button>
-                    <button
-                      onClick={handleDeleteSelected}
-                      className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </Panel>
-        </ReactFlow>
-      </div>
-    </DiagramContext.Provider>
+        {/* Node Actions Panel */}
+        <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
+          {selectedNode && (
+            <div className="flex gap-2">
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editingLabel}
+                    onChange={(e) => setEditingLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleEditLabel();
+                      }
+                    }}
+                    className="border px-2 py-1 rounded"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleEditLabel}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Rename
+                  </button>
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </Panel>
+        
+        {/* Connection Instructions */}
+        <Panel position="top-left" className="bg-white p-2 rounded shadow-lg m-2">
+          <div className="text-xs text-gray-600">
+            <strong>How to connect:</strong> Click and drag from a dot to another dot
+          </div>
+        </Panel>
+      </ReactFlow>
+    </div>
   );
 };
 
+// Wrapper with Provider
 const SystemSequenceDiagramWrapper = () => {
   return (
     <ReactFlowProvider>
