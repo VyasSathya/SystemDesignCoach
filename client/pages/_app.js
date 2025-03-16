@@ -7,15 +7,15 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { CacheProvider } from '@emotion/react';
 import theme from '../styles/theme';
 import createEmotionCache from '../utils/createEmotionCache';
-import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/globals.css';
 
 // Client-side cache, shared for the whole session
 const clientSideEmotionCache = createEmotionCache();
 
-function MyApp(props) {
+export default function MyApp(props) {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
 
   return (
@@ -24,15 +24,14 @@ function MyApp(props) {
         <title>System Design Coach</title>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
-      <AuthProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>
           <Component {...pageProps} />
           <ToastContainer />
-        </ThemeProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </CacheProvider>
   );
 }
 
-export default MyApp;

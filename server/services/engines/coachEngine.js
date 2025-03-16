@@ -19,6 +19,28 @@ class CoachEngine extends BaseEngine {
   }
   
   async processMessage(sessionId, message, options = {}) {
+    const session = await Session.findById(sessionId);
+    
+    // Track learning patterns
+    const learningPatterns = {
+      vocabularyLevel: analyzeVocabularyLevel(message),
+      conceptualUnderstanding: identifyConceptualLevel(message),
+      communicationStyle: detectCommunicationStyle(message),
+      lastTopics: session.recentTopics || []
+    };
+
+    // Update session with learning patterns
+    session.learningPatterns = {
+      ...session.learningPatterns,
+      ...learningPatterns
+    };
+
+    // Include learning patterns in AI context
+    const systemPrompt = this._buildSystemPrompt({
+      ...options,
+      learningPatterns: session.learningPatterns
+    });
+
     try {
       console.log('💬 Processing message:', {
         sessionId,

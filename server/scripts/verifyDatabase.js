@@ -2,6 +2,11 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Problem = require('../models/Problem');
 const Workbook = require('../models/Workbook');
+const Evaluation = require('../models/Evaluation');
+const Interview = require('../models/Interview');
+const Diagram = require('../models/Diagram');
+const Session = require('../models/Session');
+const User = require('../models/User');
 const logger = require('../utils/logger');
 
 async function verifyCollections() {
@@ -19,7 +24,7 @@ async function verifyCollections() {
 }
 
 async function verifyIndexes() {
-  const models = [Problem, Workbook];
+  const models = [Problem, Workbook, Evaluation, Interview, Diagram, Session, User];
   const results = {};
   
   for (const Model of models) {
@@ -36,9 +41,18 @@ async function verifyData() {
     throw new Error('No problems found in database');
   }
   
-  return {
-    problems: problemCount
+  // Add counts for other collections
+  const counts = {
+    problems: problemCount,
+    users: await User.countDocuments(),
+    workbooks: await Workbook.countDocuments(),
+    evaluations: await Evaluation.countDocuments(),
+    interviews: await Interview.countDocuments(),
+    diagrams: await Diagram.countDocuments(),
+    sessions: await Session.countDocuments()
   };
+  
+  return counts;
 }
 
 async function verifyDatabase() {

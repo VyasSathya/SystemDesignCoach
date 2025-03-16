@@ -14,13 +14,43 @@ export const ActorNode = memo(({ data, selected }) => (
       <User className="h-8 w-8 text-blue-500 mb-2" />
       <div className="text-sm font-bold text-center">{data.label}</div>
     </div>
+    {/* Single bottom handle for lifeline connection */}
     <Handle
       type="source"
       position={Position.Bottom}
       id="bottom"
-      isConnectable={false}
+      isConnectable={true}
       className="w-3 h-3 bg-blue-500"
     />
+    {/* Lifeline rendering */}
+    <div 
+      className="absolute w-[2px] bg-gray-300"
+      style={{
+        left: '50%',
+        top: '100%',
+        height: '500px', // or dynamic height based on diagram
+        transform: 'translateX(-50%)'
+      }}
+    />
+    {/* Connection points along lifeline */}
+    {Array.from({ length: 10 }).map((_, index) => (
+      <React.Fragment key={index}>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`right-${index}`}
+          style={{ top: `${(index + 1) * 50}px`, left: '50%' }}
+          className="w-2 h-2 bg-blue-500"
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id={`left-${index}`}
+          style={{ top: `${(index + 1) * 50}px`, left: '50%' }}
+          className="w-2 h-2 bg-blue-500"
+        />
+      </React.Fragment>
+    ))}
   </div>
 ));
 

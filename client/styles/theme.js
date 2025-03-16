@@ -2,17 +2,36 @@ import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: '#556cd6',
+      main: '#4f46e5',
     },
     secondary: {
-      main: '#19857b',
-    },
-    error: {
-      main: '#ff1744',
+      main: '#10b981',
     },
     background: {
-      default: '#fff',
+      default: '#f9fafb',
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'ui-sans-serif',
+      'system-ui',
+      '-apple-system',
+      'BlinkMacSystemFont',
+      'Segoe UI',
+      'Roboto',
+      'sans-serif'
+    ].join(','),
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#f9fafb',
+        },
+      },
     },
   },
 });

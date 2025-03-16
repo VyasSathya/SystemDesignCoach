@@ -8,70 +8,61 @@ import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
  * This node solves the problem of lifelines moving up and down and breaking message alignment
  * by fixing its vertical position and only allowing horizontal repositioning through its parent.
  */
-const FixedLifelineNode = memo(({ id, data, selected, xPos, yPos }) => {
+const FixedLifelineNode = memo(({ id, data, selected, xPos }) => {
   const updateNodeInternals = useUpdateNodeInternals();
   
   // Fixed vertical position from the top participant/actor
   const FIXED_TOP_POSITION = 120; // Distance from participant to where lifeline starts
+  const LIFELINE_LENGTH = data.timeExtent || 800; // Dynamic length based on messages
   
-  // Effect to update node internals when parent participant moves horizontally
   useEffect(() => {
     updateNodeInternals(id);
   }, [id, xPos, updateNodeInternals]);
   
   return (
     <div 
-      className={`sequence-lifeline-node ${selected ? 'border-l-2 border-gray-500' : ''}`} 
-      style={{ 
-        width: '2px', 
-        height: data.height || 400,
+      className={`lifeline-node ${selected ? 'selected' : ''}`}
+      style={{
         position: 'relative',
-        pointerEvents: 'all'
+        height: LIFELINE_LENGTH,
+        width: 2,
+        backgroundColor: '#ddd',
+        borderStyle: 'dashed'
       }}
     >
-      {/* The vertical lifeline */}
-      <div className="w-0.5 h-full bg-gray-300 mx-auto relative">
-        {/* Activation boxes rendered on top of lifeline */}
-        {data.activations && data.activations.map((activation, index) => (
-          <div 
-            key={index}
-            className={`bg-${activation.color || 'blue'}-200 border border-${activation.color || 'blue'}-400`}
-            style={{
-              position: 'absolute',
-              width: '10px',
-              height: `${activation.height}px`,
-              left: '-4px',
-              top: `${activation.top}px`,
-              zIndex: activation.nestLevel || 1
-            }}
+      {/* Multiple handles along the lifeline for message connections */}
+      {Array.from({ length: Math.floor(LIFELINE_LENGTH / 50) }).map((_, index) => (
+        <React.Fragment key={index}>
+          <Handle
+            type="target"
+            position={Position.Left}
+            style={{ top: index * 50 }}
+            id={`target-${index}`}
           />
-        ))}
-      </div>
+          <Handle
+            type="source"
+            position={Position.Right}
+            style={{ top: index * 50 }}
+            id={`source-${index}`}
+          />
+        </React.Fragment>
+      ))}
       
-      {/* Connection points - critical for messages */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="top"
-        isConnectable={false}
-        style={{ visibility: 'hidden' }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right"
-        className="w-3 h-3 bg-gray-500"
-        isConnectable={true}
-        style={{ right: '-6px', top: '50%' }}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="left"
-        className="w-3 h-3 bg-gray-500"
-        isConnectable={true}
-        style={{ left: '-6px', top: '50%' }}
-      />
+      {/* Activation bars for when the participant is active */}
+      {data.activations?.map((activation, index) => (
+        <div
+          key={index}
+          className="activation-bar"
+          style={{
+            position: 'absolute',
+            left: -4,
+            width: 10,
+            backgroundColor: '#666',
+            top: activation.start,
+            height: activation.end - activation.start
+          }}
+        />
+      ))}
     </div>
   );
 });

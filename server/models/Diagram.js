@@ -16,45 +16,66 @@ const DiagramSchema = new mongoose.Schema({
     required: true,
     enum: ['system', 'sequence']
   },
-  // Store both ReactFlow and Mermaid representations
-  reactFlow: {
+  metadata: {
+    title: String,
+    description: String,
+    created: Date,
+    updated: Date
+  },
+  // ReactFlow-specific data
+  diagram: {
     nodes: [{
       id: String,
-      type: String,
+      type: {
+        type: String,
+        enum: [
+          // System types
+          'service', 'database', 'cache', 'loadbalancer', 
+          'gateway', 'queue', 'client',
+          // Sequence types
+          'user', 'external', 'component'
+        ]
+      },
+      label: String,
       position: {
         x: Number,
         y: Number
       },
-      data: mongoose.Schema.Types.Mixed,
-      // Additional positioning metadata
-      mermaidPosition: {
-        order: Number,      // For sequence diagrams
-        level: Number,      // For system diagrams, vertical level
-        column: Number      // For system diagrams, horizontal position
+      // Type-specific configuration
+      config: {
+        // For sequence diagrams
+        order: Number,
+        // For system diagrams
+        scalability: String,
+        reliability: String,
+        // Common
+        notes: String,
+        customProperties: Map
       }
     }],
     edges: [{
       id: String,
       source: String,
       target: String,
-      type: String,
-      sourceHandle: String,
-      targetHandle: String,
-      data: mongoose.Schema.Types.Mixed,
-      // Store exact positions for recreation
-      sourcePosition: {
-        x: Number,
-        y: Number
+      type: {
+        type: String,
+        enum: ['sync', 'async', 'depends', 'callback']
       },
-      targetPosition: {
-        x: Number,
-        y: Number
+      label: String,
+      // Type-specific configuration
+      config: {
+        protocol: String,
+        latency: String,
+        reliability: String,
+        notes: String
       }
     }]
   },
-  mermaidCode: {
-    type: String,
-    required: true
+  // Optional alternative representations
+  representations: {
+    mermaid: String,
+    plantuml: String,
+    c4: String
   },
   currentScore: Number,
   lastUpdated: {

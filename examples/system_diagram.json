@@ -1,0 +1,51 @@
+{
+  "sessionId": "sess_123",
+  "diagramId": "diag_456",
+  "type": "system",
+  "metadata": {
+    "title": "E-commerce Backend",
+    "description": "Basic e-commerce system architecture",
+    "created": "2024-01-20T10:00:00Z",
+    "updated": "2024-01-20T10:30:00Z"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "client_1",
+        "type": "client",
+        "label": "Web Client",
+        "position": { "x": 250, "y": 50 },
+        "config": {
+          "scalability": "horizontal",
+          "notes": "React SPA"
+        }
+      },
+      {
+        "id": "gateway_1",
+        "type": "gateway",
+        "label": "API Gateway",
+        "position": { "x": 250, "y": 150 },
+        "config": {
+          "scalability": "horizontal",
+          "reliability": "high"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "client_1",
+        "target": "gateway_1",
+        "type": "sync",
+        "label": "HTTP/REST",
+        "config": {
+          "protocol": "HTTPS",
+          "latency": "low"
+        }
+      }
+    ]
+  },
+  "representations": {
+    "mermaid": "graph TD\n  client_1[Web Client] --> gateway_1[API Gateway]"
+  }
+}

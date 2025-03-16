@@ -104,6 +104,20 @@ const CoachingSessionPage = () => {
     reliability: {}
   });
 
+  // Add workbook state
+  const [workbookState, setWorkbookState] = useState({
+    diagrams: {
+      sequence: {
+        nodes: [],
+        edges: []
+      },
+      system: {
+        nodes: [],
+        edges: []
+      }
+    }
+  });
+
   // Define workbook tabs
   const workbookTabs = [
     { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
@@ -509,24 +523,34 @@ const CoachingSessionPage = () => {
   );
 
   const handleDiagramUpdate = (diagramData) => {
-    const diagramType = activeDiagramTab === 'sequence' ? 'sequence' : 'system';
+    const { type, nodes, edges, mermaidCode } = diagramData;
     
     setWorkbookState(prev => ({
       ...prev,
       diagrams: {
         ...prev.diagrams,
-        [diagramType]: {
-          ...prev.diagrams?.[diagramType],
-          ...diagramData
+        [type]: {
+          nodes,
+          edges,
+          mermaidCode,
+          metadata: {
+            lastUpdated: new Date(),
+            version: 1,
+            type
+          }
         }
       }
     }));
+
+    // Optionally auto-save after each update
+    if (autoSave) {
+      handleDiagramSave(type);
+    }
   };
 
-  const handleDiagramSave = async () => {
+  const handleDiagramSave = async (diagramType) => {
     if (!sessionId) return;
     
-    const diagramType = activeDiagramTab === 'sequence' ? 'sequence' : 'system';
     const currentDiagram = workbookState.diagrams?.[diagramType];
     
     try {

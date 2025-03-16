@@ -1,0 +1,104 @@
+{
+  "sessionId": "sess_123",
+  "diagramId": "diag_789",
+  "type": "sequence",
+  "metadata": {
+    "title": "Login Flow",
+    "description": "User authentication sequence"
+  },
+  "diagram": {
+    "nodes": [
+      {
+        "id": "user_1",
+        "type": "actor",
+        "label": "User",
+        "position": { "x": 100, "y": 50 }
+      },
+      {
+        "id": "user_1_lifeline",
+        "type": "lifeline",
+        "data": {
+          "participantId": "user_1"
+        },
+        "position": { "x": 100, "y": 100 }
+      },
+      {
+        "id": "auth_1",
+        "type": "participant",
+        "label": "AuthService",
+        "position": { "x": 300, "y": 50 }
+      },
+      {
+        "id": "auth_1_lifeline",
+        "type": "lifeline",
+        "data": {
+          "participantId": "auth_1"
+        },
+        "position": { "x": 300, "y": 100 }
+      },
+      {
+        "id": "db_1",
+        "type": "participant",
+        "label": "Database",
+        "position": { "x": 500, "y": 50 }
+      },
+      {
+        "id": "db_1_lifeline",
+        "type": "lifeline",
+        "data": {
+          "participantId": "db_1"
+        },
+        "position": { "x": 500, "y": 100 }
+      }
+    ],
+    "edges": [
+      {
+        "id": "msg_1",
+        "source": "user_1_lifeline",
+        "target": "auth_1_lifeline",
+        "type": "sync",
+        "data": {
+          "label": "Login Request",
+          "type": "sync"
+        },
+        "position": { "y": 150 }
+      },
+      {
+        "id": "msg_2",
+        "source": "auth_1_lifeline",
+        "target": "db_1_lifeline",
+        "type": "sync",
+        "data": {
+          "label": "Verify Credentials",
+          "type": "sync"
+        },
+        "position": { "y": 200 }
+      },
+      {
+        "id": "msg_3",
+        "source": "db_1_lifeline",
+        "target": "auth_1_lifeline",
+        "type": "return",
+        "data": {
+          "label": "Return User Data",
+          "type": "return"
+        },
+        "position": { "y": 250 }
+      },
+      {
+        "id": "msg_4",
+        "source": "auth_1_lifeline",
+        "target": "user_1_lifeline",
+        "type": "return",
+        "data": {
+          "label": "Send JWT",
+          "type": "return"
+        },
+        "position": { "y": 300 }
+      }
+    ]
+  },
+  "representations": {
+    "mermaid": "sequenceDiagram\n    actor User\n    participant AuthService\n    participant Database\n    User->>+AuthService: Login Request\n    AuthService->>+Database: Verify Credentials\n    Database-->>-AuthService: Return User Data\n    AuthService-->>-User: Send JWT"
+  }
+}

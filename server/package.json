@@ -6,9 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node scripts/seedDatabase.js",
-    "verify": "node scripts/verifyDatabase.js",
-    "init-db": "node scripts/initializeDatabase.js && npm run seed && npm run verify",
+    "init-db": "node scripts/initializeDatabase.js",
+    "verify-db": "node scripts/verifyDatabase.js",
     "test-diagram": "node scripts/testDiagramAnalysis.js"
   },
   "dependencies": {

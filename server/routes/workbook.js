@@ -1,3 +1,5 @@
+const express = require('express');
+const router = express.Router();
 const workbookDiagramService = require('../services/workbook/workbookDiagramService');
 
 router.post('/diagram/:sessionId/:type', async (req, res) => {

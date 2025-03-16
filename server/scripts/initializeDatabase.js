@@ -3,11 +3,15 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Problem = require('../models/Problem');
 const Workbook = require('../models/Workbook');
+const Evaluation = require('../models/Evaluation');
+const Interview = require('../models/Interview');
+const Diagram = require('../models/Diagram');
+const Session = require('../models/Session');
 const logger = require('../utils/logger');
 const problems = require('./seedData/problems');
 
 async function recreateIndexes() {
-  const models = [User, Problem, Workbook];
+  const models = [User, Problem, Workbook, Evaluation, Interview, Diagram, Session];
   
   for (const Model of models) {
     const collection = Model.collection;
@@ -41,7 +45,7 @@ async function seedInitialData() {
 
 async function verifySetup() {
   const collections = await mongoose.connection.db.listCollections().toArray();
-  const requiredCollections = ['users', 'problems', 'workbooks'];
+  const requiredCollections = ['users', 'problems', 'workbooks', 'evaluations', 'interviews', 'diagrams', 'sessions'];
   
   for (const required of requiredCollections) {
     if (!collections.find(c => c.name === required)) {
