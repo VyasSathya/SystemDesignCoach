@@ -1,0 +1,83 @@
+.control-structure {
+  border: 2px solid #666;
+  border-radius: 4px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.control-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.control-type {
+  font-weight: bold;
+  color: #333;
+}
+
+.control-condition {
+  color: #666;
+  font-style: italic;
+}
+
+/* Loop specific styles */
+.loop-container {
+  padding: 8px 0;
+}
+
+.loop-message {
+  padding: 4px 8px;
+  margin: 4px 0;
+  background: #f5f5f5;
+  border-radius: 2px;
+}
+
+/* Alternative specific styles */
+.alt-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.alt-section {
+  border-top: 1px dashed #999;
+  padding: 8px 0;
+}
+
+.alt-section:first-child {
+  border-top: none;
+}
+
+.section-condition {
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+.section-messages {
+  padding-left: 16px;
+}
+
+.alt-message {
+  padding: 4px 8px;
+  margin: 4px 0;
+  background: #f5f5f5;
+  border-radius: 2px;
+}
+
+/* Handle styles */
+.control-structure .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: #666;
+}
+
+.control-structure .react-flow__handle-top {
+  top: -4px;
+}
+
+.control-structure .react-flow__handle-bottom {
+  bottom: -4px;
+}

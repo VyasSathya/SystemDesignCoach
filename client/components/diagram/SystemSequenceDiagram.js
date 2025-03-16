@@ -206,35 +206,31 @@ const MenuPanel = ({
           {/* Middle Section: Message Types */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Message Type</h3>
-            <div className="relative h-[76px]">
-              <div className="absolute inset-0 grid grid-cols-2 gap-2 p-0.5 bg-gray-100 rounded-lg">
-                {/* Sliding selector */}
-                <div 
-                  className={`absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] transition-transform duration-200 ease-in-out
-                    ${messageType === 'async' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}
-                    bg-white rounded-md border border-gray-200 shadow-sm`}
-                />
-                
-                {/* Clickable buttons */}
-                <button
-                  onClick={() => onMessageTypeChange('sync')}
-                  className="relative z-10 p-3 flex flex-col items-center transition-colors duration-200"
-                >
-                  <SolidArrow className={`w-6 h-6 ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
-                  <span className={`text-xs text-center font-medium ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'}`}>
-                    Synchronous
-                  </span>
-                </button>
-                <button
-                  onClick={() => onMessageTypeChange('async')}
-                  className="relative z-10 p-3 flex flex-col items-center transition-colors duration-200"
-                >
-                  <AsyncArrow className={`w-6 h-6 ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
-                  <span className={`text-xs text-center font-medium ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'}`}>
-                    Asynchronous
-                  </span>
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => onMessageTypeChange('sync')}
+                className={`p-3 flex flex-col items-center rounded-lg border transition-colors
+                  ${messageType === 'sync' 
+                    ? 'bg-blue-50 border-blue-300' 
+                    : 'border-gray-200 hover:bg-gray-50'}`}
+              >
+                <SolidArrow className={`w-6 h-6 ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
+                <span className={`text-xs text-center font-medium ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'}`}>
+                  Synchronous
+                </span>
+              </button>
+              <button
+                onClick={() => onMessageTypeChange('async')}
+                className={`p-3 flex flex-col items-center rounded-lg border transition-colors
+                  ${messageType === 'async' 
+                    ? 'bg-blue-50 border-blue-300' 
+                    : 'border-gray-200 hover:bg-gray-50'}`}
+              >
+                <AsyncArrow className={`w-6 h-6 ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'} mb-2`} />
+                <span className={`text-xs text-center font-medium ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'}`}>
+                  Asynchronous
+                </span>
+              </button>
             </div>
           </div>
 
@@ -263,6 +259,30 @@ const MenuPanel = ({
   );
 };
 
+// Add these custom edge types
+const customEdgeTypes = {
+  sync: ({ id, source, target, data }) => (
+    <BaseEdge
+      id={id}
+      source={source}
+      target={target}
+      style={{ strokeWidth: 2, stroke: '#333' }}
+      markerEnd={<SolidArrow />}
+      label={data?.label}
+    />
+  ),
+  async: ({ id, source, target, data }) => (
+    <BaseEdge
+      id={id}
+      source={source}
+      target={target}
+      style={{ strokeWidth: 2, stroke: '#333', strokeDasharray: '5,5' }}
+      markerEnd={<AsyncArrow />}
+      label={data?.label}
+    />
+  )
+};
+
 const SystemSequenceDiagram = () => {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -288,10 +308,29 @@ const SystemSequenceDiagram = () => {
     []
   );
 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    []
-  );
+  const onConnect = useCallback((params) => {
+    // Validate connection
+    const sourceNode = nodes.find(n => n.id === params.source);
+    const targetNode = nodes.find(n => n.id === params.target);
+    
+    if (!sourceNode || !targetNode) return;
+    
+    // Only allow connections between lifelines
+    if (!sourceNode.data.lifelineId || !targetNode.data.lifelineId) return;
+    
+    // Create edge with current message type
+    const newEdge = {
+      ...params,
+      type: messageType, // Using the messageType from state
+      data: {
+        label: 'Message',
+        type: messageType
+      },
+      animated: messageType === 'async'
+    };
+    
+    setEdges((eds) => addEdge(newEdge, eds));
+  }, [nodes, messageType]);
 
   const handleNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
@@ -374,6 +413,7 @@ const SystemSequenceDiagram = () => {
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
         nodeTypes={NODE_TYPES}
+        edgeTypes={customEdgeTypes}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode={['Control', 'Meta']}

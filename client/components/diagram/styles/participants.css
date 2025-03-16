@@ -1,0 +1,56 @@
+.participant {
+  width: 120px;
+  min-height: 60px;
+  border: 2px solid;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.participant-header {
+  padding: 4px 8px;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+}
+
+.participant-name {
+  padding: 8px;
+  text-align: center;
+  font-weight: 500;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lifeline {
+  position: relative;
+  width: 2px;
+  pointer-events: none;
+}
+
+.lifeline-line {
+  position: absolute;
+  width: 0;
+  border-left: 2px dashed;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.lifeline .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 2px solid #666;
+}
+
+/* Hover states */
+.participant:hover {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.lifeline .react-flow__handle:hover {
+  background: #f0f0f0;
+}

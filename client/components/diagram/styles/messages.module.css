@@ -1,0 +1,36 @@
+.messageSelected .messagePath {
+  stroke-width: 2;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+}
+
+.messageError .messagePath {
+  stroke: #ff4444;
+}
+
+.messageError .messageLabel {
+  fill: #ff4444;
+}
+
+.messageContainer {
+  position: relative;
+  cursor: pointer;
+}
+
+.messagePath {
+  stroke: #333;
+  stroke-width: 1.5;
+}
+
+.messageLabel {
+  fill: #333;
+  font-size: 12px;
+  font-family: sans-serif;
+}
+
+.asyncMessage .messagePath {
+  stroke-dasharray: 5,5;
+}
+
+.syncMessage .messagePath {
+  stroke-dasharray: none;
+}

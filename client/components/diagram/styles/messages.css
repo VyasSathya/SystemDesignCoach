@@ -1,0 +1,46 @@
+.message-path {
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.message-path:hover {
+  stroke-width: 2;
+}
+
+.message-label {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Synchronous message styles */
+.message-sync .message-path {
+  stroke-dasharray: none;
+}
+
+.message-sync marker path {
+  fill: #000;
+}
+
+/* Asynchronous message styles */
+.message-async .message-path {
+  stroke-dasharray: 5,5;
+}
+
+.message-async marker path {
+  fill: none;
+}
+
+/* Selected message state */
+.message-selected .message-path {
+  stroke-width: 2;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+}
+
+/* Error state */
+.message-error .message-path {
+  stroke: #ff4444;
+}
+
+.message-error .message-label {
+  fill: #ff4444;
+}
