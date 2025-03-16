@@ -13,6 +13,8 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Server, Database, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit } from 'lucide-react';
+import MessageEdge from './components/MessageEdge';
+import ArrowMarkers from './components/ArrowMarkers';
 
 // Node styles definition
 const getNodeStyle = (type) => {
@@ -378,7 +380,9 @@ const SystemSequenceDiagram = () => {
         // Set to true to show connection lines while dragging
         connectionLineStyle={{ stroke: '#0096FF', strokeWidth: 2 }}
         connectionLineType="bezier"
+        edgeTypes={{ message: MessageEdge }}
       >
+        <ArrowMarkers />
         <Background />
         <Controls />
         
