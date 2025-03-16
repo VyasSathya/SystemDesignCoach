@@ -4,308 +4,214 @@ import ReactFlow, {
   ReactFlowProvider,
   Controls,
   Background,
-  Panel
+  Panel,
+  addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
+  useReactFlow,
 } from 'reactflow';
 import { Globe, Server, Database, Archive, Grid, Share2, Box } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
-// Import custom node types
-import DatabaseNode from './NodeTypes/DatabaseNode';
-import ServiceNode from './NodeTypes/ServiceNode';
-import ClientNode from './NodeTypes/ClientNode';
-import LoadBalancerNode from './NodeTypes/LoadBalancerNode';
-import CacheNode from './NodeTypes/CacheNode';
-import QueueNode from './NodeTypes/QueueNode';
-import CustomNode from './NodeTypes/CustomNode';
-import GatewayNode from './NodeTypes/GatewayNode';
-
-// Define nodeTypes outside the component to prevent re-creation on each render
-const nodeTypes = {
-  database: DatabaseNode,
-  service: ServiceNode,
-  client: ClientNode,
-  loadBalancer: LoadBalancerNode,
-  cache: CacheNode,
-  queue: QueueNode,
-  custom: CustomNode,
-  gateway: GatewayNode
-};
-
-const Flow = ({ 
-  initialNodes, 
-  initialEdges, 
-  onNodesChange, 
-  onEdgesChange, 
-  onConnect,
-  onDiagramUpdate 
-}) => {
-  const reactFlowWrapper = useRef(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [autoLayout, setAutoLayout] = useState(false);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [showNodeEditor, setShowNodeEditor] = useState(false);
-  const [nodeName, setNodeName] = useState('');
-  const [nodeNotes, setNodeNotes] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedElements, setSelectedElements] = useState([]);
+// Custom node component
+const CustomNode = ({ data }) => {
+  const NodeIcon = data.icon;
   
-  // Safely get nodes and edges with defaults
-  const safeNodes = Array.isArray(initialNodes) && initialNodes.length > 0 
-    ? initialNodes 
-    : [{ id: 'default', position: { x: 100, y: 100 }, data: { label: 'Default Node' } }];
-  
-  const safeEdges = Array.isArray(initialEdges) ? initialEdges : [];
-
-  const onDragOver = useCallback((event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const onNodeClick = useCallback((event, node) => {
-    setSelectedNode(node);
-    setNodeName(node.data.label || '');
-    setNodeNotes(node.data.notes || '');
-    setShowNodeEditor(true);
-  }, []);
-
-  const onNodeDoubleClick = useCallback((event, node) => {
-    setSelectedNode(node);
-    setNodeName(node.data.label || '');
-    setNodeNotes(node.data.notes || '');
-    setShowNodeEditor(true);
-  }, []);
-
-  const handleSaveNodeEdit = useCallback(() => {
-    if (!selectedNode) return;
-    
-    const updatedNodes = safeNodes.map(n => {
-      if (n.id === selectedNode.id) {
-        return {
-          ...n,
-          data: {
-            ...n.data,
-            label: nodeName,
-            notes: nodeNotes
-          }
-        };
-      }
-      return n;
-    });
-    
-    onNodesChange([{ type: 'reset', items: updatedNodes }]);
-    setShowNodeEditor(false);
-    setSelectedNode(null);
-    
-    if (onDiagramUpdate) {
-      onDiagramUpdate({
-        nodes: updatedNodes,
-        edges: safeEdges
-      });
-    }
-  }, [selectedNode, nodeName, nodeNotes, safeNodes, safeEdges, onNodesChange, onDiagramUpdate]);
-
-  const onDrop = useCallback(
-    (event) => {
-      event.preventDefault();
-
-      if (!reactFlowInstance || !reactFlowWrapper.current) return;
-
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      const type = event.dataTransfer.getData('application/reactflow');
-
-      const position = reactFlowInstance.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-
-      const newNode = {
-        id: `${type}_${Date.now()}`,
-        type,
-        position,
-        data: { 
-          label: '',  // Empty label initially
-          notes: '',
-          type: type  // Store the type separately
-        },
-      };
-
-      // Show the label editor immediately
-      setSelectedNode(newNode);
-      setNodeName('');
-      setNodeNotes('');
-      setShowNodeEditor(true);
-
-      // Add node to diagram
-      onNodesChange([{ type: 'add', item: newNode }]);
-    },
-    [reactFlowInstance]
-  );
-
-  const handleConnect = useCallback((params) => {
-    const newEdge = {
-      ...params,
-      id: `edge-${params.source}-${params.target}`,
-      type: 'smoothstep',
-      data: { label: '' }
-    };
-    
-    const updatedEdges = addEdge(newEdge, safeEdges);
-    onConnect(params);
-    
-    if (onDiagramUpdate) {
-      onDiagramUpdate({
-        nodes: safeNodes,
-        edges: updatedEdges
-      });
-    }
-  }, [safeNodes, safeEdges, onConnect, onDiagramUpdate]);
-
-  const handleAddNode = useCallback((type) => {
-    const name = prompt("Enter a name for this node:");
-    if (!name) return;
-
-    const newNode = {
-      id: `${type}-${Date.now()}`,
-      type,
-      position: { x: 100, y: 100 },
-      data: { label: name }
-    };
-    
-    onNodesChange([{ type: 'add', item: newNode }]);
-  }, [onNodesChange]);
-
-  const handleDelete = useCallback(() => {
-    selectedElements.forEach(element => {
-      onNodesChange([{ type: 'remove', id: element.id }]);
-    });
-  }, [selectedElements, onNodesChange]);
-
   return (
-    <div className="w-full h-full relative" ref={reactFlowWrapper} style={{ minHeight: '300px' }}>
-      <ReactFlow
-        nodes={safeNodes}
-        edges={safeEdges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={handleConnect}
-        onInit={setReactFlowInstance}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onNodeClick={onNodeClick}
-        onNodeDoubleClick={onNodeDoubleClick}
-        nodeTypes={nodeTypes}
-        fitView={false}
-        attributionPosition="bottom-left"
-        minZoom={0.5}
-        maxZoom={2}
-        deleteKeyCode={['Backspace', 'Delete']}
-        multiSelectionKeyCode={['Control', 'Meta']}
-        snapToGrid={autoLayout}
-        snapGrid={[15, 15]}
-        connectionLineStyle={{ strokeWidth: 2, stroke: '#999' }}
-        connectionLineType="smoothstep"
-        onSelectionChange={(elements) => setSelectedElements(elements)}
-      >
-        <Controls />
-        <Background variant="dots" gap={12} size={1} />
-        <Panel position="top-right">
-          <div className="bg-white p-2 rounded shadow-md flex flex-col space-y-2">
-            <button 
-              onClick={() => setAutoLayout(!autoLayout)} 
-              className={`px-2 py-1 text-xs rounded ${autoLayout ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            >
-              {autoLayout ? 'Disable Auto Layout' : 'Enable Auto Layout'}
-            </button>
-            <button 
-              onClick={() => {
-                if (reactFlowInstance) {
-                  reactFlowInstance.fitView();
-                }
-              }}
-              className="px-2 py-1 text-xs bg-gray-200 rounded"
-            >
-              Center View
-            </button>
+    <div className="group relative">
+      <div className={`
+        px-4 py-3
+        shadow-lg
+        rounded-lg
+        bg-${data.bgColor}
+        border-2 border-${data.color}
+        min-w-[160px]
+      `}>
+        <div className="flex items-center gap-3">
+          <div className={`
+            p-2
+            rounded-lg
+            bg-${data.color}/10
+          `}>
+            <NodeIcon className={`w-6 h-6 text-${data.color}`} />
           </div>
-        </Panel>
-        <Panel position="bottom" className="w-full">
-          <div className="bg-white p-2 border-t border-gray-200 flex flex-wrap justify-center gap-2">
-            {[
-              { type: 'client', icon: <Globe className="w-4 h-4" />, color: 'blue', label: 'Client' },
-              { type: 'service', icon: <Server className="w-4 h-4" />, color: 'green', label: 'Service' },
-              { type: 'database', icon: <Database className="w-4 h-4" />, color: 'purple', label: 'Database' },
-              { type: 'cache', icon: <Archive className="w-4 h-4" />, color: 'red', label: 'Cache' },
-              { type: 'loadBalancer', icon: <Grid className="w-4 h-4" />, color: 'orange', label: 'Load Balancer' },
-              { type: 'queue', icon: <Share2 className="w-4 h-4" />, color: 'indigo', label: 'Queue' },
-              { type: 'custom', icon: <Box className="w-4 h-4" />, color: 'gray', label: 'Custom' }
-            ].map(({ type, icon, color, label }) => (
-              <button
-                key={type}
-                onClick={() => handleAddNode(type)}
-                className="flex items-center px-2 py-1 text-xs rounded bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
-                draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData('application/reactflow', type);
-                  setIsDragging(true);
-                }}
-                onDragEnd={() => setIsDragging(false)}
-              >
-                <span className="mr-1">{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </Panel>
-      </ReactFlow>
-      
-      {showNodeEditor && selectedNode && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-          <div className="bg-white rounded-lg p-4 w-64">
-            <h3 className="font-medium mb-2">Edit Node</h3>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-700 mb-1">Name</label>
-              <input 
-                type="text" 
-                value={nodeName} 
-                onChange={(e) => setNodeName(e.target.value)}
-                className="w-full px-2 py-1 border rounded"
-              />
+          
+          <div>
+            <div className={`text-xs font-medium text-${data.color} mb-1`}>
+              {data.type.toUpperCase()}
             </div>
-            <div className="mb-4">
-              <label className="block text-sm text-gray-700 mb-1">Notes</label>
-              <textarea 
-                value={nodeNotes} 
-                onChange={(e) => setNodeNotes(e.target.value)}
-                className="w-full px-2 py-1 border rounded h-20"
-              />
+            <div className="text-sm font-bold text-gray-800">
+              {data.label}
             </div>
-            <div className="flex justify-end space-x-2">
-              <button 
-                onClick={() => setShowNodeEditor(false)}
-                className="px-3 py-1 text-sm bg-gray-200 rounded"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleSaveNodeEdit}
-                className="px-3 py-1 text-sm bg-blue-500 text-white rounded"
-              >
-                Save
-              </button>
-            </div>
+            {data.notes && (
+              <div className="text-xs text-gray-500 mt-1">
+                {data.notes}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-// Wrapper with error handling
-const ReactFlowDiagramWithProvider = (props) => {
+// Define nodeTypes with our custom node
+const nodeTypes = {
+  custom: CustomNode,
+};
+
+const getNodeConfig = (type) => {
+  const configs = {
+    client: {
+      icon: Globe,
+      color: 'blue-500',
+      bgColor: 'blue-50',
+      label: 'Client'
+    },
+    service: {
+      icon: Server,
+      color: 'green-500',
+      bgColor: 'green-50',
+      label: 'Service'
+    },
+    database: {
+      icon: Database,
+      color: 'purple-500',
+      bgColor: 'purple-50',
+      label: 'Database'
+    },
+    cache: {
+      icon: Archive,
+      color: 'amber-500',
+      bgColor: 'amber-50',
+      label: 'Cache'
+    },
+    loadBalancer: {
+      icon: Share2,
+      color: 'pink-500',
+      bgColor: 'pink-50',
+      label: 'Load Balancer'
+    },
+    queue: {
+      icon: Box,
+      color: 'indigo-500',
+      bgColor: 'indigo-50',
+      label: 'Queue'
+    }
+  };
+  return configs[type];
+};
+
+const ReactFlowDiagram = () => {
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+  const { project, getViewport } = useReactFlow();
+
+  const onNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
+
+  const addNode = (type) => {
+    const name = prompt(`Enter name for ${type}:`);
+    if (!name) return;
+
+    const nodeConfig = getNodeConfig(type);
+    
+    // Get the viewport's dimensions and center position
+    const viewport = getViewport();
+    const centerX = (viewport.width || 800) / 2;
+    const centerY = (viewport.height || 600) / 2;
+    
+    // Convert the center position to React Flow coordinates
+    const position = project({
+      x: centerX,
+      y: centerY
+    });
+
+    const newNode = {
+      id: `${type}-${Date.now()}`,
+      type: 'custom',
+      position,
+      data: {
+        label: name,
+        type: type,
+        ...nodeConfig,
+      }
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+  };
+
   return (
-    <ReactFlowProvider>
-      <Flow {...props} />
-    </ReactFlowProvider>
+    <div style={{ width: '100%', height: '100vh' }}>
+      <ReactFlowProvider>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          defaultEdgeOptions={{
+            type: 'smoothstep',
+            style: { stroke: '#999', strokeWidth: 2 }
+          }}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <Panel position="top-left" className="flex flex-col gap-2">
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => addNode('client')}
+            >
+              Add Client
+            </button>
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={() => addNode('service')}
+            >
+              Add Service
+            </button>
+            <button
+              className="bg-purple-500 text-white px-4 py-2 rounded"
+              onClick={() => addNode('database')}
+            >
+              Add Database
+            </button>
+            <button
+              className="bg-amber-500 text-white px-4 py-2 rounded"
+              onClick={() => addNode('cache')}
+            >
+              Add Cache
+            </button>
+            <button
+              className="bg-pink-500 text-white px-4 py-2 rounded"
+              onClick={() => addNode('loadBalancer')}
+            >
+              Add Load Balancer
+            </button>
+            <button
+              className="bg-indigo-500 text-white px-4 py-2 rounded"
+              onClick={() => addNode('queue')}
+            >
+              Add Queue
+            </button>
+          </Panel>
+        </ReactFlow>
+      </ReactFlowProvider>
+    </div>
   );
 };
 

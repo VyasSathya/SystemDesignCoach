@@ -2,9 +2,17 @@ import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 const CustomNode = ({ data, isConnectable = true }) => {
-  const borderColorClass = `border-${data.style.borderColor.replace('border-', '')}`;
-  const bgColorClass = `bg-${data.style.backgroundColor.replace('bg-', '')}`;
-  const textColorClass = `text-${data.style.color.replace('text-', '')}`;
+  console.log('CustomNode render:', { data, isConnectable }); // Add this log
+
+  // Add safety checks
+  if (!data) {
+    console.error('CustomNode received null or undefined data');
+    return null;
+  }
+
+  const borderColorClass = `border-${data.style?.borderColor?.replace('border-', '') || 'gray-300'}`;
+  const bgColorClass = `bg-${data.style?.backgroundColor?.replace('bg-', '') || 'white'}`;
+  const textColorClass = `text-${data.style?.color?.replace('text-', '') || 'gray-900'}`;
 
   return (
     <div className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${borderColorClass} min-w-[150px]`}>
@@ -83,4 +91,5 @@ const CustomNode = ({ data, isConnectable = true }) => {
   );
 };
 
+// Ensure the component is memoized
 export default memo(CustomNode);

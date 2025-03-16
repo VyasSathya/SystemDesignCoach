@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -13,16 +13,17 @@ import NodePalette from './NodePalette';
 import CustomNode from './NodeTypes/CustomNode';
 import 'reactflow/dist/style.css';
 
-const nodeTypes = {
-  custom: CustomNode
-};
-
 const SystemArchitectureDiagram = () => {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [nodeName, setNodeName] = useState('');
+
+  // Memoize nodeTypes
+  const nodeTypes = useMemo(() => ({
+    custom: CustomNode
+  }), []);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -36,7 +37,6 @@ const SystemArchitectureDiagram = () => {
 
   const onConnect = useCallback(
     (params) => {
-      // Create a new edge with a default style
       const edge = {
         ...params,
         type: 'smoothstep',
@@ -60,6 +60,7 @@ const SystemArchitectureDiagram = () => {
   }, [selectedNode]);
 
   const handleAddNode = useCallback((nodeData) => {
+    console.log('Adding new node:', nodeData);
     const position = { x: 100, y: 100 };
     const newNode = {
       id: `${nodeData.data.nodeType}_${Date.now()}`,
@@ -75,7 +76,11 @@ const SystemArchitectureDiagram = () => {
       draggable: true,
       connectable: true,
     };
-    setNodes((nds) => [...nds, newNode]);
+    console.log('New node created:', newNode);
+    setNodes((nds) => {
+      console.log('Current nodes:', nds);
+      return [...nds, newNode];
+    });
     setSelectedNode(newNode);
     setNodeName(nodeData.data.nodeType);
     setIsEditing(true);

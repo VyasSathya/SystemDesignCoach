@@ -1,14 +1,101 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, { 
+  ReactFlowProvider,
   Panel,
   Background, 
   Controls,
   addEdge,
   applyEdgeChanges, 
   applyNodeChanges,
+  Handle,
+  Position,
+  useReactFlow,
+  useKeyPress,
+  useOnSelectionChange
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Server, Database, Globe, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit } from 'lucide-react';
+
+// Node Types Definition
+const getNodeStyle = (type) => {
+  const styles = {
+    user: {
+      icon: <Users className="w-6 h-6" />,
+      background: 'bg-blue-50',
+      border: 'border-blue-300',
+      hoverBg: 'hover:bg-blue-50',
+      selectedBorder: 'border-blue-500',
+      iconColor: 'text-blue-500'
+    },
+    system: {
+      icon: <Server className="w-6 h-6" />,
+      background: 'bg-green-50',
+      border: 'border-green-300',
+      hoverBg: 'hover:bg-green-50',
+      selectedBorder: 'border-green-500',
+      iconColor: 'text-green-500'
+    },
+    database: {
+      icon: <Database className="w-6 h-6" />,
+      background: 'bg-purple-50',
+      border: 'border-purple-300',
+      hoverBg: 'hover:bg-purple-50',
+      selectedBorder: 'border-purple-500',
+      iconColor: 'text-purple-500'
+    }
+  };
+  return styles[type] || styles.system;
+};
+
+const BaseNode = ({ data, selected }) => {
+  const style = getNodeStyle(data.type);
+  
+  return (
+    <div className="group relative" style={{ minWidth: '120px' }}>
+      <div className={`
+        px-4 py-3 rounded-lg shadow-sm border-2 transition-all
+        ${style.background}
+        ${selected ? style.selectedBorder : style.border}
+        ${style.hoverBg}
+        hover:shadow-md
+      `}>
+        <div className="flex items-center gap-2 justify-center">
+          <div className={`${style.iconColor}`}>
+            {style.icon}
+          </div>
+          <div className="text-sm font-medium text-gray-700">
+            {data.label || 'Unnamed'}
+          </div>
+        </div>
+      </div>
+      
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="!bottom-0 !bg-gray-400"
+      />
+      
+      <div 
+        className="absolute w-[2px] bg-gray-300"
+        style={{
+          top: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          height: data.lifelineHeight || '400px',
+          zIndex: -1
+        }}
+      />
+    </div>
+  );
+};
+
+// Define nodeTypes outside the component
+const NODE_TYPES = {
+  user: BaseNode,
+  system: BaseNode,
+  database: BaseNode
+};
 
 // Custom Arrow SVG Components
 const SolidArrow = ({ className }) => (
@@ -176,154 +263,128 @@ const MenuPanel = ({
   );
 };
 
-// Update the main component to handle node selection and operations
 const SystemSequenceDiagram = () => {
-  const [nodes, setNodes] = useState([
-    {
-      id: '1',
-      type: 'default',
-      data: { label: 'Test Node 1' },
-      position: { x: 100, y: 100 }
-    },
-    {
-      id: '2',
-      type: 'default',
-      data: { label: 'Test Node 2' },
-      position: { x: 300, y: 100 }
-    }
-  ]);
+  const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [messageType, setMessageType] = useState('sync'); // Initialize as 'sync'
   const [isEditing, setIsEditing] = useState(false);
   const [editingLabel, setEditingLabel] = useState('');
+  const [messageType, setMessageType] = useState('sync');
+  const [copiedElements, setCopiedElements] = useState(null);
+  const [selectedElements, setSelectedElements] = useState([]);
 
-  const onNodeClick = useCallback((event, node) => {
-    console.log('Node clicked:', node);
+  const { getNodes, getEdges, setNodes: setReactFlowNodes, setEdges: setReactFlowEdges } = useReactFlow();
+
+  const onNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  const onEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    []
+  );
+
+  const handleNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
+    setEditingLabel(node.data.label || '');
   }, []);
 
-  const handleNodeDelete = useCallback((nodeId) => {
-    console.log('Deleting node:', nodeId);
-    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-    setEdges((eds) => eds.filter(
-      (edge) => edge.source !== nodeId && edge.target !== nodeId
-    ));
-    setSelectedNode(null);
-  }, []);
-
-  const handleStartEdit = () => {
+  const handleDeleteSelected = useCallback(() => {
     if (selectedNode) {
-      setEditingLabel(selectedNode.data.label);
-      setIsEditing(true);
+      setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
+      setEdges((eds) => eds.filter(
+        (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
+      ));
+      setSelectedNode(null);
     }
-  };
+  }, [selectedNode]);
 
-  const handleSaveEdit = () => {
-    if (selectedNode) {
-      handleNodeRename(selectedNode.id, editingLabel);
+  const handleEditLabel = useCallback(() => {
+    if (selectedNode && editingLabel.trim() !== '') {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === selectedNode.id
+            ? { ...node, data: { ...node.data, label: editingLabel } }
+            : node
+        )
+      );
       setIsEditing(false);
+      setSelectedNode(null);
     }
-  };
-
-  const handleNodeRename = useCallback((nodeId, newLabel) => {
-    console.log('Renaming node:', nodeId, 'to:', newLabel);
-    setNodes((nds) => 
-      nds.map((node) => 
-        node.id === nodeId 
-          ? { ...node, data: { ...node.data, label: newLabel } }
-          : node
-      )
-    );
-  }, []);
+  }, [selectedNode, editingLabel]);
 
   const handleAddParticipant = useCallback((type) => {
     const newNode = {
       id: `node-${Date.now()}`,
-      type: 'default',
-      data: { label: type.charAt(0).toUpperCase() + type.slice(1) },
-      position: { x: Math.random() * 500, y: Math.random() * 300 }
+      type,
+      position: { x: nodes.length * 200, y: 0 },
+      data: { label: `New ${type}`, type }
     };
-    console.log('Adding participant:', newNode);
     setNodes((nds) => [...nds, newNode]);
-  }, []);
+  }, [nodes]);
 
   const handleMessageTypeChange = useCallback((type) => {
-    console.log('Message type changed to:', type);
     setMessageType(type);
   }, []);
 
   const handleAddFragment = useCallback((type) => {
+    // Implement fragment addition logic
     console.log('Adding fragment:', type);
-    // TODO: Implement fragment addition logic
   }, []);
 
+  // Selection change handler
+  useOnSelectionChange({
+    onChange: ({ nodes, edges }) => {
+      setSelectedElements([...nodes.map(n => n.id), ...edges.map(e => e.id)]);
+    }
+  });
+
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div style={{ width: '100%', height: '80vh' }} className="relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodeClick={onNodeClick}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={handleNodeClick}
+        nodeTypes={NODE_TYPES}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode={['Control', 'Meta']}
+        selectionKeyCode={['Shift']}
         snapToGrid={true}
         snapGrid={[15, 15]}
       >
         <Background />
         <Controls />
-
-        {/* Top-right controls */}
-        {selectedNode && (
-          <Panel position="top-right" className="flex gap-2 p-2">
-            {isEditing ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={editingLabel}
-                  onChange={(e) => setEditingLabel(e.target.value)}
-                  className="border px-2 py-1 rounded"
-                  autoFocus
-                />
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Save
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleStartEdit}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md shadow-sm"
-              >
-                <Edit className="w-4 h-4" />
-                Rename
-              </button>
-            )}
-            <button
-              onClick={() => handleNodeDelete(selectedNode.id)}
-              className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md shadow-sm"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-          </Panel>
-        )}
+        
+        <Panel position="bottom" className="w-full">
+          <MenuPanel
+            menuItems={defaultMenuItems}
+            onAddParticipant={handleAddParticipant}
+            onMessageTypeChange={handleMessageTypeChange}
+            messageType={messageType}
+            onAddFragment={handleAddFragment}
+          />
+        </Panel>
       </ReactFlow>
-
-      <MenuPanel
-        menuItems={defaultMenuItems}
-        onAddParticipant={handleAddParticipant}
-        onMessageTypeChange={handleMessageTypeChange}
-        messageType={messageType}
-        onAddFragment={handleAddFragment}
-        selectedNode={selectedNode}
-        onNodeDelete={handleNodeDelete}
-        onNodeRename={handleNodeRename}
-      />
     </div>
   );
 };
 
-export default SystemSequenceDiagram;
+const SystemSequenceDiagramWrapper = () => {
+  return (
+    <ReactFlowProvider>
+      <SystemSequenceDiagram />
+    </ReactFlowProvider>
+  );
+};
+
+export default SystemSequenceDiagramWrapper;
