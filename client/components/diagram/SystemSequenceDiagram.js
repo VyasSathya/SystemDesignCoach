@@ -183,9 +183,9 @@ const MenuPanel = ({
     <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200">
       <div className="max-w-[1200px] mx-auto">
         <div className="grid grid-cols-3 gap-4 p-4">
-          {/* Left Section: Add Participants */}
+          {/* Left Section */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Add Participants</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">System Components</h3>
             <div className="grid grid-cols-3 gap-2">
               {menuItems.participants.map((item) => {
                 const Icon = iconMap[item.iconName];
@@ -203,9 +203,9 @@ const MenuPanel = ({
             </div>
           </div>
 
-          {/* Middle Section: Message Types */}
+          {/* Middle Section */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Message Type</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Communication Types</h3>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => onMessageTypeChange('sync')}
@@ -234,9 +234,9 @@ const MenuPanel = ({
             </div>
           </div>
 
-          {/* Right Section: Fragments */}
+          {/* Right Section */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Interaction Patterns</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Control Flow</h3>
             <div className="grid grid-cols-2 gap-2">
               {menuItems.fragments.map((item) => {
                 const Icon = iconMap[item.iconName];
