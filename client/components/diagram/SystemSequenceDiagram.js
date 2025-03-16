@@ -53,15 +53,26 @@ const getNodeStyle = (type) => {
 const BaseNode = ({ data, selected }) => {
   const { sourcePoint, setSourcePoint, messageType, setEdges } = useContext(DiagramContext);
   const style = getNodeStyle(data.type);
+  const [isDragging, setIsDragging] = useState(false);
   
+  // Prevent node dragging when drawing connections
+  useEffect(() => {
+    if (sourcePoint) {
+      setIsDragging(true);
+    } else {
+      setIsDragging(false);
+    }
+  }, [sourcePoint]);
+
   return (
     <div 
       className="group relative" 
-      style={{ minWidth: '120px' }}
-      draggable={false}
-      onDragStart={(e) => e.preventDefault()}
+      style={{ 
+        minWidth: '120px',
+        pointerEvents: isDragging ? 'none' : 'all'
+      }}
     >
-      {/* Participant header - this part remains draggable for ReactFlow */}
+      {/* Participant header */}
       <div className={`
         px-4 py-3 rounded-lg shadow-sm border-2 transition-all
         ${style.background}
@@ -81,9 +92,8 @@ const BaseNode = ({ data, selected }) => {
 
       {/* Lifeline with dots */}
       <div 
-        className="relative" 
-        draggable={false}
-        onDragStart={(e) => e.preventDefault()}
+        className="relative"
+        style={{ pointerEvents: 'none' }}
       >
         <div
           className="absolute left-1/2 top-full border-l-2 border-gray-300"
@@ -92,7 +102,6 @@ const BaseNode = ({ data, selected }) => {
             transform: 'translateX(-50%)',
             zIndex: 1
           }}
-          draggable={false}
         />
         
         {/* Connection dots */}
@@ -109,7 +118,7 @@ const BaseNode = ({ data, selected }) => {
                 absolute w-3 h-3 rounded-full 
                 ${isSource ? 'bg-blue-500 border-2 border-blue-600' : 'bg-white border-2 border-gray-400'}
                 hover:border-blue-500 hover:bg-blue-50
-                cursor-pointer transition-colors
+                cursor-crosshair transition-colors
               `}
               style={{
                 left: '50%',
@@ -118,13 +127,15 @@ const BaseNode = ({ data, selected }) => {
                 zIndex: 2,
                 pointerEvents: 'all'
               }}
-              draggable={false}
               onMouseDown={(e) => {
-                e.preventDefault();
                 e.stopPropagation();
                 if (!sourcePoint) {
                   setSourcePoint({ nodeId: data.id, y: yPos });
-                } else if (sourcePoint.nodeId !== data.id) {
+                }
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                if (sourcePoint && sourcePoint.nodeId !== data.id) {
                   setEdges(prev => [...prev, {
                     id: `edge-${Date.now()}`,
                     source: sourcePoint.nodeId,
@@ -137,8 +148,6 @@ const BaseNode = ({ data, selected }) => {
                       type: messageType
                     }
                   }]);
-                  setSourcePoint(null);
-                } else {
                   setSourcePoint(null);
                 }
               }}
