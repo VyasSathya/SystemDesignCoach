@@ -142,10 +142,15 @@ const BaseNode = ({ data, selected }) => {
                     target: data.id,
                     sourceHandle: `dot-${sourcePoint.y}`,
                     targetHandle: `dot-${yPos}`,
-                    type: messageType,
+                    type: messageType,  // 'sync' or 'async'
                     data: { 
                       label: 'Message',
                       type: messageType
+                    },
+                    style: {
+                      strokeDasharray: messageType === 'async' ? '5, 5' : 'none',
+                      stroke: '#333',
+                      strokeWidth: 2
                     }
                   }]);
                   setSourcePoint(null);

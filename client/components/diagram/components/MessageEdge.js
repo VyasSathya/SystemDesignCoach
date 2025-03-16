@@ -1,6 +1,5 @@
 import React from 'react';
 import { BaseEdge, getStraightPath } from 'reactflow';
-import { CONSTANTS } from '../utils/sequenceDiagramConstants';
 
 const MessageEdge = ({
   id,
@@ -10,40 +9,40 @@ const MessageEdge = ({
   sourceY,
   targetX,
   targetY,
-  data
+  data,
+  style = {}
 }) => {
-  const messageType = data?.type || CONSTANTS.MESSAGE_TYPES.SYNC;
-  const style = CONSTANTS.STYLES[`${messageType.toUpperCase()}_MESSAGE`];
+  const messageType = data?.type || 'sync';
   
-  const [edgePath, labelX, labelY] = getStraightPath({
+  const [edgePath] = getStraightPath({
     sourceX,
     sourceY,
     targetX,
     targetY
   });
 
-  const markerEnd = `url(#${messageType}-arrow)`;
-
   return (
     <>
-      <BaseEdge
-        path={edgePath}
-        markerEnd={markerEnd}
+      <path
+        id={id}
+        className="react-flow__edge-path"
+        d={edgePath}
         style={{
-          strokeDasharray: style.strokeDasharray,
-          stroke: style.stroke,
-          strokeWidth: style.strokeWidth
+          ...style,
+          strokeDasharray: messageType === 'async' ? '5, 5' : 'none',
+          stroke: '#333',
+          strokeWidth: 2
         }}
+        markerEnd={`url(#${messageType}-arrow)`}
       />
       {data?.label && (
         <text
-          x={labelX}
-          y={labelY - 10}
+          x={(sourceX + targetX) / 2}
+          y={sourceY - 10}
           textAnchor="middle"
-          alignmentBaseline="central"
-          className="message-label"
+          style={{ fontSize: '12px', fill: '#666' }}
         >
-          {data.label}
+          {data?.label}
         </text>
       )}
     </>
