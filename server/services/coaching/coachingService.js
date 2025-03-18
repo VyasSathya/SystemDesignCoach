@@ -1,10 +1,18 @@
 const AIFactory = require('../ai/aiFactory');
 const logger = require('../../utils/logger');
 const { config } = require('../../config/aiConfig');
+const DiagramAnalyzer = require('../ai/diagramAnalyzer');
+const progressTrackingService = require('../progress/progressTrackingService');
 
 class CoachingService {
   constructor() {
-    this.ai = AIFactory.createService();
+    try {
+      this.ai = AIFactory.create('claude');
+      this.diagramAnalyzer = new DiagramAnalyzer();
+    } catch (error) {
+      logger.error('Failed to initialize CoachingService:', error);
+      throw error;
+    }
   }
 
   async processMessage(sessionId, message, context = {}) {
@@ -61,6 +69,62 @@ class CoachingService {
       messageLength: message.length,
       responseLength: response.length
     });
+  }
+
+  async reviewSection(sessionId, sectionId, data) {
+    try {
+      const review = await this._generateReview(sectionId, data);
+      
+      // Track progress
+      const progress = await progressTrackingService.trackSectionProgress(
+        sessionId,
+        sectionId,
+        review
+      );
+
+      // Adjust feedback based on progress
+      const adaptiveFeedback = this._adaptFeedbackToProgress(
+        review.feedback,
+        progress
+      );
+
+      return {
+        ...review,
+        progress,
+        adaptiveFeedback
+      };
+    } catch (error) {
+      logger.error('Review error:', error);
+      throw error;
+    }
+  }
+
+  _generateDiagramSuggestions(analysis) {
+    return {
+      improvements: analysis.patterns.missing,
+      security: analysis.security,
+      scalability: analysis.scalability,
+      recommendations: analysis.recommendations
+    };
+  }
+
+  _generateTextSuggestions(sectionId, content) {
+    // Add section-specific suggestion logic here
+    return {
+      completeness: this._checkCompleteness(sectionId, content),
+      clarity: this._checkClarity(content),
+      recommendations: []
+    };
+  }
+
+  _adaptFeedbackToProgress(feedback, progress) {
+    // Adjust feedback based on improvement trend
+    if (progress.improvement > 0) {
+      return `Great improvement! ${feedback}`;
+    } else if (progress.improvement < 0) {
+      return `Let's focus on improving these areas: ${feedback}`;
+    }
+    return feedback;
   }
 }
 

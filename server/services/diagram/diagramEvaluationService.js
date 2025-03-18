@@ -1,11 +1,12 @@
 const DiagramAnalyzer = require('./diagramAnalyzer');
 const PatternLibrary = require('./patterns/PatternLibrary');
 const { diagramStructure } = require('../../../data/diagram_structure');
+const WorkbookService = require('./WorkbookService');
 
 class DiagramEvaluationService {
   constructor() {
     this.analyzer = new DiagramAnalyzer();
-    this.patternLibrary = new PatternLibrary();
+    this.workbookService = new WorkbookService();
   }
 
   async evaluateDiagram(diagram, type, context) {
@@ -16,7 +17,8 @@ class DiagramEvaluationService {
       timestamp: Date.now(),
       scores: {},
       analysis: {},
-      recommendations: []
+      recommendations: [],
+      saveStatus: context.saveStatus
     };
 
     // Evaluate different criteria
@@ -24,13 +26,13 @@ class DiagramEvaluationService {
     for (const criterion of criteria) {
       evaluation.scores[criterion] = await this._evaluateCriterion(
         normalizedDiagram, 
-        criterion, 
+        criterion,
         this._getCriterionConfig(criterion),
         context
       );
     }
 
-    // Analyze components and patterns
+    // Enhanced analysis with save status awareness
     evaluation.analysis = {
       components: this._analyzeComponents(normalizedDiagram),
       patterns: this._identifyPatterns(normalizedDiagram),
@@ -38,21 +40,18 @@ class DiagramEvaluationService {
         normalizedDiagram.nodes, 
         normalizedDiagram.edges, 
         type
-      )
+      ),
+      saveState: {
+        lastSaved: context.lastSaved,
+        hasUnsavedChanges: context.saveStatus === 'unsaved'
+      }
     };
 
-    // Calculate overall score
-    evaluation.scores.overall = this._calculateOverallScore(evaluation.scores);
-
-    // Generate recommendations
-    evaluation.recommendations = this._generateRecommendations(
-      evaluation.analysis,
-      evaluation.scores,
-      context
-    );
-
     // Store evaluation results
-    await this._storeEvaluation(evaluation, context);
+    await this.workbookService.updateDiagramEvaluation(
+      context.sessionId,
+      evaluation
+    );
 
     return evaluation;
   }
@@ -71,30 +70,17 @@ class DiagramEvaluationService {
   }
 
   _getCriterionConfig(criterion) {
-    const configs = {
-      scalability: {
-        weight: 0.25,
-        checks: ['loadBalancing', 'horizontalScaling', 'caching']
+    return {
+      weights: {
+        complexity: 0.3,
+        patterns: 0.3,
+        bestPractices: 0.4
       },
-      reliability: {
-        weight: 0.2,
-        checks: ['redundancy', 'failover', 'errorHandling']
-      },
-      security: {
-        weight: 0.25,
-        checks: ['authentication', 'authorization', 'dataEncryption']
-      },
-      performance: {
-        weight: 0.15,
-        checks: ['responseTime', 'throughput', 'resourceUtilization']
-      },
-      maintainability: {
-        weight: 0.15,
-        checks: ['modularity', 'coupling', 'cohesion']
+      thresholds: {
+        warning: 0.6,
+        error: 0.4
       }
     };
-
-    return configs[criterion] || { weight: 0.1, checks: [] };
   }
 
   async _evaluateCriterion(diagram, criterion, config, context) {

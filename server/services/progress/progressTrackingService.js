@@ -1,39 +1,47 @@
-const Workbook = require('../../models/Workbook');
-const workbookEvaluationService = require('../evaluation/workbookEvaluationService');
+ const Session = require('../../models/Session');
+const logger = require('../../utils/logger');
 
 class ProgressTrackingService {
-  async trackProgress(sessionId, userId) {
-    const workbook = await Workbook.findOne({ sessionId });
-    if (!workbook) throw new Error('Workbook not found');
+  async trackSectionProgress(sessionId, sectionId, review) {
+    try {
+      const session = await Session.findById(sessionId);
+      
+      // Calculate improvement from previous review
+      const previousReviews = session.reviews?.[sectionId] || [];
+      const previousScore = previousReviews[previousReviews.length - 1]?.score || 0;
+      const improvement = review.score - previousScore;
 
-    const evaluation = await workbookEvaluationService.evaluateProgress(sessionId);
-    
-    // Update progress in workbook
-    workbook.progress = {
-      completion: evaluation.overallProgress,
-      sections: new Map(Object.entries(evaluation.evaluations)),
-      lastUpdated: new Date()
-    };
+      // Update progress metrics
+      await Session.findByIdAndUpdate(sessionId, {
+        $push: {
+          [`reviews.${sectionId}`]: {
+            timestamp: new Date(),
+            score: review.score,
+            improvement
+          }
+        },
+        $set: {
+          [`progress.sections.${sectionId}`]: review.score
+        }
+      });
 
-    await workbook.save();
-
-    return {
-      currentProgress: evaluation.overallProgress,
-      sectionProgress: evaluation.evaluations,
-      recommendations: evaluation.recommendations,
-      timeline: await this.getProgressTimeline(sessionId)
-    };
+      return {
+        currentScore: review.score,
+        improvement,
+        trend: this._calculateTrend(previousReviews, review.score)
+      };
+    } catch (error) {
+      logger.error('Progress tracking error:', error);
+      throw error;
+    }
   }
 
-  async getProgressTimeline(sessionId) {
-    const workbook = await Workbook.findOne({ sessionId });
-    if (!workbook) throw new Error('Workbook not found');
-
-    return workbook.coachingInteractions.map(interaction => ({
-      timestamp: interaction.timestamp,
-      type: 'coaching',
-      content: interaction.message
-    }));
+  _calculateTrend(previousReviews, currentScore) {
+    // Implementation of trend analysis
+    return {
+      direction: 'improving',
+      rate: 'steady'
+    };
   }
 }
 

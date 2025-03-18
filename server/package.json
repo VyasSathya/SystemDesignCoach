@@ -8,7 +8,9 @@
     "dev": "nodemon index.js",
     "init-db": "node scripts/initializeDatabase.js",
     "verify-db": "node scripts/verifyDatabase.js",
-    "test-diagram": "node scripts/testDiagramAnalysis.js"
+    "test-diagram": "node scripts/testDiagramAnalysis.js",
+    "test": "jest --detectOpenHandles",
+    "install-test-deps": "npm install --save-dev jest supertest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -24,6 +26,11 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^6.3.4"
   }
 }
