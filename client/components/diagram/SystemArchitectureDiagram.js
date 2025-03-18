@@ -8,7 +8,7 @@ import ReactFlow, {
   applyEdgeChanges,
   applyNodeChanges
 } from 'reactflow';
-import { Trash2, Edit } from 'lucide-react';
+import { Trash2, Edit, MessageSquare, Save } from 'lucide-react';
 import NodePalette from './NodePalette';
 import CustomNode from './NodeTypes/CustomNode';
 import 'reactflow/dist/style.css';
@@ -123,8 +123,22 @@ const SystemArchitectureDiagram = () => {
     setNodeName(node.data.label);
   }, []);
 
+  const onSaveAndContinue = async () => {
+    try {
+      const diagramData = {
+        nodes,
+        edges
+      };
+      console.log('Saving diagram:', diagramData);
+      // Here you would typically make an API call to save the data
+      console.log('Diagram saved successfully');
+    } catch (error) {
+      console.error('Error saving diagram:', error);
+    }
+  };
+
   return (
-    <div style={{ width: '100%', height: '80vh' }} className="relative">
+    <div style={{ width: '100%', height: '77vh' }} className="relative">  {/* Changed from 80vh to 75vh */}
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
@@ -237,6 +251,19 @@ const SystemArchitectureDiagram = () => {
           </div>
         </div>
       )}
+      <div className="bg-white border-t border-gray-200 p-4 flex justify-between items-center shadow-md">
+        <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors">
+          <MessageSquare size={16} className="mr-2" />
+          Ask Coach
+        </button>
+        <button 
+          onClick={onSaveAndContinue}
+          className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          <Save size={16} className="mr-2" />
+          Save & Continue
+        </button>
+      </div>
     </div>
   );
 };
