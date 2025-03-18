@@ -237,4 +237,39 @@ router.get('/progress', async (req, res) => {
   }
 });
 
+router.post('/:sessionId/review/:sectionId', async (req, res) => {
+  try {
+    const { sessionId, sectionId } = req.params;
+    const { sectionData, diagramData } = req.body;
+    
+    const coachingService = new CoachingService();
+    const review = await coachingService.reviewSection(
+      sessionId,
+      sectionId,
+      { sectionData, diagramData }
+    );
+    
+    // Store review in workbook
+    await Workbook.findOneAndUpdate(
+      { sessionId },
+      { 
+        $push: {
+          [`reviews.${sectionId}`]: {
+            timestamp: new Date(),
+            review
+          }
+        }
+      }
+    );
+    
+    res.json({
+      success: true,
+      review
+    });
+  } catch (error) {
+    console.error('Review error:', error);
+    res.status(500).json({ error: 'Failed to review section' });
+  }
+});
+
 module.exports = router;

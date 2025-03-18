@@ -1,0 +1,30 @@
+Context: Working on a system design workbook application with AI coaching. The app has basic auto-save functionality implemented in workbookStorage.js (3s) and RequirementsPage.js (30s).
+
+Current Implementation:
+- Auto-saves workbook data every 3 seconds
+- Auto-saves requirements every 30 seconds
+- Uses debouncing for performance
+- Includes save status notifications
+
+Next Steps Needed:
+1. Test and verify auto-save reliability:
+   - Add error recovery
+   - Implement conflict resolution
+   - Add offline support
+
+2. Enhance auto-save features:
+   - Add version history
+   - Implement diff tracking
+   - Add manual save checkpoints
+
+3. Improve user feedback:
+   - Add visual save indicators
+   - Implement unsaved changes warnings
+   - Add recovery options
+
+Key files to focus on:
+- client/utils/workbookStorage.js
+- client/pages/RequirementsPage.js
+- client/components/Workbook.js
+
+Please help implement these improvements while maintaining performance and reliability.

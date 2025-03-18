@@ -29,6 +29,30 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const { sessionId, sessionType } = useSession();
   const [isDiagramOpen, setIsDiagramOpen] = useState(false);
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle');
+
+  // Handle unsaved changes warning
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasLocalChanges) {
+        e.preventDefault();
+        const message = 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasLocalChanges]);
+
+  // Track changes
+  useEffect(() => {
+    setHasLocalChanges(true);
+  }, [functionalReqs, nonFunctionalReqs, constraints, assumptions]);
 
   const updateFunctionalReq = (id, text) => {
     const updatedReqs = functionalReqs.map(req =>
@@ -87,14 +111,15 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
   }, [functionalReqs, nonFunctionalReqs, constraints, assumptions]);
 
   const hasUnsavedChanges = useCallback(() => {
-    // Implementation of unsaved changes detection
-    return false;
-  }, [functionalReqs, nonFunctionalReqs]);
+    return hasLocalChanges;
+  }, [hasLocalChanges]);
 
   const handleAutoSave = async () => {
     if (isSaving) return;
 
     setIsSaving(true);
+    setSaveStatus('saving');
+    
     try {
       const formattedData = {
         functionalReqs: JSON.stringify(functionalReqs),
@@ -106,6 +131,9 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
 
       await updateData(formattedData);
       setLastSaved(new Date());
+      setHasLocalChanges(false);
+      setSaveStatus('saved');
+      
       toast({
         title: "Progress Saved",
         description: "Your changes have been automatically saved",
@@ -114,6 +142,7 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
         isClosable: true,
       });
     } catch (error) {
+      setSaveStatus('error');
       toast({
         title: "Auto-save Failed",
         description: "Changes couldn't be saved automatically. Please save manually.",
@@ -123,6 +152,21 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Manual save checkpoint
+  const handleManualSave = async () => {
+    try {
+      setSaveStatus('saving');
+      await handleAutoSave();
+      // Create a named checkpoint
+      await createSaveCheckpoint({
+        name: `Manual Save - ${new Date().toLocaleString()}`,
+        type: 'manual'
+      });
+    } catch (error) {
+      setSaveStatus('error');
     }
   };
 
@@ -245,26 +289,26 @@ const EnhancedRequirementsPage = ({ data = {}, updateData }) => {
       isValid={functionalReqs.some(req => req.text.trim().length > 0)}
       nextSection="API Design"
     >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Requirements Definition</h2>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          {isSaving && (
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 mr-1 animate-spin" />
-              Saving...
+      <div className="flex flex-col min-h-full bg-white">
+        <div className="p-6 space-y-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Requirements Definition</h2>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              {isSaving && (
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-1 animate-spin" />
+                  Saving...
+                </div>
+              )}
+              {lastSaved && !isSaving && (
+                <div className="flex items-center">
+                  <Check className="w-4 h-4 mr-1 text-green-500" />
+                  Last saved {new Date(lastSaved).toLocaleTimeString()}
+                </div>
+              )}
             </div>
-          )}
-          {lastSaved && !isSaving && (
-            <div className="flex items-center">
-              <Check className="w-4 h-4 mr-1 text-green-500" />
-              Last saved {new Date(lastSaved).toLocaleTimeString()}
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex flex-col h-full bg-white">
-        <div className="flex-1 overflow-auto p-6 space-y-8">
+          </div>
+          
           {/* Coach tip box */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-md p-4 text-sm text-indigo-700">
             <strong className="font-medium">Coach tip:</strong> Start with clear user stories to identify key functional requirements. Define non-functional requirements with specific, measurable metrics.

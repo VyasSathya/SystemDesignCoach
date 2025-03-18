@@ -12,7 +12,7 @@ import ReactFlow, {
   MarkerType
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Server, Database, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit } from 'lucide-react';
+import { Server, Database, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit, MessageSquare, Save, Wand2 } from 'lucide-react';
 import MessageEdge from './components/MessageEdge';
 import ArrowMarkers from './components/ArrowMarkers';
 
@@ -127,6 +127,11 @@ const BaseNode = ({ data, selected, id }) => {
       </div>
     </div>
   );
+};
+
+// Edge types definition
+const EDGE_TYPES = {
+  default: MessageEdge
 };
 
 // Node types definition
@@ -288,6 +293,11 @@ const SystemSequenceDiagram = () => {
     [messageType]
   );
 
+  const handleSave = () => {
+    // Implement your save logic here
+    console.log('Saving diagram:', { nodes, edges });
+  };
+
   // Handle node click
   const handleNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
@@ -360,135 +370,63 @@ const SystemSequenceDiagram = () => {
     // Implement fragment logic
   }, []);
 
+  const onSaveAndContinue = async () => {
+    try {
+      // Save the current diagram state
+      const diagramData = {
+        nodes,
+        edges
+      };
+      
+      console.log('Saving diagram:', diagramData);
+      // Here you would typically make an API call to save the data
+      
+      // For now, just log it
+      console.log('Diagram saved successfully');
+    } catch (error) {
+      console.error('Error saving diagram:', error);
+    }
+  };
+
   return (
-    <div style={{ width: '100%', height: '80vh' }} className="relative">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={handleNodeClick}
-        nodeTypes={NODE_TYPES}
-        fitView
-        deleteKeyCode={['Backspace', 'Delete']}
-        multiSelectionKeyCode={['Control', 'Meta']}
-        selectionKeyCode={['Shift']}
-        snapToGrid={true}
-        snapGrid={[15, 15]}
-        connectionMode="strict"
-        // Set to true to show connection lines while dragging
-        connectionLineStyle={{ stroke: '#0096FF', strokeWidth: 2 }}
-        connectionLineType="bezier"
-        edgeTypes={{ message: MessageEdge }}
-      >
-        <ArrowMarkers />
-        <Background />
-        <Controls />
-        
-        {/* Menu Panel */}
-        <Panel position="bottom" className="w-full">
-          <MenuPanel
-            onAddParticipant={handleAddParticipant}
-            onMessageTypeChange={handleMessageTypeChange}
-            messageType={messageType}
-            onAddFragment={handleAddFragment}
-          />
-        </Panel>
-
-        {/* Name Input Dialog */}
-        {showNameDialog && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg">
-              <h3 className="text-lg font-medium mb-4">Enter participant name</h3>
-              <input
-                type="text"
-                value={newNodeName}
-                onChange={(e) => setNewNodeName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCreateNamedNode();
-                  }
-                }}
-                className="border px-3 py-2 rounded w-full mb-4"
-                autoFocus
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowNameDialog(false);
-                    setPendingNodeType(null);
-                    setNewNodeName('');
-                  }}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateNamedNode}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Create
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Node Actions Panel */}
-        <Panel position="top-right" className="bg-white p-2 rounded shadow-lg">
-          {selectedNode && (
-            <div className="flex gap-2">
-              {isEditing ? (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={editingLabel}
-                    onChange={(e) => setEditingLabel(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleEditLabel();
-                      }
-                    }}
-                    className="border px-2 py-1 rounded"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleEditLabel}
-                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Rename
-                  </button>
-                  <button
-                    onClick={handleDeleteSelected}
-                    className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </Panel>
-        
-        {/* Connection Instructions */}
-        <Panel position="top-left" className="bg-white p-2 rounded shadow-lg m-2">
-          <div className="text-xs text-gray-600">
-            <strong>How to connect:</strong> Click and drag from a dot to another dot
-          </div>
-        </Panel>
-      </ReactFlow>
+    <div className="h-full flex flex-col">
+      <ReactFlowProvider>
+        <div className="flex-1">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={NODE_TYPES}
+            edgeTypes={EDGE_TYPES}
+            fitView
+          >
+            <Background />
+            <Controls />
+            <MenuPanel 
+              onAddParticipant={handleAddParticipant}
+              onMessageTypeChange={handleMessageTypeChange}
+              messageType={messageType}
+              onAddFragment={handleAddFragment}
+            />
+          </ReactFlow>
+        </div>
+      </ReactFlowProvider>
+      
+      <div className="sticky bottom-0 w-full bg-white border-t border-gray-200 p-4 flex justify-between items-center shadow-md">
+        <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors">
+          <MessageSquare size={16} className="mr-2" />
+          Ask Coach
+        </button>
+        <button 
+          onClick={onSaveAndContinue}
+          className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          <Save size={16} className="mr-2" />
+          Save & Continue
+        </button>
+      </div>
     </div>
   );
 };

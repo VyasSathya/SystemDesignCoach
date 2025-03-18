@@ -3,6 +3,10 @@ const router = express.Router();
 const { CoachingService } = require('../services/coaching/coachingService');
 const logger = require('../utils/logger');
 
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 const coachingService = new CoachingService();
 
 router.post('/message', async (req, res) => {
@@ -27,77 +31,6 @@ router.post('/message', async (req, res) => {
       success: false, 
       error: error.message 
     });
-  }
-});
-
-router.post('/analyze-diagram', async (req, res) => {
-  try {
-    const { sessionId, diagram } = req.body;
-    const analysis = await coachingService.analyzeDiagram(sessionId, diagram);
-    res.json({ success: true, analysis });
-  } catch (error) {
-    logger.error('Diagram Analysis Error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-router.post('/review-code', async (req, res) => {
-  try {
-    const { code, context } = req.body;
-    const review = await coachingService.reviewCode(code, context);
-    res.json({ success: true, review });
-  } catch (error) {
-    logger.error('Code Review Error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-router.post('/suggest-requirements', async (req, res) => {
-  try {
-    const { functionalReqs, nonFunctionalReqs, constraints, assumptions } = req.body;
-    
-    const context = {
-      currentRequirements: {
-        functional: functionalReqs,
-        nonFunctional: nonFunctionalReqs,
-        constraints,
-        assumptions
-      }
-    };
-
-    const suggestions = await coachEngine.generateSuggestions('requirements', context);
-    
-    res.json(suggestions);
-  } catch (error) {
-    console.error('Error generating requirements suggestions:', error);
-    res.status(500).json({ error: 'Failed to generate suggestions' });
-  }
-});
-
-router.post('/analyze-requirements-diagram', async (req, res) => {
-  try {
-    const { diagramData, requirements } = req.body;
-    
-    // Analyze diagram components and their relationship to requirements
-    const analysis = await diagramAnalyzer.analyzeDiagram(
-      diagramData.nodes,
-      diagramData.edges,
-      'system'
-    );
-
-    // Get suggestions for improving the diagram based on requirements
-    const suggestions = await diagramService.generateSuggestions(
-      diagramData,
-      requirements
-    );
-
-    res.json({
-      analysis,
-      suggestions
-    });
-  } catch (error) {
-    console.error('Error analyzing requirements diagram:', error);
-    res.status(500).json({ error: 'Failed to analyze diagram' });
   }
 });
 

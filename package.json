@@ -5,9 +5,28 @@
     "scripts": {
         "server": "cd server && npm run dev",
         "client": "cd client && npm run dev",
-        "dev": "concurrently \"npm run server\" \"npm run client\""
+        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "test": "jest --detectOpenHandles"
     },
     "devDependencies": {
+        "@babel/core": "^7.26.10",
+        "@babel/preset-env": "^7.26.9",
+        "babel-jest": "^29.7.0",
         "concurrently": "^9.1.2"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "moduleDirectories": [
+            "node_modules"
+        ],
+        "roots": [
+            "<rootDir>/server"
+        ],
+        "modulePaths": [
+            "<rootDir>/server"
+        ],
+        "setupFilesAfterEnv": [
+            "<rootDir>/server/tests/jest.setup.js"
+        ]
     }
 }

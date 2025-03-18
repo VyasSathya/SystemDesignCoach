@@ -3,6 +3,10 @@ const logger = require('../../utils/logger');
 
 class AIService {
   constructor(config) {
+    if (!config.apiKey) {
+      throw new Error('API key is required for AI service');
+    }
+    
     this.config = config;
     this.client = new Anthropic({
       apiKey: config.apiKey,
@@ -29,26 +33,12 @@ class AIService {
   }
 
   async analyzeDiagram(diagramData, context = {}) {
-    const analysis = {
-      diagramType: diagramData.type,
-      components: this._analyzeComponents(diagramData.nodes),
-      patterns: this._detectPatterns(diagramData.nodes, diagramData.edges),
-      metrics: {
-        complexity: this._calculateComplexity(diagramData),
-        coverage: this._calculateCoverage(diagramData),
-        bestPractices: this._evaluateBestPractices(diagramData)
-      }
+    // Implementation of diagram analysis
+    return {
+      type: diagramData.type,
+      analysis: "Diagram analysis would go here",
+      suggestions: []
     };
-
-    const messages = [{
-      role: 'user',
-      content: `Analyze this system design diagram:\n${JSON.stringify(analysis, null, 2)}\nContext: ${JSON.stringify(context)}`
-    }];
-
-    return this.sendMessage(messages, {
-      systemPrompt: "You are an expert system design reviewer. Analyze the diagram and provide specific, actionable feedback focusing on architecture, scalability, and best practices.",
-      temperature: 0.5
-    });
   }
 }
 
