@@ -7,7 +7,10 @@ const DataModelPage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
   
-  // Get data from context or initialize
+  // Add previewMode state
+  const [previewMode, setPreviewMode] = useState(false);
+  
+  // Get data from context
   const dataModelData = problems[currentProblem]?.sections?.data || {
     entities: [],
     relationships: [],
@@ -15,18 +18,13 @@ const DataModelPage = () => {
     databaseJustification: ''
   };
 
-  // Add previewMode state
-  const [previewMode, setPreviewMode] = useState(false);
+  // Initialize state from context data
   const [entities, setEntities] = useState(dataModelData.entities);
   const [relationships, setRelationships] = useState(dataModelData.relationships);
   const [databaseChoice, setDatabaseChoice] = useState(dataModelData.databaseChoice);
   const [databaseJustification, setDatabaseJustification] = useState(dataModelData.databaseJustification);
 
-  // Add togglePreview function
-  const togglePreview = () => {
-    setPreviewMode(!previewMode);
-  };
-
+  // Save state when data changes
   useEffect(() => {
     if (currentProblem) {
       dispatch({
@@ -42,6 +40,11 @@ const DataModelPage = () => {
       });
     }
   }, [entities, relationships, databaseChoice, databaseJustification]);
+
+  // Toggle preview mode
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
+  };
 
   const addEntity = () => {
     const newId = Math.max(...entities.map(e => e.id), 0) + 1;

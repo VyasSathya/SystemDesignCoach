@@ -10,7 +10,7 @@ const SystemArchitecturePage = () => {
   // Add previewMode state
   const [previewMode, setPreviewMode] = useState(false);
   
-  // Get data from context or initialize
+  // Get data from context
   const architectureData = problems[currentProblem]?.sections?.architecture || {
     components: [],
     connections: [],
@@ -24,7 +24,7 @@ const SystemArchitecturePage = () => {
     }
   };
 
-  // Initialize state from context
+  // Initialize state from context data
   const [components, setComponents] = useState(architectureData.components);
   const [connections, setConnections] = useState(architectureData.connections);
   const [selectedPattern, setSelectedPattern] = useState(architectureData.selectedPattern);

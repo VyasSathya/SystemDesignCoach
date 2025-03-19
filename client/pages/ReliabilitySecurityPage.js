@@ -5,21 +5,20 @@ import ProgressBar from '../components/ProgressBar';
 import { useWorkbook } from '../context/WorkbookContext';
 
 const ReliabilitySecurityPage = () => {
-  // Add WorkbookContext
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
   
   // Add previewMode state
   const [previewMode, setPreviewMode] = useState(false);
   
-  // Get data from context or initialize
+  // Get data from context
   const reliabilityData = problems[currentProblem]?.sections?.reliability || {
     reliabilityMetrics: [],
     failureScenarios: [],
     securityMeasures: []
   };
 
-  // Initialize state from context
+  // Initialize state from context data
   const [reliabilityMetrics, setReliabilityMetrics] = useState(reliabilityData.reliabilityMetrics);
   const [failureScenarios, setFailureScenarios] = useState(reliabilityData.failureScenarios);
   const [securityMeasures, setSecurityMeasures] = useState(reliabilityData.securityMeasures);

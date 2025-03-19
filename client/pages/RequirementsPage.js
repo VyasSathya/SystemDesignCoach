@@ -7,40 +7,35 @@ const RequirementsPage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
   
-  // Add previewMode state
   const [previewMode, setPreviewMode] = useState(false);
   
-  // Get data from context or initialize with default empty arrays
+  // Get data from context
   const requirementsData = problems[currentProblem]?.sections?.requirements || {
-    functional: [{
-      id: 1,
-      title: '',
-      description: '',
-      priority: 'medium',
-      status: 'pending',
-      acceptance: []
-    }],
-    nonFunctional: [{
-      id: 1,
-      title: '',
-      description: '',
-      category: 'performance',
-      status: 'pending',
-      criteria: []
-    }],
-    constraints: [{
-      id: 1,
-      title: '',
-      description: '',
-      type: 'business',
-      status: 'pending'
-    }]
+    functional: [],
+    nonFunctional: [],
+    constraints: []
   };
 
-  // Initialize state from context
+  // Initialize state from context data
   const [functionalRequirements, setFunctionalRequirements] = useState(requirementsData.functional);
   const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState(requirementsData.nonFunctional);
   const [constraints, setConstraints] = useState(requirementsData.constraints);
+
+  // Save state when data changes
+  useEffect(() => {
+    if (currentProblem) {
+      dispatch({
+        type: 'UPDATE_SECTION_DATA',
+        problemId: currentProblem,
+        section: 'requirements',
+        data: {
+          functional: functionalRequirements,
+          nonFunctional: nonFunctionalRequirements,
+          constraints: constraints
+        }
+      });
+    }
+  }, [functionalRequirements, nonFunctionalRequirements, constraints]);
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
