@@ -156,6 +156,15 @@ const APIDesignPage = () => {
     saveData(updatedData);
   };
 
+  const handleApiTypeChange = (type) => {
+    const updatedData = {
+      ...apiData,
+      apiType: type
+    };
+    setApiType(type);
+    saveData(updatedData);
+  };
+
   // Request parameter management functions
   const addRequestParam = (endpointId) => {
     const updatedData = {

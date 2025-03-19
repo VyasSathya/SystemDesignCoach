@@ -101,9 +101,15 @@ const SystemArchitecturePage = () => {
 
   // Connection management functions
   const addConnection = () => {
-    if (components.length < 2) return;
+    if (components.length < 2) {
+      // Show an error or return if there aren't enough components
+      return;
+    }
     
-    const newId = Math.max(...connections.map(c => c.id), 0) + 1;
+    const newId = connections.length > 0 
+      ? Math.max(...connections.map(c => c.id)) + 1 
+      : 1;
+
     const newConnection = {
       id: newId,
       from: components[0].id,
@@ -116,6 +122,7 @@ const SystemArchitecturePage = () => {
       ...architectureData,
       connections: [...connections, newConnection]
     };
+
     setConnections(updatedData.connections);
     saveData(updatedData);
   };
