@@ -1,3 +1,12 @@
+require('dotenv').config({ path: '.env.test' });
+
+// Global test setup
+beforeAll(async () => {
+  // Database connection for all tests
+  await require('../config/db')();
+});
+
+// Mock AI configurations
 jest.mock('../config/aiConfig', () => ({
   config: {
     apiKey: 'test-key',
@@ -5,3 +14,8 @@ jest.mock('../config/aiConfig', () => ({
     maxTokens: 1000
   }
 }));
+
+// Clean up after all tests
+afterAll(async () => {
+  await mongoose.connection.close();
+});

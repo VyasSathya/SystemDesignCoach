@@ -7,6 +7,10 @@ module.exports = {
   },
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/tests/setup.js'],
+  testMatch: [
+    "**/tests/**/*.test.js",
+    "**/tests/**/*.spec.js"
+  ],
   transformIgnorePatterns: [
     'node_modules/(?!(your-es-module-dependency)/)',
   ],

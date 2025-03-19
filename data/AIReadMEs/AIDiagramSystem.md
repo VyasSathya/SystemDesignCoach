@@ -4,47 +4,25 @@
 
 1. Diagram Management:
 ```
-/client/components/ReactFlowDiagram.js:ReactFlowDiagramWithProvider()
+/client/components/diagram/SystemSequenceDiagram.js:SystemSequenceDiagramWrapper()
 ↓
-/client/components/ReactFlowDiagram.js:Flow()
+/client/components/diagram/SystemSequenceDiagram.js:handleAddParticipant()
 ↓
-/server/models/Diagram.js:save()
+/server/services/diagram/diagramDataProcessor.js:reactFlowToMermaid()
 ```
 
 2. Node Management:
 ```
-/server/services/diagram/NodeTypes/nodePresets.js:createNode()
+/client/components/diagram/SystemSequenceDiagram.js:handleAddParticipant()
 ↓
-/server/services/diagram/NodeTypes/nodePresets.js:getDefaultProperties()
+/client/components/diagram/SystemSequenceDiagram.js:handleNodeClick()
 ↓
-/client/components/ReactFlowDiagram.js:handleNodeAdd()
+/client/components/diagram/SystemSequenceDiagram.js:handleDeleteSelected()
 ```
 
-## Core Data Flow Patterns
-
-### 1. Node Operations:
+## Testing Infrastructure:
 ```
-/client/components/ReactFlowDiagram.js:onNodesChange()
-↓
-/client/components/ReactFlowDiagram.js:handleConnect()
-↓
-/client/components/ReactFlowDiagram.js:handleDelete()
-```
-
-### 2. Layout Management:
-```
-/client/components/ReactFlowDiagram.js:onDrop()
-↓
-/client/components/ReactFlowDiagram.js:onDragOver()
-↓
-/client/components/ReactFlowDiagram.js:fitView()
-```
-
-### 3. Diagram Validation:
-```
-/server/models/Diagram.js:validateNode()
-↓
-/server/models/Diagram.js:validateEdge()
-↓
-/server/services/diagram/NodeTypes/nodePresets.js:isValidType()
+/tests/services/diagram/diagramDataProcessor.test.js
+/tests/diagram.test.js
+/tests/api/workbook.test.js
 ```

@@ -1,4 +1,4 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { Anthropic } = require('@anthropic-ai/sdk');
 const logger = require('../../utils/logger');
 
 class AIService {
@@ -15,6 +15,15 @@ class AIService {
 
   async sendMessage(messages, options = {}) {
     try {
+      // Validate messages
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        throw new Error('Invalid message format');
+      }
+      
+      if (messages.some(m => !m.role || !m.content)) {
+        throw new Error('Invalid message format');
+      }
+
       const systemPrompt = options.systemPrompt || this.config.defaultSystemPrompt;
 
       const response = await this.client.messages.create({
@@ -28,18 +37,12 @@ class AIService {
       return response.content[0].text;
     } catch (error) {
       logger.error('AI Service Error:', error);
+      if (error.message === 'Invalid message format') {
+        throw error;
+      }
       throw new Error('Failed to get AI response');
     }
   }
-
-  async analyzeDiagram(diagramData, context = {}) {
-    // Implementation of diagram analysis
-    return {
-      type: diagramData.type,
-      analysis: "Diagram analysis would go here",
-      suggestions: []
-    };
-  }
 }
 
-module.exports = AIService;
+module.exports = { AIService };

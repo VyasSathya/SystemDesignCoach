@@ -6,11 +6,17 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "init-db": "node scripts/initializeDatabase.js",
-    "verify-db": "node scripts/verifyDatabase.js",
-    "test-diagram": "node scripts/testDiagramAnalysis.js",
+    
+    "db:init": "node scripts/database/initialize.js",
+    "db:verify": "node scripts/verifyDatabase.js",
+    "db:seed": "node scripts/database/seed.js",
+    
     "test": "jest --detectOpenHandles",
-    "install-test-deps": "npm install --save-dev jest supertest"
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:e2e": "jest tests/e2e",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

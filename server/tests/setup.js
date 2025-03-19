@@ -5,6 +5,11 @@ if (!process.env.MONGODB_URI) {
   process.env.MONGODB_URI = 'mongodb://localhost:27017/systemdesigncoach-test';
 }
 
+// Use existing ANTHROPIC_API_KEY if TEST_ANTHROPIC_API_KEY is not set
+if (!process.env.TEST_ANTHROPIC_API_KEY) {
+  process.env.TEST_ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+}
+
 // Ensure required test environment variables are set
 const requiredEnvVars = ['TEST_ANTHROPIC_API_KEY', 'JWT_SECRET'];
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);

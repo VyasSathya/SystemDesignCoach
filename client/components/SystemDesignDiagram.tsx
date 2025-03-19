@@ -14,14 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Server, Database, CloudLightning, Router, Lock } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { mermaidToReactFlow } from './diagram/utils/systemDiagramUtils';
 import SystemDesignPalette from './diagram/SystemDesignPalette';
-
-const MermaidRenderer = dynamic(() => import('./diagram/MermaidRenderer'), {
-  ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-100 h-full w-full"></div>
-});
 
 // Define node types outside the component for better performance
 const nodeTypes: NodeTypes = {
@@ -87,7 +80,11 @@ const componentTypes: ComponentType[] = [
 
 interface SystemDesignDiagramProps {
   initialMermaidCode?: string;
-  onDiagramChange?: (mermaidCode: string) => void;
+  onDiagramChange?: (diagramData: {
+    nodes: Node[],
+    edges: Edge[],
+    mermaidCode: string
+  }) => void;
 }
 
 const SystemDesignDiagram: React.FC<SystemDesignDiagramProps> = ({ 
@@ -96,23 +93,7 @@ const SystemDesignDiagram: React.FC<SystemDesignDiagramProps> = ({
 }) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [mermaidCode, setMermaidCode] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'flow' | 'mermaid'>('flow');
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-
-  useEffect(() => {
-    if (initialMermaidCode) {
-      setMermaidCode(initialMermaidCode);
-      // Convert initial Mermaid code to ReactFlow
-      try {
-        const { nodes: initialNodes, edges: initialEdges } = mermaidToReactFlow(initialMermaidCode);
-        setNodes(initialNodes);
-        setEdges(initialEdges);
-      } catch (error) {
-        console.error('Failed to parse initial Mermaid code:', error);
-      }
-    }
-  }, [initialMermaidCode]);
 
   const generateMermaidCode = useCallback((nodes: Node[], edges: Edge[]): string => {
     let code = 'graph TD\n';
@@ -130,17 +111,20 @@ const SystemDesignDiagram: React.FC<SystemDesignDiagramProps> = ({
     return code;
   }, []);
 
-  const updateMermaidCode = useCallback(() => {
-    const newMermaidCode = generateMermaidCode(nodes, edges);
-    setMermaidCode(newMermaidCode);
+  const updateDiagramState = useCallback(() => {
+    const mermaidCode = generateMermaidCode(nodes, edges);
     if (onDiagramChange) {
-      onDiagramChange(newMermaidCode);
+      onDiagramChange({
+        nodes,
+        edges,
+        mermaidCode
+      });
     }
-  }, [nodes, edges, generateMermaidCode, onDiagramChange]);
+  }, [nodes, edges, onDiagramChange, generateMermaidCode]);
 
   useEffect(() => {
-    updateMermaidCode();
-  }, [nodes, edges, updateMermaidCode]);
+    updateDiagramState();
+  }, [nodes, edges, updateDiagramState]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -203,61 +187,34 @@ const SystemDesignDiagram: React.FC<SystemDesignDiagramProps> = ({
 
   return (
     <div className="flex flex-col h-screen">
-      <div className="flex gap-2 p-2 bg-gray-100">
-        <button
-          onClick={() => setViewMode('flow')}
-          className={`px-3 py-1 rounded ${viewMode === 'flow' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        >
-          Flow Editor
-        </button>
-        <button
-          onClick={() => setViewMode('mermaid')}
-          className={`px-3 py-1 rounded ${viewMode === 'mermaid' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        >
-          Mermaid View
-        </button>
-      </div>
-      
       <div className="flex-1 relative">
-        {viewMode === 'flow' ? (
-          <div className="flex h-full">
-            <SystemDesignPalette
-              onNodeAdd={handleNodeAdd}
-              onNodeDelete={handleNodeDelete}
-              onNodeRename={handleNodeRename}
-              selectedNode={selectedNode}
-            />
-            <div className="flex-1">
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onNodeClick={onNodeClick}
-                nodeTypes={nodeTypes}
-                fitView
-                defaultEdgeOptions={{
-                  type: 'smoothstep',
-                  animated: true,
-                }}
-              >
-                <Controls />
-                <Background color="#f0f0f0" gap={16} />
-              </ReactFlow>
-            </div>
-          </div>
-        ) : (
-          <div className="h-full">
-            <MermaidRenderer 
-              code={mermaidCode} 
-              onError={(error) => {
-                console.error('Mermaid rendering error:', error);
-                // Optionally handle the error in UI
+        <div className="flex h-full">
+          <SystemDesignPalette
+            onNodeAdd={handleNodeAdd}
+            onNodeDelete={handleNodeDelete}
+            onNodeRename={handleNodeRename}
+            selectedNode={selectedNode}
+          />
+          <div className="flex-1">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={onNodeClick}
+              nodeTypes={nodeTypes}
+              fitView
+              defaultEdgeOptions={{
+                type: 'smoothstep',
+                animated: true,
               }}
-            />
+            >
+              <Controls />
+              <Background color="#f0f0f0" gap={16} />
+            </ReactFlow>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

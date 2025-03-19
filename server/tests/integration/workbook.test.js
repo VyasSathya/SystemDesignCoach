@@ -1,7 +1,8 @@
-const { WorkbookService } = require('../services/workbook/workbookService');
-const { mockIndexedDB } = require('../mocks/indexedDB');
+const { WorkbookService } = require('../../services/workbook/workbookService');
+const { mockIndexedDB } = require('../utils/mockIndexedDB'); // Move mock to utils
 
-jest.mock('../../client/utils/workbookStorage', () => ({
+// Mock the storage module
+jest.mock('../../services/workbook/workbookStorage', () => ({
   saveWorkbookData: async (sessionId, data, userId) => {
     return Promise.resolve({ status: 'success' });
   },

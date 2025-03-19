@@ -579,86 +579,54 @@ const CoachingSessionPage = () => {
     }
     
     // Default systems diagram
-    if (viewMode === 'edit') {
-      return (
-        <div className="relative h-full">
-          <SystemArchitectureDiagram
-            initialNodes={nodes}
-            initialEdges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onDiagramUpdate={handleDiagramUpdate}
-          />
-          {showSuggestions && diagramSuggestions && (
-            <div className="absolute inset-0 bg-black bg-opacity-10 z-10 flex flex-col">
-              <div className="bg-yellow-50 p-3 border-b border-yellow-200">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-yellow-800">
-                    <span className="font-medium">AI has suggested diagram changes</span>
-                  </p>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={handleAcceptSuggestions}
-                      className="px-3 py-1 bg-green-600 text-white text-sm rounded flex items-center"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Accept Changes
-                    </button>
-                    <button 
-                      onClick={handleDiscardSuggestions}
-                      className="px-3 py-1 bg-gray-600 text-white text-sm rounded flex items-center"
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Discard
-                    </button>
-                  </div>
+    return (
+      <div className="relative h-full">
+        <SystemArchitectureDiagram
+          initialNodes={nodes}
+          initialEdges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onDiagramUpdate={handleDiagramUpdate}
+        />
+        {showSuggestions && diagramSuggestions && (
+          <div className="absolute inset-0 bg-black bg-opacity-10 z-10 flex flex-col">
+            <div className="bg-yellow-50 p-3 border-b border-yellow-200">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-yellow-800">
+                  <span className="font-medium">AI has suggested diagram changes</span>
+                </p>
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={handleAcceptSuggestions}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded flex items-center"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Accept Changes
+                  </button>
+                  <button 
+                    onClick={handleDiscardSuggestions}
+                    className="px-3 py-1 bg-gray-600 text-white text-sm rounded flex items-center"
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Discard
+                  </button>
                 </div>
               </div>
-              <div className="flex-1 relative">
-                <SystemArchitectureDiagram
-                  initialNodes={diagramSuggestions.nodes}
-                  initialEdges={diagramSuggestions.edges}
-                  onNodesChange={() => {}}
-                  onEdgesChange={() => {}}
-                  onConnect={() => {}}
-                />
-              </div>
             </div>
-          )}
-        </div>
-      );
-    } else if (viewMode === 'preview') {
-      return <MermaidRenderer code={diagramCode} />;
-    } else {
-      return (
-        <div className="h-full p-4 flex flex-col">
-          <textarea
-            value={diagramCode}
-            onChange={e => setDiagramCode(e.target.value)}
-            className="w-full flex-1 font-mono text-sm p-2 border border-gray-300 rounded"
-          />
-          <div className="mt-2">
-            <button
-              onClick={() => {
-                try {
-                  const { nodes: newNodes, edges: newEdges } = mermaidToReactFlow(diagramCode);
-                  setNodes(newNodes);
-                  setEdges(newEdges);
-                  setViewMode('edit');
-                } catch (err) {
-                  console.error("Error parsing Mermaid code:", err);
-                  alert("Invalid Mermaid code: " + err.message);
-                }
-              }}
-              className="px-3 py-1 bg-blue-600 text-white text-sm rounded"
-            >
-              Apply Changes
-            </button>
+            <div className="flex-1 relative">
+              <SystemArchitectureDiagram
+                initialNodes={diagramSuggestions.nodes}
+                initialEdges={diagramSuggestions.edges}
+                onNodesChange={() => {}}
+                onEdgesChange={() => {}}
+                onConnect={() => {}}
+              />
+            </div>
           </div>
-        </div>
-      );
-    }
+        )}
+      </div>
+    );
   };
 
   // Render active workbook component
@@ -926,43 +894,6 @@ const CoachingSessionPage = () => {
                         {tab.label}
                       </button>
                     ))}
-                  </div>
-                  
-                  {/* Diagram view controls */}
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => setViewMode('edit')}
-                      className={`px-3 py-1 text-xs rounded-lg border ${
-                        viewMode === 'edit'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Edit className="h-3 w-3 inline mr-1" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setViewMode('preview')}
-                      className={`px-3 py-1 text-xs rounded-lg border ${
-                        viewMode === 'preview'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Eye className="h-3 w-3 inline mr-1" />
-                      Preview
-                    </button>
-                    <button
-                      onClick={() => setViewMode('code')}
-                      className={`px-3 py-1 text-xs rounded-lg border ${
-                        viewMode === 'code'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Code className="h-3 w-3 inline mr-1" />
-                      Code
-                    </button>
                   </div>
                   
                   <button

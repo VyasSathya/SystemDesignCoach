@@ -11,6 +11,8 @@
 
 ## Handling Real-time Diagram Updates and Analysis: Processing Live Diagram Changes while Detecting and Analyzing Design Patterns
 ```
+/client/components/diagram/SystemSequenceDiagram.js:handleAddParticipant()
+↓
 /client/components/ReactFlowDiagram.js:handleDiagramUpdate()
 ↓
 /server/services/diagram/diagramManager.js:updateDiagram()

@@ -32,16 +32,12 @@ class DiagramAiService {
     };
   }
 
-  async getSuggestions(sessionId, diagramType, context) {
-    const diagram = await this.workbookService.getDiagram(sessionId, diagramType);
-    const mermaidCode = this.processor.reactFlowToMermaid(
-      diagram.nodes, 
-      diagram.edges, 
-      diagramType
-    );
-
+  async getSuggestions(sessionId, diagramData, context) {
+    const { nodes, edges, mermaidCode } = diagramData;
+    
     const suggestions = await this.ai.generateSuggestions({
       mermaidCode,
+      diagramState: { nodes, edges },
       context
     });
 
@@ -50,7 +46,7 @@ class DiagramAiService {
       proposedMermaid: suggestions.diagramSuggestions?.mermaidCode,
       reactFlowUpdates: this.processor.mermaidToReactFlow(
         suggestions.diagramSuggestions?.mermaidCode,
-        diagramType
+        'system'
       )
     };
   }
