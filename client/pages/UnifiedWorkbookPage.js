@@ -37,6 +37,16 @@ const UnifiedWorkbookPage = ({
     sections: Object.fromEntries(sections.map(section => [section.id, 65 + Math.floor(Math.random() * 20)]))
   });
 
+  const [sections, setSections] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [annotations, setAnnotations] = useState([]);
+  const [metadata, setMetadata] = useState({
+    title: '',
+    description: '',
+    version: '',
+    lastModified: new Date().toISOString()
+  });
+
   // Demo calculation of overall progress
   const calculateProgress = () => {
     const sectionsProgress = Object.values(progress.sections);
@@ -429,6 +439,8 @@ const UnifiedWorkbookPage = ({
 };
 
 export default UnifiedWorkbookPage;
+
+
 
 
 

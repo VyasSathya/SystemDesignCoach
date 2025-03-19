@@ -3,35 +3,11 @@ import { Trash2 } from 'lucide-react';
 
 const ScalingStrategyPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
-  const [strategies, setStrategies] = useState([
-    {
-      id: 1,
-      name: 'API Services - Horizontal Scaling',
-      description: 'Add more instances behind load balancer',
-      details: 'Use auto-scaling based on CPU utilization (over 70%) and request count',
-      status: 'implemented'
-    }
-  ]);
+  const [strategies, setStrategies] = useState([]);
 
-  const [metrics, setMetrics] = useState([
-    {
-      id: 1,
-      name: 'Response Time',
-      target: '200 ms',
-      current: '180 ms',
-      status: 'met'
-    }
-  ]);
+  const [metrics, setMetrics] = useState([]);
 
-  const [bottlenecks, setBottlenecks] = useState([
-    {
-      id: 1,
-      component: 'Database',
-      issue: 'High read query volume during peak hours',
-      solution: 'Implement read replicas and connection pooling',
-      priority: 'high'
-    }
-  ]);
+  const [bottlenecks, setBottlenecks] = useState([]);
 
   const deleteStrategy = (id) => {
     setStrategies(strategies.filter(s => s.id !== id));
@@ -340,7 +316,8 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current Load</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue="Average 500 req/s with peaks of 850 req/s during business hours. 10,000 daily active users."
+                  defaultValue=""
+                  placeholder="Describe current system load, e.g., requests per second, daily active users"
                   rows={2}
                 />
               </div>
@@ -349,7 +326,8 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Projected Growth</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue="20 percent user growth expected in next quarter. 50 percent increase in data storage needs annually."
+                  defaultValue=""
+                  placeholder="Describe expected growth, e.g., user growth, data storage needs"
                   rows={2}
                 />
               </div>
@@ -358,7 +336,8 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Scaling Triggers</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue="CPU utilization above 70 percent for 5 minutes, memory usage above 80 percent, response time above 300ms"
+                  defaultValue=""
+                  placeholder="Describe conditions for scaling, e.g., CPU utilization, memory usage, response time"
                   rows={2}
                 />
               </div>
@@ -367,7 +346,8 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cost Considerations</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue="Reserved instances for baseline load, spot instances for handling peaks. Estimated 15 percent cost increase next quarter."
+                  defaultValue=""
+                  placeholder="Describe cost considerations, e.g., reserved instances, spot instances, cost projections"
                   rows={2}
                 />
               </div>

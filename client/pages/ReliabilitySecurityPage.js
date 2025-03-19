@@ -4,41 +4,11 @@ import { autoSaveWorkbook } from '../utils/workbookStorage';
 
 const ReliabilitySecurityPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
-  const [reliabilityMetrics, setReliabilityMetrics] = useState([
-    {
-      id: 1,
-      metric: 'Availability',
-      target: '99.9',
-      notes: 'Maximum 8.76 hours downtime per year',
-      completed: true
-    },
-    {
-      id: 2,
-      metric: 'Response Time',
-      target: '200',
-      notes: 'P95 latency',
-      completed: true
-    }
-  ]);
+  const [reliabilityMetrics, setReliabilityMetrics] = useState([]);
 
-  const [failureScenarios, setFailureScenarios] = useState([
-    {
-      id: 1,
-      component: 'Database',
-      scenario: 'Primary database becomes unavailable',
-      mitigation: 'Automatic failover to standby replica with maximum 30 second recovery time',
-      completed: true
-    }
-  ]);
+  const [failureScenarios, setFailureScenarios] = useState([]);
 
-  const [securityMeasures, setSecurityMeasures] = useState([
-    {
-      id: 1,
-      type: 'Authentication',
-      description: 'Multi-factor authentication for all admin access',
-      completed: true
-    }
-  ]);
+  const [securityMeasures, setSecurityMeasures] = useState([]);
 
   const [saveStatus, setSaveStatus] = useState('idle');
 

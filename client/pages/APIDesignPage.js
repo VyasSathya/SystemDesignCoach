@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 const APIDesignPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -7,44 +9,13 @@ const APIDesignPage = () => {
   const [apiType, setApiType] = useState('REST');
   
   // Endpoints state
-  const [endpoints, setEndpoints] = useState([
-    {
-      id: 1,
-      path: '/api/users',
-      method: 'GET',
-      description: 'Get a list of all users with pagination and filtering',
-      requestParams: [
-        { id: 1, name: 'page', type: 'number', required: false, description: 'Page number for pagination' },
-        { id: 2, name: 'limit', type: 'number', required: false, description: 'Number of items per page' },
-        { id: 3, name: 'role', type: 'string', required: false, description: 'Filter users by role' }
-      ],
-      requestBody: '',
-      responseFormat: '{\n  "total": 100,\n  "page": 1,\n  "limit": 10,\n  "data": [\n    {\n      "id": "string",\n      "name": "string",\n      "email": "string",\n      "role": "string"\n    }\n  ]\n}',
-      expanded: true
-    },
-    {
-      id: 2,
-      path: '/api/users/:id',
-      method: 'GET',
-      description: 'Get details of a specific user by ID',
-      requestParams: [
-        { id: 1, name: 'id', type: 'string', required: true, description: 'User ID' }
-      ],
-      requestBody: '',
-      responseFormat: '{\n  "id": "string",\n  "name": "string",\n  "email": "string",\n  "role": "string",\n  "createdAt": "date",\n  "updatedAt": "date"\n}',
-      expanded: false
-    },
-    {
-      id: 3,
-      path: '/api/users',
-      method: 'POST',
-      description: 'Create a new user',
-      requestParams: [],
-      requestBody: '{\n  "name": "string",\n  "email": "string",\n  "password": "string",\n  "role": "string"\n}',
-      responseFormat: '{\n  "id": "string",\n  "name": "string",\n  "email": "string",\n  "role": "string",\n  "createdAt": "date"\n}',
-      expanded: false
-    }
-  ]);
+  const [endpoints, setEndpoints] = useState([]);
+  
+  // Auth methods state
+  const [authMethods, setAuthMethods] = useState([]);
+  
+  // Error handling state
+  const [errorHandling, setErrorHandling] = useState([]);
   
   // Methods
   const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -235,7 +206,7 @@ const APIDesignPage = () => {
                   >
                     {/* Endpoint Header */}
                     <div 
-                      className="flex items-center justify-between p-3 bg-gray-50 border-b cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-gray-50 border-b"
                       onClick={() => toggleExpand(endpoint.id)}
                     >
                       <div className="flex items-center space-x-3">
@@ -251,34 +222,22 @@ const APIDesignPage = () => {
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex items-center space-x-2">
                         <button 
                           className="p-1 text-gray-500 hover:text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExpand(endpoint.id);
-                          }}
+                          onClick={() => toggleExpand(endpoint.id)}
                         >
                           {endpoint.expanded ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                            </svg>
+                            <ChevronUp size={20} />
                           ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown size={20} />
                           )}
                         </button>
                         <button 
-                          className="p-1 text-gray-500 hover:text-red-500"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteEndpoint(endpoint.id);
-                          }}
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => deleteEndpoint(endpoint.id)}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

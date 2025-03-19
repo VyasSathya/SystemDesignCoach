@@ -1,63 +1,25 @@
 import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 const SystemArchitecturePage = () => {
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(false);
   
   // Initial component data
-  const [components, setComponents] = useState([
-    { 
-      id: 1, 
-      name: 'Frontend', 
-      type: 'ui',
-      description: 'React single-page application',
-      technologies: ['React', 'Redux', 'TailwindCSS'],
-      responsibilities: ['User interface', 'State management', 'Form validation']
-    },
-    { 
-      id: 2, 
-      name: 'API Gateway', 
-      type: 'service',
-      description: 'Entry point for all client requests',
-      technologies: ['Node.js', 'Express'],
-      responsibilities: ['Request routing', 'Authentication', 'Rate limiting']
-    },
-    { 
-      id: 3, 
-      name: 'User Service', 
-      type: 'service',
-      description: 'Handles user-related operations',
-      technologies: ['Node.js', 'Express', 'PostgreSQL'],
-      responsibilities: ['User management', 'Authentication', 'Profile data']
-    },
-    { 
-      id: 4, 
-      name: 'Product Service', 
-      type: 'service',
-      description: 'Manages product catalog',
-      technologies: ['Node.js', 'Express', 'PostgreSQL'],
-      responsibilities: ['Product details', 'Inventory', 'Categories']
-    }
-  ]);
+  const [components, setComponents] = useState([]);
   
   // Initial connection data
-  const [connections, setConnections] = useState([
-    { id: 1, from: 1, to: 2, type: 'REST API', description: 'HTTP/JSON' },
-    { id: 2, from: 2, to: 3, type: 'REST API', description: 'HTTP/JSON' },
-    { id: 3, from: 2, to: 4, type: 'REST API', description: 'HTTP/JSON' }
-  ]);
+  const [connections, setConnections] = useState([]);
   
   // Architecture patterns
-  const [selectedPattern, setSelectedPattern] = useState('microservices');
-  const [patternDescription, setPatternDescription] = useState(
-    'Microservices architecture with separate, independently deployable services communicating via REST APIs.'
-  );
+  const [selectedPattern, setSelectedPattern] = useState('');
+  const [patternDescription, setPatternDescription] = useState('');
   
   // Deployment model
   const [deploymentModel, setDeploymentModel] = useState({
-    cloud: 'AWS',
-    containerization: 'Docker + Kubernetes',
-    regions: 'us-east-1, eu-west-1',
-    cicd: 'GitHub Actions'
+    cloud: '',
+    containerization: '',
+    regions: '',
+    cicd: ''
   });
   
   // Component type styles
@@ -313,10 +275,10 @@ const SystemArchitecturePage = () => {
                     
                     <div className="flex justify-end">
                       <button 
-                        className="text-red-600 text-sm"
+                        className="text-red-500 hover:text-red-700"
                         onClick={() => deleteComponent(component.id)}
                       >
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -403,10 +365,10 @@ const SystemArchitecturePage = () => {
                     
                     <div className="flex justify-end mt-2">
                       <button 
-                        className="text-red-600 text-sm"
+                        className="text-red-500 hover:text-red-700"
                         onClick={() => deleteConnection(connection.id)}
                       >
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

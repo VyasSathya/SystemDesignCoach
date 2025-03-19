@@ -7,7 +7,7 @@ const APIEndpointCard = ({ api, onUpdate, onDelete }) => {
   const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="border p-3 rounded mb-3">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1">
@@ -34,12 +34,6 @@ const APIEndpointCard = ({ api, onUpdate, onDelete }) => {
             className="p-1 hover:bg-gray-100 rounded"
           >
             {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1 hover:bg-gray-100 rounded text-red-600"
-          >
-            <Trash2 size={20} />
           </button>
         </div>
       </div>
@@ -134,6 +128,15 @@ const APIEndpointCard = ({ api, onUpdate, onDelete }) => {
           </div>
         </div>
       )}
+      {/* Move trash can to bottom and make it red */}
+      <div className="mt-2 flex justify-end">
+        <button 
+          onClick={() => onDelete(api.id)}
+          className="text-red-500 hover:text-red-700"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };

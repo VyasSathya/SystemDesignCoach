@@ -1,115 +1,14 @@
 import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 const RequirementsPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
   
   // Initial requirement data
-  const [functionalRequirements, setFunctionalRequirements] = useState([
-    { 
-      id: 1, 
-      title: 'User Authentication',
-      description: 'Users must be able to sign up, log in, and manage their account settings.',
-      priority: 'high',
-      status: 'complete',
-      acceptance: [
-        'Users can create new accounts with email verification',
-        'Users can log in with email/password',
-        'Users can reset forgotten passwords',
-        'Users can update profile information'
-      ]
-    },
-    { 
-      id: 2, 
-      title: 'Product Search',
-      description: 'Users must be able to search for products using keywords and filters.',
-      priority: 'high',
-      status: 'complete',
-      acceptance: [
-        'Search by product name or description',
-        'Filter by category, price range, rating',
-        'Sort results by relevance, price, popularity',
-        'Search results update in real-time as filters are applied'
-      ]
-    },
-    { 
-      id: 3, 
-      title: 'Shopping Cart',
-      description: 'Users must be able to add products to a cart, modify quantities, and proceed to checkout.',
-      priority: 'high',
-      status: 'pending',
-      acceptance: [
-        'Add/remove products from cart',
-        'Modify product quantities',
-        'Cart persists across sessions',
-        'Proceed to checkout from cart view'
-      ]
-    }
-  ]);
-  
-  const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState([
-    { 
-      id: 1, 
-      title: 'Performance',
-      description: 'The system must maintain responsive performance under expected load conditions.',
-      category: 'performance',
-      status: 'complete',
-      criteria: [
-        'Page load time < 2 seconds',
-        'API response time < 200ms for 95% of requests',
-        'Support 1000 concurrent users with minimal degradation'
-      ]
-    },
-    { 
-      id: 2, 
-      title: 'Security',
-      description: 'The system must protect user data and prevent unauthorized access.',
-      category: 'security',
-      status: 'complete',
-      criteria: [
-        'All sensitive data encrypted at rest and in transit',
-        'Password storage using strong hashing algorithms',
-        'Protection against common web vulnerabilities (XSS, CSRF, SQL injection)',
-        'Regular security audits and penetration testing'
-      ]
-    },
-    { 
-      id: 3, 
-      title: 'Accessibility',
-      description: 'The application must be accessible to users with disabilities.',
-      category: 'usability',
-      status: 'pending',
-      criteria: [
-        'WCAG 2.1 AA compliance',
-        'Screen reader compatibility',
-        'Keyboard navigation support',
-        'Sufficient color contrast ratios'
-      ]
-    }
-  ]);
-  
-  const [constraints, setConstraints] = useState([
-    { 
-      id: 1, 
-      title: 'Budget',
-      description: 'Development and infrastructure costs must remain within the approved budget of $150,000.',
-      type: 'business',
-      status: 'complete'
-    },
-    { 
-      id: 2, 
-      title: 'Timeline',
-      description: 'The initial version must be completed and launched by Q3 2025.',
-      type: 'business',
-      status: 'pending'
-    },
-    { 
-      id: 3, 
-      title: 'Technology Stack',
-      description: 'The system must be built using the company\'s approved tech stack (React, Node.js, PostgreSQL).',
-      type: 'technical',
-      status: 'complete'
-    }
-  ]);
+  const [functionalRequirements, setFunctionalRequirements] = useState([]);
+  const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState([]);
+  const [constraints, setConstraints] = useState([]);
+  const [assumptions, setAssumptions] = useState([]);
   
   // Toggle functions
   const togglePreview = () => {
@@ -358,12 +257,12 @@ const RequirementsPage = () => {
                       />
                     </div>
                     
-                    <div className="flex justify-end">
+                    <div className="mt-2 flex justify-end">
                       <button 
-                        className="text-red-600 text-sm"
                         onClick={() => deleteFunctionalRequirement(req.id)}
+                        className="text-red-500 hover:text-red-700"
                       >
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -440,12 +339,12 @@ const RequirementsPage = () => {
                       />
                     </div>
                     
-                    <div className="flex justify-end">
+                    <div className="mt-2 flex justify-end">
                       <button 
-                        className="text-red-600 text-sm"
                         onClick={() => deleteNonFunctionalRequirement(req.id)}
+                        className="text-red-500 hover:text-red-700"
                       >
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -509,12 +408,12 @@ const RequirementsPage = () => {
                       />
                     </div>
                     
-                    <div className="flex justify-end">
+                    <div className="mt-2 flex justify-end">
                       <button 
-                        className="text-red-600 text-sm"
                         onClick={() => deleteConstraint(constraint.id)}
+                        className="text-red-500 hover:text-red-700"
                       >
-                        Remove
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
