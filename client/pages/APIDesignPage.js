@@ -220,7 +220,7 @@ const APIDesignPage = () => {
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
               <h2 className="font-medium text-gray-800">API Endpoints</h2>
               <button 
-                className="text-green-600 text-sm font-medium"
+                className="text-indigo-600 text-sm font-medium"
                 onClick={addEndpoint}
               >
                 + Add Endpoint

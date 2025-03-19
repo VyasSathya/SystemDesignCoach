@@ -9,17 +9,46 @@ const DataModelPage = () => {
   });
   
   // Demo entities
-  const [entities, setEntities] = useState([
-    { id: 1, text: 'User\n- id: UUID (PK)\n- email: String\n- name: String\n- created_at: Timestamp', completed: true },
-    { id: 2, text: 'Order\n- id: UUID (PK)\n- user_id: UUID (FK)\n- amount: Decimal\n- status: String\n- created_at: Timestamp', completed: true },
-    { id: 3, text: 'Product\n- id: UUID (PK)\n- name: String\n- price: Decimal\n- inventory: Integer', completed: false }
-  ]);
+  const [entities, setEntities] = useState([]);
+  
+  // Add the addEntity function
+  const addEntity = () => {
+    const newId = Math.max(...entities.map(e => e.id), 0) + 1;
+    setEntities([...entities, {
+      id: newId,
+      text: 'NewEntity\n- id: UUID (PK)',
+      completed: false,
+      expanded: true
+    }]);
+  };
+  
+  // Add the delete function
+  const deleteEntity = (id) => {
+    setEntities(entities.filter(entity => entity.id !== id));
+  };
   
   // Demo relationships
   const [relationships, setRelationships] = useState([
     { id: 1, sourceEntity: 'User', targetEntity: 'Order', type: 'one-to-many', text: 'One user can have many orders', completed: true },
     { id: 2, sourceEntity: 'Order', targetEntity: 'Product', type: 'many-to-many', text: 'Order can contain multiple products, products can be in multiple orders', completed: false }
   ]);
+  
+  // Add these functions near your other state management code
+  const addRelationship = () => {
+    const newId = Math.max(...relationships.map(r => r.id), 0) + 1;
+    setRelationships([...relationships, {
+      id: newId,
+      sourceEntity: '',
+      targetEntity: '',
+      type: 'one-to-many',
+      text: 'Describe the relationship...',
+      completed: false
+    }]);
+  };
+
+  const deleteRelationship = (id) => {
+    setRelationships(relationships.filter(rel => rel.id !== id));
+  };
   
   // Demo database choice
   const [databaseChoice, setDatabaseChoice] = useState('relational');
@@ -73,7 +102,10 @@ const DataModelPage = () => {
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
               <h2 className="font-medium text-gray-800">Entities</h2>
-              <button className="text-purple-600 text-sm font-medium">
+              <button 
+                className="text-indigo-600 text-sm font-medium"
+                onClick={addEntity}
+              >
                 + Add Entity
               </button>
             </div>
@@ -84,14 +116,25 @@ const DataModelPage = () => {
                     <div className="flex justify-between mb-2">
                       <h3 className="text-sm font-medium">Entity Definition</h3>
                       <div className="flex space-x-2">
-                        <button className={`p-1 rounded ${entity.completed ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {entity.completed ? '✓' : '○'}
+                        <button 
+                          onClick={() => deleteEntity(entity.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </div>
                     <textarea
-                      className="w-full h-32 p-2 border rounded-md font-mono text-sm"
-                      defaultValue={entity.text}
+                      className="w-full h-32 p-2 border rounded-md text-sm font-mono"
+                      value={entity.text}
+                      onChange={(e) => {
+                        const updatedEntities = entities.map(e => 
+                          e.id === entity.id ? { ...e, text: e.target.value } : e
+                        );
+                        setEntities(updatedEntities);
+                      }}
                     />
                   </div>
                 ))}
@@ -103,7 +146,10 @@ const DataModelPage = () => {
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
               <h2 className="font-medium text-gray-800">Relationships</h2>
-              <button className="text-purple-600 text-sm font-medium">
+              <button 
+                onClick={addRelationship}
+                className="text-indigo-600 text-sm font-medium"
+              >
                 + Add Relationship
               </button>
             </div>
@@ -123,9 +169,17 @@ const DataModelPage = () => {
                         <option>User</option>
                         <option>Product</option>
                       </select>
-                      <div className="flex items-center ml-2">
+                      <div className="flex items-center ml-2 space-x-2">
                         <button className={`p-1 rounded ${rel.completed ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
                           {rel.completed ? '✓' : '○'}
+                        </button>
+                        <button 
+                          onClick={() => deleteRelationship(rel.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </div>

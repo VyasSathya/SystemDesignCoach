@@ -1,13 +1,93 @@
 import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { autoSaveWorkbook } from '../utils/workbookStorage';
 
 const ReliabilitySecurityPage = () => {
   const [previewMode, setPreviewMode] = useState(true);
-  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
-  
-  // Toggle preview mode
+  const [reliabilityMetrics, setReliabilityMetrics] = useState([
+    {
+      id: 1,
+      metric: 'Availability',
+      target: '99.9',
+      notes: 'Maximum 8.76 hours downtime per year',
+      completed: true
+    },
+    {
+      id: 2,
+      metric: 'Response Time',
+      target: '200',
+      notes: 'P95 latency',
+      completed: true
+    }
+  ]);
+
+  const [failureScenarios, setFailureScenarios] = useState([
+    {
+      id: 1,
+      component: 'Database',
+      scenario: 'Primary database becomes unavailable',
+      mitigation: 'Automatic failover to standby replica with maximum 30 second recovery time',
+      completed: true
+    }
+  ]);
+
+  const [securityMeasures, setSecurityMeasures] = useState([
+    {
+      id: 1,
+      type: 'Authentication',
+      description: 'Multi-factor authentication for all admin access',
+      completed: true
+    }
+  ]);
+
+  const [saveStatus, setSaveStatus] = useState('idle');
+
   const togglePreview = () => {
     setPreviewMode(!previewMode);
+  };
+
+  const addReliabilityMetric = () => {
+    const newId = Math.max(0, ...reliabilityMetrics.map(m => m.id)) + 1;
+    setReliabilityMetrics([...reliabilityMetrics, {
+      id: newId,
+      metric: '',
+      target: '',
+      notes: '',
+      completed: false
+    }]);
+  };
+
+  const deleteReliabilityMetric = (id) => {
+    setReliabilityMetrics(reliabilityMetrics.filter(m => m.id !== id));
+  };
+
+  const addFailureScenario = () => {
+    const newId = Math.max(0, ...failureScenarios.map(f => f.id)) + 1;
+    setFailureScenarios([...failureScenarios, {
+      id: newId,
+      component: '',
+      scenario: '',
+      mitigation: '',
+      completed: false
+    }]);
+  };
+
+  const deleteFailureScenario = (id) => {
+    setFailureScenarios(failureScenarios.filter(f => f.id !== id));
+  };
+
+  const addSecurityMeasure = () => {
+    const newId = Math.max(0, ...securityMeasures.map(s => s.id)) + 1;
+    setSecurityMeasures([...securityMeasures, {
+      id: newId,
+      type: 'Authentication',
+      description: '',
+      completed: false
+    }]);
+  };
+
+  const deleteSecurityMeasure = (id) => {
+    setSecurityMeasures(securityMeasures.filter(s => s.id !== id));
   };
   
   return (
@@ -61,83 +141,55 @@ const ReliabilitySecurityPage = () => {
                   </div>
                   <span className="ml-2 text-xs text-gray-500">100%</span>
                 </div>
+                <button 
+                  onClick={addReliabilityMetric}
+                  className="text-red-600 text-sm font-medium"
+                >
+                  + Add Metric
+                </button>
               </div>
             </div>
             <div className="p-4">
               <div className="space-y-3">
-                <div className="grid grid-cols-12 gap-2 border p-3 rounded">
-                  <div className="col-span-3">
-                    <input
-                      type="text"
-                      defaultValue="Availability"
-                      placeholder="Metric"
-                      className="w-full px-2 py-1 text-sm border rounded"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <div className="flex">
+                {reliabilityMetrics.map(metric => (
+                  <div key={metric.id} className="grid grid-cols-12 gap-2 border p-3 rounded">
+                    <div className="col-span-3">
                       <input
                         type="text"
-                        defaultValue="99.9"
-                        placeholder="Value"
-                        className="w-full px-2 py-1 text-sm border rounded-l"
+                        defaultValue={metric.metric}
+                        placeholder="Metric"
+                        className="w-full px-2 py-1 text-sm border rounded"
                       />
-                      <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r text-sm">%</span>
                     </div>
-                  </div>
-                  <div className="col-span-6">
-                    <input
-                      type="text"
-                      defaultValue="Maximum 8.76 hours downtime per year"
-                      placeholder="Notes"
-                      className="w-full px-2 py-1 text-sm border rounded"
-                    />
-                  </div>
-                  <div className="col-span-1 flex justify-center items-center">
-                    <button className="text-red-500 hover:text-red-700">
-                      <span>×</span>
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-12 gap-2 border p-3 rounded">
-                  <div className="col-span-3">
-                    <input
-                      type="text"
-                      defaultValue="Response Time"
-                      placeholder="Metric"
-                      className="w-full px-2 py-1 text-sm border rounded"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <div className="flex">
+                    <div className="col-span-2">
+                      <div className="flex">
+                        <input
+                          type="text"
+                          defaultValue={metric.target}
+                          placeholder="Value"
+                          className="w-full px-2 py-1 text-sm border rounded-l"
+                        />
+                        <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r text-sm">%</span>
+                      </div>
+                    </div>
+                    <div className="col-span-6">
                       <input
                         type="text"
-                        defaultValue="200"
-                        placeholder="Value"
-                        className="w-full px-2 py-1 text-sm border rounded-l"
+                        defaultValue={metric.notes}
+                        placeholder="Notes"
+                        className="w-full px-2 py-1 text-sm border rounded"
                       />
-                      <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r text-sm">ms</span>
+                    </div>
+                    <div className="col-span-1 flex justify-center items-center">
+                      <button 
+                        onClick={() => deleteReliabilityMetric(metric.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="col-span-6">
-                    <input
-                      type="text"
-                      defaultValue="P95 latency"
-                      placeholder="Notes"
-                      className="w-full px-2 py-1 text-sm border rounded"
-                    />
-                  </div>
-                  <div className="col-span-1 flex justify-center items-center">
-                    <button className="text-red-500 hover:text-red-700">
-                      <span>×</span>
-                    </button>
-                  </div>
-                </div>
-                
-                <button className="flex items-center text-sm text-red-600">
-                  <span className="mr-1">+</span> Add Reliability Metric
-                </button>
+                ))}
               </div>
             </div>
           </div>
@@ -153,41 +205,53 @@ const ReliabilitySecurityPage = () => {
                   </div>
                   <span className="ml-2 text-xs text-gray-500">75%</span>
                 </div>
+                <button 
+                  onClick={addFailureScenario}
+                  className="text-red-600 text-sm font-medium"
+                >
+                  + Add Scenario
+                </button>
               </div>
             </div>
             <div className="p-4">
-              <div className="border p-3 rounded mb-3">
-                <div className="grid grid-cols-2 gap-3 mb-2">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
-                    <input
-                      type="text"
-                      defaultValue="Database"
-                      className="w-full px-2 py-1 text-sm border rounded"
-                    />
+              {failureScenarios.map(scenario => (
+                <div key={scenario.id} className="border p-3 rounded mb-3">
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
+                      <input
+                        type="text"
+                        defaultValue={scenario.component}
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Scenario</label>
+                      <input
+                        type="text"
+                        defaultValue={scenario.scenario}
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Scenario</label>
-                    <input
-                      type="text"
-                      defaultValue="Primary database becomes unavailable"
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Mitigation</label>
+                    <textarea
+                      defaultValue={scenario.mitigation}
                       className="w-full px-2 py-1 text-sm border rounded"
+                      rows="2"
                     />
                   </div>
+                  <div className="mt-2 flex justify-end">
+                    <button 
+                      onClick={() => deleteFailureScenario(scenario.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Mitigation</label>
-                  <textarea
-                    defaultValue="Automatic failover to standby replica with maximum 30 second recovery time"
-                    className="w-full px-2 py-1 text-sm border rounded"
-                    rows="2"
-                  />
-                </div>
-              </div>
-              
-              <button className="flex items-center text-sm text-red-600">
-                <span className="mr-1">+</span> Add Failure Scenario
-              </button>
+              ))}
             </div>
           </div>
           
@@ -198,130 +262,114 @@ const ReliabilitySecurityPage = () => {
               <div className="flex items-center space-x-3">
                 <div className="flex items-center">
                   <div className="w-16 h-1.5 bg-gray-200 rounded-full">
-                    <div className="h-full bg-red-400" style={{ width: '67%' }}></div>
+                    <div className="h-full bg-red-400" style={{ width: '50%' }}></div>
                   </div>
-                  <span className="ml-2 text-xs text-gray-500">67%</span>
+                  <span className="ml-2 text-xs text-gray-500">50%</span>
                 </div>
+                <button 
+                  onClick={addSecurityMeasure}
+                  className="text-red-600 text-sm font-medium"
+                >
+                  + Add Measure
+                </button>
               </div>
             </div>
             <div className="p-4">
-              <div className="space-y-3">
-                <div className="flex items-start space-x-2 border-b pb-2">
-                  <input
-                    type="checkbox"
-                    defaultChecked={true}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <select
-                      defaultValue="Authentication"
-                      className="w-full px-2 py-1 text-sm border rounded mb-2"
-                    >
-                      <option>Authentication</option>
-                      <option>Input Validation</option>
-                      <option>Data Encryption</option>
+              {securityMeasures.map(measure => (
+                <div key={measure.id} className="border p-3 rounded mb-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                    <select className="w-full px-2 py-1 text-sm border rounded mb-2">
+                      <option value="authentication" selected={measure.type === 'Authentication'}>Authentication</option>
+                      <option value="authorization" selected={measure.type === 'Authorization'}>Authorization</option>
+                      <option value="encryption" selected={measure.type === 'Encryption'}>Encryption</option>
+                      <option value="monitoring" selected={measure.type === 'Monitoring'}>Monitoring</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
                     <textarea
-                      defaultValue="JWT tokens with short expiration and refresh token rotation"
+                      defaultValue={measure.description}
                       className="w-full px-2 py-1 text-sm border rounded"
+                      rows="2"
                     />
                   </div>
-                </div>
-                
-                <div className="flex items-start space-x-2 border-b pb-2">
-                  <input
-                    type="checkbox"
-                    defaultChecked={false}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <select
-                      defaultValue="Data Encryption"
-                      className="w-full px-2 py-1 text-sm border rounded mb-2"
+                  <div className="mt-2 flex justify-end">
+                    <button 
+                      onClick={() => deleteSecurityMeasure(measure.id)}
+                      className="text-red-500 hover:text-red-700"
                     >
-                      <option>Authentication</option>
-                      <option>Input Validation</option>
-                      <option>Data Encryption</option>
-                    </select>
-                    <textarea
-                      defaultValue="TLS 1.3 for all connections, AES-256 for data at rest"
-                      className="w-full px-2 py-1 text-sm border rounded"
-                    />
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                
-                <button className="flex items-center text-sm text-red-600">
-                  <span className="mr-1">+</span> Add Security Measure
-                </button>
-              </div>
+              ))}
             </div>
           </div>
         </div>
         
         {/* Right column: Preview */}
         {previewMode && (
-          <div>
-            <div className="bg-white border rounded-md overflow-hidden">
+          <div className="space-y-6">
+            <div className="bg-white border rounded-md overflow-hidden sticky top-6">
               <div className="bg-gray-50 px-4 py-3 border-b">
-                <h3 className="font-medium text-gray-800">Live Preview</h3>
+                <h3 className="font-medium text-gray-800">Preview</h3>
               </div>
               <div className="p-4">
-                <div className="space-y-4">
-                  {/* Reliability preview */}
-                  <div className="border rounded">
-                    <div className="bg-gray-50 px-3 py-2 border-b flex justify-between items-center">
-                      <span className="text-sm font-medium">Reliability Targets</span>
-                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Preview</span>
-                    </div>
-                    <div className="p-3">
-                      <table className="min-w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Metric</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          <tr>
-                            <td className="px-3 py-2">Availability</td>
-                            <td className="px-3 py-2 font-mono">99.9%</td>
-                            <td className="px-3 py-2 text-gray-500">8.76 hours downtime per year</td>
-                          </tr>
-                          <tr>
-                            <td className="px-3 py-2">Response Time</td>
-                            <td className="px-3 py-2 font-mono">200 ms</td>
-                            <td className="px-3 py-2 text-gray-500">P95 latency</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  
-                  {/* Security preview */}
-                  <div className="border rounded">
-                    <div className="bg-gray-50 px-3 py-2 border-b flex justify-between items-center">
-                      <span className="text-sm font-medium">Security Measures</span>
-                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Preview</span>
-                    </div>
-                    <div className="p-3">
-                      <div className="space-y-2">
-                        <div className="flex items-start space-x-2">
-                          <div className="mt-0.5 h-5 w-5 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xs">✓</div>
-                          <div>
-                            <h4 className="font-medium">Authentication</h4>
-                            <p className="text-sm text-gray-600">JWT tokens with short expiration and refresh token rotation</p>
-                          </div>
+                {/* Reliability Metrics Preview */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Reliability Targets</h4>
+                  <div className="space-y-3">
+                    {reliabilityMetrics.map(metric => (
+                      <div key={metric.id} className="flex justify-between items-start">
+                        <div>
+                          <h5 className="text-sm font-medium">{metric.metric}</h5>
+                          <p className="text-xs text-gray-600">{metric.notes}</p>
                         </div>
-                        <div className="flex items-start space-x-2">
-                          <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-xs">○</div>
-                          <div>
-                            <h4 className="font-medium">Data Encryption</h4>
-                            <p className="text-sm text-gray-600">TLS 1.3 for all connections, AES-256 for data at rest</p>
-                          </div>
+                        <span className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded-full">
+                          {metric.target}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Failure Scenarios Preview */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Failure Scenarios</h4>
+                  <div className="space-y-3">
+                    {failureScenarios.map(scenario => (
+                      <div key={scenario.id} className="p-3 border rounded-md">
+                        <div className="flex justify-between items-start">
+                          <h5 className="text-sm font-medium">{scenario.component}</h5>
+                          <span className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
+                            Critical
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">{scenario.scenario}</p>
+                        <div className="mt-2 p-2 bg-green-50 rounded-md text-xs">
+                          <span className="font-medium">Mitigation:</span> {scenario.mitigation}
                         </div>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Security Measures Preview */}
+                <div>
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Security Measures</h4>
+                  <div className="space-y-3">
+                    {securityMeasures.map(measure => (
+                      <div key={measure.id} className="p-3 border rounded-md">
+                        <div className="flex justify-between items-start">
+                          <h5 className="text-sm font-medium">{measure.type}</h5>
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                            Required
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">{measure.description}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

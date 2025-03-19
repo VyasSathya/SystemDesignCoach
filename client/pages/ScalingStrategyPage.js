@@ -1,7 +1,82 @@
 import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 const ScalingStrategyPage = () => {
   const [previewMode, setPreviewMode] = useState(true);
+  const [strategies, setStrategies] = useState([
+    {
+      id: 1,
+      name: 'API Services - Horizontal Scaling',
+      description: 'Add more instances behind load balancer',
+      details: 'Use auto-scaling based on CPU utilization (over 70%) and request count',
+      status: 'implemented'
+    }
+  ]);
+
+  const [metrics, setMetrics] = useState([
+    {
+      id: 1,
+      name: 'Response Time',
+      target: '200 ms',
+      current: '180 ms',
+      status: 'met'
+    }
+  ]);
+
+  const [bottlenecks, setBottlenecks] = useState([
+    {
+      id: 1,
+      component: 'Database',
+      issue: 'High read query volume during peak hours',
+      solution: 'Implement read replicas and connection pooling',
+      priority: 'high'
+    }
+  ]);
+
+  const deleteStrategy = (id) => {
+    setStrategies(strategies.filter(s => s.id !== id));
+  };
+
+  const deleteMetric = (id) => {
+    setMetrics(metrics.filter(m => m.id !== id));
+  };
+
+  const deleteBottleneck = (id) => {
+    setBottlenecks(bottlenecks.filter(b => b.id !== id));
+  };
+
+  const addStrategy = () => {
+    const newId = Math.max(0, ...strategies.map(s => s.id)) + 1;
+    setStrategies([...strategies, {
+      id: newId,
+      name: '',
+      description: '',
+      details: '',
+      status: 'planned'
+    }]);
+  };
+
+  const addMetric = () => {
+    const newId = Math.max(0, ...metrics.map(m => m.id)) + 1;
+    setMetrics([...metrics, {
+      id: newId,
+      name: '',
+      target: '',
+      current: '',
+      status: 'pending'
+    }]);
+  };
+
+  const addBottleneck = () => {
+    const newId = Math.max(0, ...bottlenecks.map(b => b.id)) + 1;
+    setBottlenecks([...bottlenecks, {
+      id: newId,
+      component: '',
+      issue: '',
+      solution: '',
+      priority: 'medium'
+    }]);
+  };
   
   // Toggle preview mode
   const togglePreview = () => {
@@ -50,234 +125,208 @@ const ScalingStrategyPage = () => {
         <div className="space-y-6">
           {/* Scaling Strategies */}
           <div className="bg-white border rounded-md overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
               <h2 className="font-medium text-gray-800">Scaling Strategies</h2>
-              <button className="text-orange-600 text-sm font-medium">
+              <button 
+                onClick={addStrategy}
+                className="text-orange-600 text-sm font-medium"
+              >
                 + Add Strategy
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              {/* First scaling strategy */}
-              <div className="border rounded-md p-3 bg-white">
-                <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-md"
-                      defaultValue="API Services"
+            <div className="p-4">
+              {strategies.map(strategy => (
+                <div key={strategy.id} className="border p-3 rounded mb-3">
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
+                      <input
+                        type="text"
+                        defaultValue={strategy.component}
+                        placeholder="e.g., API Services, Database"
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                      <select
+                        defaultValue={strategy.type}
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      >
+                        <option value="horizontal">Horizontal Scaling</option>
+                        <option value="vertical">Vertical Scaling</option>
+                        <option value="database">Database Scaling</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Strategy Description</label>
+                    <textarea
+                      defaultValue={strategy.description}
+                      placeholder="Describe the scaling strategy..."
+                      className="w-full px-2 py-1 text-sm border rounded"
+                      rows={2}
                     />
                   </div>
-                  <div className="col-span-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                    <select className="w-full px-2 py-1 text-sm border rounded-md">
-                      <option value="horizontal" selected>Horizontal</option>
-                      <option value="vertical">Vertical</option>
-                      <option value="database">Database</option>
-                    </select>
-                  </div>
-                  <div className="col-span-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Strategy</label>
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-md"
-                      defaultValue="Add more instances behind load balancer"
+                  
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Implementation Details</label>
+                    <textarea
+                      defaultValue={strategy.details}
+                      placeholder="Specific implementation steps and triggers..."
+                      className="w-full px-2 py-1 text-sm border rounded"
+                      rows={2}
                     />
                   </div>
-                  <div className="col-span-1 flex items-end justify-center">
-                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+
+                  <div className="flex justify-end">
+                    <button 
+                      onClick={() => deleteStrategy(strategy.id)}
+                      className="text-orange-500 hover:text-orange-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="mt-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Details</label>
-                  <textarea
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="Use auto-scaling based on CPU utilization (>70%) and request count"
-                    rows={2}
-                  />
-                </div>
-              </div>
-              
-              {/* Second scaling strategy */}
-              <div className="border rounded-md p-3 bg-white">
-                <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-md"
-                      defaultValue="Database"
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                    <select className="w-full px-2 py-1 text-sm border rounded-md">
-                      <option value="horizontal">Horizontal</option>
-                      <option value="vertical" selected>Vertical</option>
-                      <option value="database">Database</option>
-                    </select>
-                  </div>
-                  <div className="col-span-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Strategy</label>
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-md"
-                      defaultValue="Increase database instance size"
-                    />
-                  </div>
-                  <div className="col-span-1 flex items-end justify-center">
-                    <input type="checkbox" className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Details</label>
-                  <textarea
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="Scale up when memory usage exceeds 80 percent or disk IO is high"
-                    rows={2}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           
           {/* Bottlenecks */}
           <div className="bg-white border rounded-md overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
-              <h2 className="font-medium text-gray-800">Bottlenecks & Solutions</h2>
-              <button className="text-orange-600 text-sm font-medium">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+              <h2 className="font-medium text-gray-800">Bottlenecks</h2>
+              <button 
+                onClick={addBottleneck}
+                className="text-orange-600 text-sm font-medium"
+              >
                 + Add Bottleneck
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="border rounded-md p-3 bg-white">
-                <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-md"
-                      defaultValue="Database"
+            <div className="p-4">
+              {bottlenecks.map(bottleneck => (
+                <div key={bottleneck.id} className="border p-3 rounded mb-3">
+                  <div className="grid grid-cols-2 gap-3 mb-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
+                      <input
+                        type="text"
+                        defaultValue={bottleneck.component}
+                        placeholder="e.g., Database, Cache"
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                      <select
+                        defaultValue={bottleneck.priority}
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      >
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Issue Description</label>
+                    <textarea
+                      defaultValue={bottleneck.issue}
+                      placeholder="Describe the bottleneck..."
+                      className="w-full px-2 py-1 text-sm border rounded"
+                      rows={2}
                     />
                   </div>
-                  <div className="col-span-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
-                    <select className="w-full px-2 py-1 text-sm border rounded-md">
-                      <option value="high" selected>High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
-                  </div>
-                  <div className="col-span-4">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Issue</label>
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-md"
-                      defaultValue="High read query volume during peak hours"
+
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Solution</label>
+                    <textarea
+                      defaultValue={bottleneck.solution}
+                      placeholder="Proposed solution..."
+                      className="w-full px-2 py-1 text-sm border rounded"
+                      rows={2}
                     />
                   </div>
-                  <div className="col-span-1 flex items-end justify-center">
-                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+
+                  <div className="flex justify-end">
+                    <button 
+                      onClick={() => deleteBottleneck(bottleneck.id)}
+                      className="text-orange-500 hover:text-orange-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="mt-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Solution</label>
-                  <textarea
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="Implement read replicas and connection pooling"
-                    rows={2}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           
           {/* Performance Metrics */}
           <div className="bg-white border rounded-md overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
               <h2 className="font-medium text-gray-800">Performance Metrics</h2>
-              <button className="text-orange-600 text-sm font-medium">
+              <button 
+                onClick={addMetric}
+                className="text-orange-600 text-sm font-medium"
+              >
                 + Add Metric
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-12 gap-2 items-center bg-white p-3 border rounded-md">
-                <div className="col-span-4">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Metric</label>
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="Response Time"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Target</label>
-                  <div className="flex">
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-l-md"
-                      defaultValue="200"
+            <div className="p-4">
+              {metrics.map(metric => (
+                <div key={metric.id} className="border p-3 rounded mb-3">
+                  <div className="grid grid-cols-3 gap-3 mb-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Metric Name</label>
+                      <input
+                        type="text"
+                        defaultValue={metric.name}
+                        placeholder="e.g., Response Time"
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Target Value</label>
+                      <input
+                        type="text"
+                        defaultValue={metric.target}
+                        placeholder="e.g., 200ms"
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Current Value</label>
+                      <input
+                        type="text"
+                        defaultValue={metric.current}
+                        placeholder="e.g., 180ms"
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Additional Notes</label>
+                    <textarea
+                      defaultValue={metric.notes}
+                      placeholder="Any additional context or notes..."
+                      className="w-full px-2 py-1 text-sm border rounded"
+                      rows={2}
                     />
-                    <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r-md text-sm">ms</span>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button 
+                      onClick={() => deleteMetric(metric.id)}
+                      className="text-orange-500 hover:text-orange-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Current</label>
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="180"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Context</label>
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="P95 API response time"
-                  />
-                </div>
-                <div className="col-span-1 flex items-end justify-center">
-                  <input type="checkbox" defaultChecked className="h-4 w-4" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-12 gap-2 items-center bg-white p-3 border rounded-md">
-                <div className="col-span-4">
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="Throughput"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <div className="flex">
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 text-sm border rounded-l-md"
-                      defaultValue="1000"
-                    />
-                    <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r-md text-sm">req/s</span>
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="850"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1 text-sm border rounded-md"
-                    defaultValue="Maximum requests per second"
-                  />
-                </div>
-                <div className="col-span-1 flex items-end justify-center">
-                  <input type="checkbox" className="h-4 w-4" />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           
