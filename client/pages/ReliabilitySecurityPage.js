@@ -318,7 +318,7 @@ const ReliabilitySecurityPage = ({ data = {}, updateData }) => {
   
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="flex-1 overflow-auto p-6 space-y-8">
+      <div className="flex-1 overflow-auto p-6">
         {/* Coach tip box */}
         <div className="bg-red-50 border border-red-100 rounded-md p-4 text-sm text-red-700">
           <strong className="font-medium">Coach tip:</strong> Define specific reliability targets with measurable metrics and create comprehensive failure scenarios with detailed mitigation strategies.
@@ -862,18 +862,6 @@ const ReliabilitySecurityPage = ({ data = {}, updateData }) => {
             )}
           </div>
         </div>
-      </div>
-      
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors shadow-sm">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ const EnhancedDataModelPage = ({ data = {}, updateData }) => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="flex-1 overflow-auto p-6 space-y-8">
+      <div className="flex-1 overflow-auto p-6">
         {/* Coach tip box */}
         <div className="bg-purple-50 border border-purple-100 rounded-md p-4 text-sm text-purple-700">
           <strong className="font-medium">Coach tip:</strong> Start by identifying key entities and their attributes. Consider database selection based on access patterns, not just data volume.
@@ -134,18 +134,6 @@ const EnhancedDataModelPage = ({ data = {}, updateData }) => {
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100 transition-colors">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors shadow-sm">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
       </div>
     </div>
   );

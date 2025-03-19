@@ -143,33 +143,44 @@ export const getCoachingSession = async (sessionId) => {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export const sendCoachingMessage = async (sessionId, message, contextInfo = null) => {
+  if (!sessionId) {
+    console.error('Missing sessionId');
+    throw new Error('Session ID is required');
+  }
+
   try {
-    const response = await fetch(`/api/mock/coaching/message`, {
+    console.log('Sending coaching message:', {
+      sessionId,
+      messageLength: message.length,
+      hasContextInfo: !!contextInfo
+    });
+
+    const response = await fetch(`/api/mock/coaching/sessions/${sessionId}/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: [{  // Changed to match the expected format
-          role: 'user',
-          content: message
-        }],
-        options: {  // Added options object
-          sessionId,
-          contextInfo,
-          timestamp: new Date().toISOString()
-        }
+        message,
+        contextInfo,
+        timestamp: new Date().toISOString()
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      throw new Error(errorData.error || errorData.details || `HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
     
-    if (!data?.message?.content) {
+    if (!data?.message) {
+      console.warn('Missing message in response data:', data);
       return {
         message: {
           role: 'assistant',
@@ -181,7 +192,23 @@ export const sendCoachingMessage = async (sessionId, message, contextInfo = null
 
     return data;
   } catch (error) {
-    console.error('Error in sendCoachingMessage:', error);
+    console.error('Error in sendCoachingMessage:', {
+      error: error.message,
+      sessionId,
+      messageLength: message?.length
+    });
+    
+    // If we're in development, return a fallback response
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        message: {
+          role: 'assistant',
+          content: 'Development mode: Unable to process message. Please check your server configuration.',
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+    
     throw error;
   }
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MessageSquare, Save, PenTool } from 'lucide-react';
 
-const EnhancedSystemArchitecturePage = ({ data = {}, updateData }) => {
+const SystemArchitecturePage = ({ data = {}, updateData }) => {
   const [formState, setFormState] = useState({
     overview: data.overview || '',
     components: data.components || '',
@@ -22,7 +22,7 @@ const EnhancedSystemArchitecturePage = ({ data = {}, updateData }) => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="flex-1 overflow-auto p-6 space-y-8">
+      <div className="flex-1 overflow-auto p-6">
         {/* Coach tip box */}
         <div className="bg-blue-50 border border-blue-100 rounded-md p-4 text-sm text-blue-700">
           <strong className="font-medium">Coach tip:</strong> Start with a high-level architecture diagram. Define clear boundaries between components and specify how data flows through the system.
@@ -135,20 +135,8 @@ const EnhancedSystemArchitecturePage = ({ data = {}, updateData }) => {
           </div>
         </div>
       </div>
-      
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
-      </div>
     </div>
   );
 };
 
-export default EnhancedSystemArchitecturePage;
+export default SystemArchitecturePage;

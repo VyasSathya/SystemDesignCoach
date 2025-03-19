@@ -358,18 +358,6 @@ const EnhancedAPIDesignPage = ({ data = {}, updateData }) => {
           </button>
         </div>
       </div>
-      
-      {/* Enhanced footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors shadow-sm">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
-      </div>
     </div>
   );
 };

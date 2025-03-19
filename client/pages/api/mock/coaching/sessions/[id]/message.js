@@ -1,5 +1,5 @@
 import { Anthropic } from '@anthropic-ai/sdk';
-import { CLAUDE_MODEL } from '../../../../../../config/aiConfig';
+import { AI_CONFIG } from '../../../../../../config/aiConfig';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -14,15 +14,19 @@ export default async function handler(req, res) {
   const { message, contextInfo } = req.body;
 
   try {
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
     const response = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 1000,
+      model: AI_CONFIG.model,
+      max_tokens: AI_CONFIG.maxTokens,
       messages: [{
         role: 'user',
         content: message
       }],
-      system: "You are an expert system design coach helping developers improve their architecture and implementation decisions.",
-      temperature: 0.7,
+      system: AI_CONFIG.defaultSystemPrompt,
+      temperature: AI_CONFIG.temperature,
     });
 
     return res.status(200).json({
@@ -46,3 +50,4 @@ export const config = {
     bodyParser: true,
   },
 };
+

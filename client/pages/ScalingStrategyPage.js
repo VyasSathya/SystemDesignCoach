@@ -297,7 +297,7 @@ const EnhancedScalingStrategyPage = ({ data = {}, updateData }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="bg-white rounded-lg shadow">
       <div className="flex-1 overflow-auto p-6 space-y-8">
         {/* Coach tip box */}
         <div className="bg-orange-50 border border-orange-100 rounded-md p-4 text-sm text-orange-700">
@@ -490,18 +490,6 @@ const EnhancedScalingStrategyPage = ({ data = {}, updateData }) => {
             </button>
           </div>
         </div>
-      </div>
-      
-      {/* Footer with actions */}
-      <div className="border-t border-gray-200 p-4 flex justify-between">
-        <button className="flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 transition-colors">
-          <MessageSquare size={16} className="mr-2" />
-          Ask Coach
-        </button>
-        <button className="flex items-center px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm">
-          <Save size={16} className="mr-2" />
-          Save & Continue
-        </button>
       </div>
     </div>
   );
