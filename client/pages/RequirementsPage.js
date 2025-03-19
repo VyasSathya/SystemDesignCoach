@@ -295,7 +295,7 @@ const RequirementsPage = () => {
       </div>
       
       {/* Main content area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
         {/* Left column: Requirements input forms */}
         <div className="space-y-6">
           {/* Functional Requirements */}

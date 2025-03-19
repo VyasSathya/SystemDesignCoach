@@ -50,10 +50,10 @@ const ReliabilitySecurityPage = () => {
         </div>
       </div>
       
-      {/* Content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left column: Content */}
-        <div className="space-y-4">
+      {/* Main content area */}
+      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
+        {/* Left column: Content forms */}
+        <div className="space-y-6">
           {/* Reliability Targets section */}
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">

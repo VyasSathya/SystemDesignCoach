@@ -51,7 +51,7 @@ const ScalingStrategyPage = () => {
       </div>
       
       {/* Main content area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
         {/* Left column: Scaling strategy forms */}
         <div className="space-y-6">
           {/* Scaling Strategies */}
@@ -66,7 +66,7 @@ const ScalingStrategyPage = () => {
               {/* First scaling strategy */}
               <div className="border rounded-md p-3 bg-white">
                 <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-3">
+                  <div className="col-span-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
                     <input
                       type="text"
@@ -74,7 +74,7 @@ const ScalingStrategyPage = () => {
                       defaultValue="API Services"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
                     <select className="w-full px-2 py-1 text-sm border rounded-md">
                       <option value="horizontal" selected>Horizontal</option>
@@ -82,7 +82,7 @@ const ScalingStrategyPage = () => {
                       <option value="database">Database</option>
                     </select>
                   </div>
-                  <div className="col-span-6">
+                  <div className="col-span-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Strategy</label>
                     <input
                       type="text"
@@ -107,7 +107,7 @@ const ScalingStrategyPage = () => {
               {/* Second scaling strategy */}
               <div className="border rounded-md p-3 bg-white">
                 <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-3">
+                  <div className="col-span-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
                     <input
                       type="text"
@@ -115,7 +115,7 @@ const ScalingStrategyPage = () => {
                       defaultValue="Database"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
                     <select className="w-full px-2 py-1 text-sm border rounded-md">
                       <option value="horizontal">Horizontal</option>
@@ -123,7 +123,7 @@ const ScalingStrategyPage = () => {
                       <option value="database">Database</option>
                     </select>
                   </div>
-                  <div className="col-span-6">
+                  <div className="col-span-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Strategy</label>
                     <input
                       type="text"
@@ -158,7 +158,7 @@ const ScalingStrategyPage = () => {
             <div className="p-4 space-y-4">
               <div className="border rounded-md p-3 bg-white">
                 <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-3">
+                  <div className="col-span-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
                     <input
                       type="text"
@@ -166,7 +166,7 @@ const ScalingStrategyPage = () => {
                       defaultValue="Database"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
                     <select className="w-full px-2 py-1 text-sm border rounded-md">
                       <option value="high" selected>High</option>
@@ -174,7 +174,7 @@ const ScalingStrategyPage = () => {
                       <option value="low">Low</option>
                     </select>
                   </div>
-                  <div className="col-span-6">
+                  <div className="col-span-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Issue</label>
                     <input
                       type="text"
@@ -208,7 +208,7 @@ const ScalingStrategyPage = () => {
             </div>
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-12 gap-2 items-center bg-white p-3 border rounded-md">
-                <div className="col-span-3">
+                <div className="col-span-4">
                   <label className="block text-xs font-medium text-gray-700 mb-1">Metric</label>
                   <input
                     type="text"
@@ -216,7 +216,7 @@ const ScalingStrategyPage = () => {
                     defaultValue="Response Time"
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <label className="block text-xs font-medium text-gray-700 mb-1">Target</label>
                   <div className="flex">
                     <input
@@ -235,7 +235,7 @@ const ScalingStrategyPage = () => {
                     defaultValue="180"
                   />
                 </div>
-                <div className="col-span-4">
+                <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-700 mb-1">Context</label>
                   <input
                     type="text"
@@ -249,14 +249,14 @@ const ScalingStrategyPage = () => {
               </div>
               
               <div className="grid grid-cols-12 gap-2 items-center bg-white p-3 border rounded-md">
-                <div className="col-span-3">
+                <div className="col-span-4">
                   <input
                     type="text"
                     className="w-full px-2 py-1 text-sm border rounded-md"
                     defaultValue="Throughput"
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <div className="flex">
                     <input
                       type="text"
@@ -273,7 +273,7 @@ const ScalingStrategyPage = () => {
                     defaultValue="850"
                   />
                 </div>
-                <div className="col-span-4">
+                <div className="col-span-2">
                   <input
                     type="text"
                     className="w-full px-2 py-1 text-sm border rounded-md"

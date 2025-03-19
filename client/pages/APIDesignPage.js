@@ -189,7 +189,7 @@ const APIDesignPage = () => {
       </div>
       
       {/* Main content area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
         {/* Left column: API design input forms */}
         <div className="space-y-6">
           {/* API Type */}
@@ -335,8 +335,8 @@ const APIDesignPage = () => {
                               {/* Table Header */}
                               <div className="bg-gray-50 px-3 py-2 grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
                                 <div className="col-span-3">Name</div>
-                                <div className="col-span-2">Type</div>
-                                <div className="col-span-2">Required</div>
+                                <div className="col-span-3">Type</div>
+                                <div className="col-span-1">Req</div>
                                 <div className="col-span-4">Description</div>
                                 <div className="col-span-1"></div>
                               </div>

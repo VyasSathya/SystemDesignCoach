@@ -203,7 +203,7 @@ const SystemArchitecturePage = () => {
       </div>
       
       {/* Main content area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
         {/* Left column: Content forms */}
         <div className="space-y-6">
           {/* Architecture Pattern */}
