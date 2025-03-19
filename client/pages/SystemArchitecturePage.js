@@ -1,28 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
+import { useWorkbook } from '../context/WorkbookContext';
 
 const SystemArchitecturePage = () => {
+  const { state, dispatch } = useWorkbook();
+  const { currentProblem, problems } = state;
+  
+  // Add previewMode state
   const [previewMode, setPreviewMode] = useState(false);
   
-  // Initial component data
-  const [components, setComponents] = useState([]);
-  
-  // Initial connection data
-  const [connections, setConnections] = useState([]);
-  
-  // Architecture patterns
-  const [selectedPattern, setSelectedPattern] = useState('');
-  const [patternDescription, setPatternDescription] = useState('');
-  
-  // Deployment model
-  const [deploymentModel, setDeploymentModel] = useState({
-    cloud: '',
-    containerization: '',
-    regions: '',
-    cicd: ''
-  });
-  
+  // Get data from context or initialize
+  const architectureData = problems[currentProblem]?.sections?.architecture || {
+    components: [],
+    connections: [],
+    selectedPattern: '',
+    patternDescription: '',
+    deploymentModel: {
+      cloud: '',
+      containerization: '',
+      regions: '',
+      cicd: ''
+    }
+  };
+
+  // Initialize state from context
+  const [components, setComponents] = useState(architectureData.components);
+  const [connections, setConnections] = useState(architectureData.connections);
+  const [selectedPattern, setSelectedPattern] = useState(architectureData.selectedPattern);
+  const [patternDescription, setPatternDescription] = useState(architectureData.patternDescription);
+  const [deploymentModel, setDeploymentModel] = useState(architectureData.deploymentModel);
+
+  // Save state when data changes
+  useEffect(() => {
+    if (currentProblem) {
+      dispatch({
+        type: 'UPDATE_SECTION_DATA',
+        problemId: currentProblem,
+        section: 'architecture',
+        data: {
+          components,
+          connections,
+          selectedPattern,
+          patternDescription,
+          deploymentModel
+        }
+      });
+    }
+  }, [components, connections, selectedPattern, patternDescription, deploymentModel]);
+
   // Component type styles
   const getComponentTypeStyle = (type) => {
     switch(type) {
@@ -61,16 +87,16 @@ const SystemArchitecturePage = () => {
   
   // Handle adding a new connection
   const addConnection = () => {
+    if (components.length < 2) return;
+    
     const newId = Math.max(...connections.map(c => c.id), 0) + 1;
-    if (components.length >= 2) {
-      setConnections([...connections, {
-        id: newId,
-        from: components[0].id,
-        to: components[1].id,
-        type: 'REST API',
-        description: ''
-      }]);
-    }
+    setConnections([...connections, {
+      id: newId,
+      from: components[0].id,
+      to: components[1].id,
+      type: 'REST API',
+      description: ''
+    }]);
   };
   
   // Handle updating a component
@@ -126,7 +152,7 @@ const SystemArchitecturePage = () => {
   // Placeholder progress functions - to be refined later
   const calculateProgress = () => 0;
   const getCompletedSections = () => 0;
-  const getTotalSections = () => 3;
+  const getTotalSections = () => 4; // Updated from 3 to 4
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -193,7 +219,7 @@ const SystemArchitecturePage = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Pattern Description</label>
                 <textarea
-                  className="w-full p-2 border rounded-md"
+                  className="w-full p-2 border rounded-md bg-gray-50"
                   value={patternDescription}
                   onChange={(e) => setPatternDescription(e.target.value)}
                   rows={3}

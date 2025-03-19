@@ -1,18 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import { autoSaveWorkbook } from '../utils/workbookStorage';
 import ProgressBar from '../components/ProgressBar';
+import { useWorkbook } from '../context/WorkbookContext';
 
 const ReliabilitySecurityPage = () => {
+  // Add WorkbookContext
+  const { state, dispatch } = useWorkbook();
+  const { currentProblem, problems } = state;
+  
+  // Add previewMode state
   const [previewMode, setPreviewMode] = useState(false);
-  const [reliabilityMetrics, setReliabilityMetrics] = useState([]);
-  const [failureScenarios, setFailureScenarios] = useState([]);
-  const [securityMeasures, setSecurityMeasures] = useState([]);
+  
+  // Get data from context or initialize
+  const reliabilityData = problems[currentProblem]?.sections?.reliability || {
+    reliabilityMetrics: [],
+    failureScenarios: [],
+    securityMeasures: []
+  };
+
+  // Initialize state from context
+  const [reliabilityMetrics, setReliabilityMetrics] = useState(reliabilityData.reliabilityMetrics);
+  const [failureScenarios, setFailureScenarios] = useState(reliabilityData.failureScenarios);
+  const [securityMeasures, setSecurityMeasures] = useState(reliabilityData.securityMeasures);
+
+  // Save state when data changes
+  useEffect(() => {
+    if (currentProblem) {
+      dispatch({
+        type: 'UPDATE_SECTION_DATA',
+        problemId: currentProblem,
+        section: 'reliability',
+        data: {
+          reliabilityMetrics,
+          failureScenarios,
+          securityMeasures
+        }
+      });
+    }
+  }, [reliabilityMetrics, failureScenarios, securityMeasures]);
 
   // Placeholder progress functions - to be refined later
   const calculateProgress = () => 0;
   const getCompletedSections = () => 0;
-  const getTotalSections = () => 3;
+  const getTotalSections = () => 3; // Correct, no change needed
 
   const togglePreview = () => {
     setPreviewMode(!previewMode);
@@ -177,24 +208,27 @@ const ReliabilitySecurityPage = () => {
                       <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
                       <input
                         type="text"
-                        defaultValue={scenario.component}
-                        className="w-full px-2 py-1 text-sm border rounded"
+                        value={scenario.component}
+                        onChange={(e) => updateFailureScenario(scenario.id, 'component', e.target.value)}
+                        className="w-full px-2 py-1 text-sm border rounded bg-gray-50"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Scenario</label>
                       <input
                         type="text"
-                        defaultValue={scenario.scenario}
-                        className="w-full px-2 py-1 text-sm border rounded"
+                        value={scenario.scenario}
+                        onChange={(e) => updateFailureScenario(scenario.id, 'scenario', e.target.value)}
+                        className="w-full px-2 py-1 text-sm border rounded bg-gray-50"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Mitigation</label>
                     <textarea
-                      defaultValue={scenario.mitigation}
-                      className="w-full px-2 py-1 text-sm border rounded"
+                      value={scenario.mitigation}
+                      onChange={(e) => updateFailureScenario(scenario.id, 'mitigation', e.target.value)}
+                      className="w-full px-2 py-1 text-sm border rounded bg-gray-50"
                       rows="2"
                     />
                   </div>

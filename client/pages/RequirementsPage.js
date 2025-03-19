@@ -6,19 +6,41 @@ import { useWorkbook } from '../context/WorkbookContext';
 const RequirementsPage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
+  
+  // Add previewMode state
   const [previewMode, setPreviewMode] = useState(false);
   
-  // Get requirements data from context or initialize if not exists
+  // Get data from context or initialize with default empty arrays
   const requirementsData = problems[currentProblem]?.sections?.requirements || {
-    functional: [],
-    nonFunctional: [],
-    constraints: []
+    functional: [{
+      id: 1,
+      title: '',
+      description: '',
+      priority: 'medium',
+      status: 'pending',
+      acceptance: []
+    }],
+    nonFunctional: [{
+      id: 1,
+      title: '',
+      description: '',
+      category: 'performance',
+      status: 'pending',
+      criteria: []
+    }],
+    constraints: [{
+      id: 1,
+      title: '',
+      description: '',
+      type: 'business',
+      status: 'pending'
+    }]
   };
 
-  // Extract arrays for easier access
-  const functionalRequirements = requirementsData.functional || [];
-  const nonFunctionalRequirements = requirementsData.nonFunctional || [];
-  const constraints = requirementsData.constraints || [];
+  // Initialize state from context
+  const [functionalRequirements, setFunctionalRequirements] = useState(requirementsData.functional);
+  const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState(requirementsData.nonFunctional);
+  const [constraints, setConstraints] = useState(requirementsData.constraints);
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -311,10 +333,33 @@ const RequirementsPage = () => {
     );
   };
 
-  // Placeholder progress functions - to be refined later
-  const calculateProgress = () => 0;
-  const getCompletedSections = () => 0;
-  const getTotalSections = () => 3;
+  // Progress calculation functions
+  const calculateProgress = () => {
+    const totalRequirements = functionalRequirements.length + 
+      nonFunctionalRequirements.length + 
+      constraints.length;
+
+    if (totalRequirements === 0) return 0;
+
+    const completedRequirements = 
+      functionalRequirements.filter(req => req.status === 'complete').length +
+      nonFunctionalRequirements.filter(req => req.status === 'complete').length +
+      constraints.filter(req => req.status === 'complete').length;
+
+    return Math.round((completedRequirements / totalRequirements) * 100);
+  };
+
+  const getCompletedSections = () => {
+    return functionalRequirements.filter(req => req.status === 'complete').length +
+      nonFunctionalRequirements.filter(req => req.status === 'complete').length +
+      constraints.filter(req => req.status === 'complete').length;
+  };
+
+  const getTotalSections = () => {
+    return functionalRequirements.length +
+      nonFunctionalRequirements.length +
+      constraints.length;
+  };
 
   useEffect(() => {
     const progress = calculateProgress();

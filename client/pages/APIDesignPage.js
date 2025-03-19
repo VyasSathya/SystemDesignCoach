@@ -121,7 +121,7 @@ const APIDesignPage = () => {
   // Placeholder progress functions - to be refined later
   const calculateProgress = () => 0;
   const getCompletedSections = () => 0;
-  const getTotalSections = () => 3;
+  const getTotalSections = () => 4; // API Overview, Endpoints, Authentication Methods, Error Handling
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
