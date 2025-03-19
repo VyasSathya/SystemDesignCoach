@@ -1,156 +1,340 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import ProgressBar from '../components/ProgressBar';
+import { useWorkbook } from '../context/WorkbookContext';
 
 const RequirementsPage = () => {
+  const { state, dispatch } = useWorkbook();
+  const { currentProblem, problems } = state;
   const [previewMode, setPreviewMode] = useState(false);
   
-  // Initial requirement data
-  const [functionalRequirements, setFunctionalRequirements] = useState([]);
-  const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState([]);
-  const [constraints, setConstraints] = useState([]);
-  const [assumptions, setAssumptions] = useState([]);
-  
-  // Toggle functions
-  const togglePreview = () => {
-    setPreviewMode(!previewMode);
+  // Get requirements data from context or initialize if not exists
+  const requirementsData = problems[currentProblem]?.sections?.requirements || {
+    functional: [],
+    nonFunctional: [],
+    constraints: []
   };
-  
-  const toggleRequirementStatus = (type, id) => {
-    if (type === 'functional') {
-      setFunctionalRequirements(functionalRequirements.map(req => 
-        req.id === id ? { ...req, status: req.status === 'complete' ? 'pending' : 'complete' } : req
-      ));
-    } else if (type === 'nonFunctional') {
-      setNonFunctionalRequirements(nonFunctionalRequirements.map(req => 
-        req.id === id ? { ...req, status: req.status === 'complete' ? 'pending' : 'complete' } : req
-      ));
-    } else if (type === 'constraint') {
-      setConstraints(constraints.map(constraint => 
-        constraint.id === id ? { ...constraint, status: constraint.status === 'complete' ? 'pending' : 'complete' } : constraint
-      ));
-    }
-  };
-  
-  // Add requirement functions
+
+  // Extract arrays for easier access
+  const functionalRequirements = requirementsData.functional || [];
+  const nonFunctionalRequirements = requirementsData.nonFunctional || [];
+  const constraints = requirementsData.constraints || [];
+
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   const addFunctionalRequirement = () => {
-    const newId = Math.max(...functionalRequirements.map(req => req.id), 0) + 1;
-    setFunctionalRequirements([...functionalRequirements, {
-      id: newId,
+    const newRequirement = {
+      id: generateId(),
       title: '',
       description: '',
       priority: 'medium',
       status: 'pending',
       acceptance: []
-    }]);
+    };
+
+    const updatedData = {
+      ...requirementsData,
+      functional: [...requirementsData.functional, newRequirement]
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
   };
-  
+
+  const updateFunctionalRequirement = (id, field, value) => {
+    const updatedData = {
+      ...requirementsData,
+      functional: requirementsData.functional.map(req =>
+        req.id === id ? { ...req, [field]: value } : req
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  const updateFunctionalRequirementAcceptance = (id, value) => {
+    const criteria = value.split('\n').filter(item => item.trim() !== '');
+    
+    const updatedData = {
+      ...requirementsData,
+      functional: requirementsData.functional.map(req =>
+        req.id === id ? { ...req, acceptance: criteria } : req
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  const deleteFunctionalRequirement = (id) => {
+    const updatedData = {
+      ...requirementsData,
+      functional: requirementsData.functional.filter(req => req.id !== id)
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  const toggleRequirementStatus = (type, id) => {
+    const updatedData = {
+      ...requirementsData,
+      [type]: requirementsData[type].map(req =>
+        req.id === id 
+          ? { ...req, status: req.status === 'complete' ? 'pending' : 'complete' }
+          : req
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  // Helper function for priority colors
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const addNonFunctionalRequirement = () => {
-    const newId = Math.max(...nonFunctionalRequirements.map(req => req.id), 0) + 1;
-    setNonFunctionalRequirements([...nonFunctionalRequirements, {
-      id: newId,
+    const newRequirement = {
+      id: generateId(),
       title: '',
       description: '',
       category: 'performance',
       status: 'pending',
       criteria: []
-    }]);
+    };
+
+    const updatedData = {
+      ...requirementsData,
+      nonFunctional: [...requirementsData.nonFunctional, newRequirement]
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
   };
-  
+
+  const updateNonFunctionalRequirement = (id, field, value) => {
+    const updatedData = {
+      ...requirementsData,
+      nonFunctional: requirementsData.nonFunctional.map(req =>
+        req.id === id ? { ...req, [field]: value } : req
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  const updateNonFunctionalRequirementCriteria = (id, value) => {
+    const criteria = value.split('\n').filter(item => item.trim() !== '');
+    
+    const updatedData = {
+      ...requirementsData,
+      nonFunctional: requirementsData.nonFunctional.map(req =>
+        req.id === id ? { ...req, criteria: criteria } : req
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  const deleteNonFunctionalRequirement = (id) => {
+    const updatedData = {
+      ...requirementsData,
+      nonFunctional: requirementsData.nonFunctional.filter(req => req.id !== id)
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+  };
+
+  // Helper function for category colors
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'performance':
+        return 'bg-blue-100 text-blue-800';
+      case 'security':
+        return 'bg-red-100 text-red-800';
+      case 'usability':
+        return 'bg-green-100 text-green-800';
+      case 'reliability':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'scalability':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const addConstraint = () => {
-    const newId = Math.max(...constraints.map(c => c.id), 0) + 1;
-    setConstraints([...constraints, {
-      id: newId,
+    const newConstraint = {
+      id: generateId(),
       title: '',
       description: '',
       type: 'business',
       status: 'pending'
-    }]);
+    };
+
+    const updatedData = {
+      ...requirementsData,
+      constraints: [...requirementsData.constraints, newConstraint]
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
   };
-  
-  // Update requirement functions
-  const updateFunctionalRequirement = (id, field, value) => {
-    setFunctionalRequirements(functionalRequirements.map(req => 
-      req.id === id ? { ...req, [field]: value } : req
-    ));
-  };
-  
-  const updateFunctionalRequirementAcceptance = (id, value) => {
-    setFunctionalRequirements(functionalRequirements.map(req => {
-      if (req.id === id) {
-        // Split by new lines, trim, and filter empty items
-        const criteria = value.split('\n').map(item => item.trim()).filter(item => item);
-        return { ...req, acceptance: criteria };
-      }
-      return req;
-    }));
-  };
-  
-  const updateNonFunctionalRequirement = (id, field, value) => {
-    setNonFunctionalRequirements(nonFunctionalRequirements.map(req => 
-      req.id === id ? { ...req, [field]: value } : req
-    ));
-  };
-  
-  const updateNonFunctionalRequirementCriteria = (id, value) => {
-    setNonFunctionalRequirements(nonFunctionalRequirements.map(req => {
-      if (req.id === id) {
-        // Split by new lines, trim, and filter empty items
-        const criteria = value.split('\n').map(item => item.trim()).filter(item => item);
-        return { ...req, criteria: criteria };
-      }
-      return req;
-    }));
-  };
-  
+
   const updateConstraint = (id, field, value) => {
-    setConstraints(constraints.map(constraint => 
-      constraint.id === id ? { ...constraint, [field]: value } : constraint
-    ));
+    const updatedData = {
+      ...requirementsData,
+      constraints: requirementsData.constraints.map(constraint =>
+        constraint.id === id ? { ...constraint, [field]: value } : constraint
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
   };
-  
-  // Delete requirement functions
-  const deleteFunctionalRequirement = (id) => {
-    setFunctionalRequirements(functionalRequirements.filter(req => req.id !== id));
-  };
-  
-  const deleteNonFunctionalRequirement = (id) => {
-    setNonFunctionalRequirements(nonFunctionalRequirements.filter(req => req.id !== id));
-  };
-  
+
   const deleteConstraint = (id) => {
-    setConstraints(constraints.filter(constraint => constraint.id !== id));
+    const updatedData = {
+      ...requirementsData,
+      constraints: requirementsData.constraints.filter(constraint => constraint.id !== id)
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
   };
-  
-  // Priority and category colors
-  const getPriorityColor = (priority) => {
-    switch(priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-  
-  const getCategoryColor = (category) => {
-    switch(category) {
-      case 'performance': return 'bg-blue-100 text-blue-800';
-      case 'security': return 'bg-red-100 text-red-800';
-      case 'usability': return 'bg-purple-100 text-purple-800';
-      case 'reliability': return 'bg-orange-100 text-orange-800';
-      case 'scalability': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-  
+
+  // Helper function for constraint type colors
   const getTypeColor = (type) => {
-    switch(type) {
-      case 'business': return 'bg-orange-100 text-orange-800';
-      case 'technical': return 'bg-blue-100 text-blue-800';
-      case 'legal': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+    switch (type) {
+      case 'business':
+        return 'bg-blue-100 text-blue-800';
+      case 'technical':
+        return 'bg-purple-100 text-purple-800';
+      case 'legal':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
+  };
+
+  const updateRequirementStatus = (type, id, newStatus) => {
+    const updatedData = {
+      ...requirementsData,
+      [type]: requirementsData[type].map(req =>
+        req.id === id ? { ...req, status: newStatus } : req
+      )
+    };
+
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+
+    // Auto-save to backend
+    workbookService.saveAllData(
+      currentProblem,
+      'requirements',
+      {
+        sections: {
+          requirements: updatedData
+        }
+      }
+    );
+  };
+
+  const calculateProgress = () => {
+    const allRequirements = [
+      ...requirementsData.functional,
+      ...requirementsData.nonFunctional,
+      ...requirementsData.constraints
+    ];
+    
+    if (allRequirements.length === 0) return 0;
+    
+    const completed = allRequirements.filter(req => req.status === 'complete').length;
+    return Math.round((completed / allRequirements.length) * 100);
+  };
+
+  useEffect(() => {
+    const progress = calculateProgress();
+    
+    dispatch({
+      type: 'UPDATE_PROGRESS',
+      problemId: currentProblem,
+      section: 'requirements',
+      progress
+    });
+  }, [requirementsData]);
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header with title and actions */}
@@ -177,13 +361,25 @@ const RequirementsPage = () => {
       <div className="bg-white p-4 border rounded-md mb-6">
         <div className="flex justify-between mb-2">
           <span className="text-sm text-gray-600">Overall Progress</span>
-          <span className="text-sm font-medium">66%</span>
+          <span className="text-sm font-medium">{calculateProgress()}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full">
-          <div className="h-full bg-indigo-500 rounded-full" style={{ width: '66%' }}></div>
+          <div 
+            className="h-full bg-indigo-500 rounded-full transition-all duration-300" 
+            style={{ width: `${calculateProgress()}%` }}
+          />
         </div>
         <div className="mt-4 text-center text-sm text-gray-500">
-          <span className="font-medium">6</span> of <span className="font-medium">9</span> requirements completed
+          <span className="font-medium">
+            {requirementsData.functional.filter(req => req.status === 'complete').length +
+             requirementsData.nonFunctional.filter(req => req.status === 'complete').length +
+             requirementsData.constraints.filter(req => req.status === 'complete').length}
+          </span> of{' '}
+          <span className="font-medium">
+            {requirementsData.functional.length +
+             requirementsData.nonFunctional.length +
+             requirementsData.constraints.length}
+          </span> requirements completed
         </div>
       </div>
       

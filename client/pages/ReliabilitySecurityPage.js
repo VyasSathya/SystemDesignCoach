@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { autoSaveWorkbook } from '../utils/workbookStorage';
+import ProgressBar from '../components/ProgressBar';
 
 const ReliabilitySecurityPage = () => {
   const [previewMode, setPreviewMode] = useState(false);

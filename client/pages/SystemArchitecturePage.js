@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import ProgressBar from '../components/ProgressBar';
 
 const SystemArchitecturePage = () => {
   const [previewMode, setPreviewMode] = useState(false);

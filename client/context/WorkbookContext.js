@@ -79,20 +79,34 @@ const workbookReducer = (state, action) => {
       };
 
     case 'UPDATE_SECTION_DATA':
-      if (!state.currentProblem) return state;
       return {
         ...state,
         problems: {
           ...state.problems,
-          [state.currentProblem]: {
-            ...state.problems[state.currentProblem],
+          [action.problemId]: {
+            ...state.problems[action.problemId],
             sections: {
-              ...state.problems[state.currentProblem]?.sections,
-              [action.sectionName]: action.data
+              ...state.problems[action.problemId]?.sections,
+              [action.section]: action.data
+            },
+            lastSaved: new Date().toISOString()
+          }
+        }
+      };
+
+    case 'UPDATE_PROGRESS':
+      return {
+        ...state,
+        problems: {
+          ...state.problems,
+          [action.problemId]: {
+            ...state.problems[action.problemId],
+            progress: {
+              ...state.problems[action.problemId]?.progress,
+              [action.section]: action.progress
             }
           }
-        },
-        saveStatus: 'saving'
+        }
       };
 
     default:
@@ -294,12 +308,4 @@ export function useSection(sectionName) {
 
   return [sectionData, updateSection];
 }
-
-
-
-
-
-
-
-
 

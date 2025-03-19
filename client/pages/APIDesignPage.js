@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import ProgressBar from '../components/ProgressBar';
 
 const APIDesignPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -116,7 +117,17 @@ const APIDesignPage = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
+  const calculateProgress = () => {
+    if (!endpoints.length) return 0;
+    const completedEndpoints = endpoints.filter(endpoint => {
+      return endpoint.path && 
+             endpoint.responseFormat && 
+             (endpoint.method === 'GET' || endpoint.requestBody);
+    }).length;
+    return (completedEndpoints / endpoints.length) * 100;
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header with title and actions */}

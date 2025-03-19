@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ProgressBar from '../components/ProgressBar';
 
 const DataModelPage = () => {
   const [previewMode, setPreviewMode] = useState(false);

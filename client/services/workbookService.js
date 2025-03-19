@@ -169,32 +169,25 @@ class WorkbookService {
     const fullState = {
       currentPage,
       lastModified: new Date().toISOString(),
-      diagrams: pageData?.diagrams || {},
       sections: {
-        requirements: pageData?.sections?.requirements || {},
-        architecture: pageData?.sections?.architecture || {},
-        api: pageData?.sections?.api || {},
-        data: pageData?.sections?.data || {},
-        scaling: pageData?.sections?.scaling || {},
-        reliability: pageData?.sections?.reliability || {}
+        ...pageData.sections,
       },
-      chat: pageData?.chat || [],
-      progress: pageData?.progress || {}
+      progress: {
+        ...pageData.progress,
+      }
     };
 
-    // Save to local storage first
+    // Save to localStorage for immediate access
     this.saveToLocal(problemId, fullState);
-    
-    // Queue server save
-    try {
-      await this.queueSave({
-        type: 'fullState',
-        problemId,
-        data: fullState
-      });
-    } catch (error) {
-      console.error('Error saving workbook data:', error);
-      // Continue even if server save fails
+
+    // Save to server
+    if (navigator.onLine) {
+      try {
+        await this.saveToServer(problemId, fullState);
+      } catch (error) {
+        console.error('Failed to save to server:', error);
+        // Continue with local save even if server fails
+      }
     }
 
     return fullState;
@@ -336,6 +329,25 @@ class WorkbookService {
     const key = `workbook_${sessionId}_${pageId}`;
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
+  }
+
+  calculateSectionProgress(sectionData, sectionType) {
+    switch (sectionType) {
+      case 'requirements':
+        const allReqs = [
+          ...sectionData.functional || [],
+          ...sectionData.nonFunctional || [],
+          ...sectionData.constraints || []
+        ];
+        return allReqs.length ? 
+          (allReqs.filter(req => req.status === 'complete').length / allReqs.length) * 100 
+          : 0;
+      
+      // Add cases for other section types...
+      
+      default:
+        return 0;
+    }
   }
 }
 
