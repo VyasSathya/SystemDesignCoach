@@ -7,7 +7,49 @@
 |   |   |       |-- component:SYSTEM_DESIGN_TOPICS [internal]
 |   |   |       |-- component:TopicGuidedCoaching [internal]
 |   |   |-- diagram
+|   |   |   |-- components
+|   |   |   |   |-- ArrowMarkers.js
+|   |   |   |   |   |-- module:ArrowMarkers.js
+|   |   |   |   |   |-- fn: ArrowMarkers() [internal]
+|   |   |   |   |   |-- component:MESSAGE_TYPES [internal]
+|   |   |   |   |   |-- component:STYLES [internal]
+|   |   |   |   |   |-- component:ArrowMarkers [internal]
+|   |   |   |   |-- ControlStructure.js
+|   |   |   |   |   |-- module:ControlStructure.js
+|   |   |   |   |   |-- fn: ControlStructure({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:ControlStructure [internal]
+|   |   |   |   |-- Lifeline.js
+|   |   |   |   |   |-- module:Lifeline.js
+|   |   |   |   |   |-- fn: Lifeline({ data, isConnectable }) [internal]
+|   |   |   |   |   |-- component:Lifeline [internal]
+|   |   |   |   |-- Message.js
+|   |   |   |   |   |-- module:Message.js
+|   |   |   |   |   |-- fn: Message({ data, selected, sourceX, sourceY, targetX, targetY }) [internal]
+|   |   |   |   |   |-- component:Message [internal]
+|   |   |   |   |-- MessageEdge.js
+|   |   |   |   |   |-- module:MessageEdge.js
+|   |   |   |   |   |-- fn: MessageEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  data,
+  style = {},
+}) [internal]
+|   |   |   |   |   |-- component:MessageEdge [internal]
+|   |   |   |   +-- Participant.js
+|   |   |   |       |-- module:Participant.js
+|   |   |   |       |-- fn: Participant({ data, id, isConnectable, onMouseDown, onMouseUp }) [internal]
+|   |   |   |       |-- fn: getParticipantStyle(type) [internal]
+|   |   |   |       |-- component:Participant [internal]
+|   |   |   |-- nodes
 |   |   |   |-- NodeTypes
+|   |   |   |   |-- BaseNode.js
+|   |   |   |   |   |-- module:BaseNode.js
+|   |   |   |   |   |-- fn: BaseNode({ data, selected }) [internal]
+|   |   |   |   |   |-- component:BaseNode [internal]
+|   |   |   |   |   |-- component:Icon [internal]
 |   |   |   |   |-- CacheNode.js
 |   |   |   |   |   |-- module:CacheNode.js
 |   |   |   |   |   |-- fn: CacheNode({ data, isConnectable }) [internal]
@@ -18,10 +60,9 @@
 |   |   |   |   |   |-- component:ClientNode [internal]
 |   |   |   |   |-- CustomNode.js
 |   |   |   |   |   |-- module:CustomNode.js
-|   |   |   |   |   |-- fn: CustomNode({ data, type }) [internal]
-|   |   |   |   |   |-- method: CustomNode({ data, type })
+|   |   |   |   |   |-- fn: CustomNode({ data, isConnectable = true }) [internal]
 |   |   |   |   |   |-- component:CustomNode [internal]
-|   |   |   |   |   |-- component:Icon [internal]
+|   |   |   |   |   |-- component:IconComponent [internal]
 |   |   |   |   |-- DatabaseNode.js
 |   |   |   |   |   |-- module:DatabaseNode.js
 |   |   |   |   |   |-- fn: DatabaseNode({ data, isConnectable }) [internal]
@@ -30,6 +71,7 @@
 |   |   |   |   |   |-- module:FixedLifelineNode.js
 |   |   |   |   |   |-- component:FixedLifelineNode [internal]
 |   |   |   |   |   |-- component:FIXED_TOP_POSITION [internal]
+|   |   |   |   |   |-- component:LIFELINE_LENGTH [internal]
 |   |   |   |   |-- GatewayNode.js
 |   |   |   |   |   |-- module:GatewayNode.js
 |   |   |   |   |   |-- fn: GatewayNode({ data, isConnectable }) [internal]
@@ -38,17 +80,6 @@
 |   |   |   |   |   |-- module:LoadBalancerNode.js
 |   |   |   |   |   |-- fn: LoadBalancerNode({ data, isConnectable }) [internal]
 |   |   |   |   |   |-- component:LoadBalancerNode [internal]
-|   |   |   |   |-- MessageEdge.js
-|   |   |   |   |   |-- fn: MessageEdge({
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    data,
-    style = {},
-  }) [internal]
-|   |   |   |   |   |-- component:MessageEdge [internal]
 |   |   |   |   |-- nodePresets.js
 |   |   |   |   |   |-- module:nodePresets.js
 |   |   |   |   |   |-- fn: generateId(type) [internal]
@@ -61,20 +92,25 @@
 |   |   |   |   |   |-- component:QueueNode [internal]
 |   |   |   |   |-- SequenceDiagramNodeTypes.js
 |   |   |   |   |   |-- module:SequenceDiagramNodeTypes.js
-|   |   |   |   |   |-- component:ActorNode [exported]
-|   |   |   |   |   |-- component:ParticipantNode [exported]
-|   |   |   |   |   |-- component:LifelineNode [exported]
-|   |   |   |   |   |-- component:CombinedFragmentNode [exported]
-|   |   |   |   |   |-- component:NoteNode [exported]
-|   |   |   |   |   |-- component:GateNode [exported]
-|   |   |   |   |   |-- component:MessageTypes [exported]
-|   |   |   |   |   |-- component:FragmentTypes [exported]
+|   |   |   |   |   |-- fn: getNodeStyle(type) [internal]
+|   |   |   |   |   |-- component:BaseNode [internal]
 |   |   |   |   +-- ServiceNode.js
 |   |   |   |       |-- module:ServiceNode.js
 |   |   |   |       |-- fn: ServiceNode({ data, isConnectable }) [internal]
 |   |   |   |       |-- component:ServiceNode [internal]
+|   |   |   |-- rules
+|   |   |   |   +-- sequence-diagram-rules.md
 |   |   |   |-- styles
 |   |   |   |-- utils
+|   |   |   |   |-- controlStructureValidator.js
+|   |   |   |   |   |-- class:ControlStructureValidator [exported]
+|   |   |   |   |   |-- method: validateStructure(structure, existingStructures)
+|   |   |   |   |   |-- method: hasRequiredFields(structure)
+|   |   |   |   |   |-- method: validateLoop(loop)
+|   |   |   |   |   |-- method: validateAlternative(alt)
+|   |   |   |   |   |-- method: checkOverlap(newStructure, existingStructures)
+|   |   |   |   |   |-- method: getStructureBounds(structure)
+|   |   |   |   |   |-- method: boundsOverlap(bounds1, bounds2)
 |   |   |   |   |-- conversion.js
 |   |   |   |   |   |-- module:conversion.js
 |   |   |   |   |   |-- fn: getNodeType(mermaidNodeDef) [internal]
@@ -82,6 +118,29 @@
 |   |   |   |   |   |-- fn: mermaidToReactFlow(mermaidCode) [exported]
 |   |   |   |   |   |-- fn: reactFlowToMermaid({ nodes, edges }) [exported]
 |   |   |   |   |   |-- component:MERMAID_NODE_TYPES [internal]
+|   |   |   |   |-- iconMapping.js
+|   |   |   |   |   |-- module:iconMapping.js
+|   |   |   |   |   |-- fn: getIconComponent(iconName) [exported]
+|   |   |   |   |-- lifelineValidator.js
+|   |   |   |   |   |-- class:LifelineValidator [exported]
+|   |   |   |   |   |-- method: validateLifeline(lifeline, parent)
+|   |   |   |   |   |-- method: isAlignedWithParent(lifeline, parent)
+|   |   |   |   |   |-- method: hasValidConnections(lifeline)
+|   |   |   |   |   |-- method: validateLifelineExtension(lifeline, messages)
+|   |   |   |   |-- messageValidator.js
+|   |   |   |   |   |-- class:MessageValidator [exported]
+|   |   |   |   |   |-- method: validateMessage(message, participants, existingMessages)
+|   |   |   |   |   |-- method: hasRequiredFields(message)
+|   |   |   |   |   |-- method: validateConnections(message, participants)
+|   |   |   |   |   |-- method: hasCrossingMessages(newMessage, existingMessages)
+|   |   |   |   |   |-- method: hasValidTemporalOrder(newMessage, existingMessages)
+|   |   |   |   |   |-- method: isSelfMessage(message)
+|   |   |   |   |   |-- method: hasValidResponse(syncMessage, existingMessages)
+|   |   |   |   |-- nodeCreation.js
+|   |   |   |   |   |-- module:nodeCreation.js
+|   |   |   |   |   |-- fn: createParticipantNode(type, position) [exported]
+|   |   |   |   |   |-- fn: calculateNextPosition(existingNodes) [exported]
+|   |   |   |   |   |-- fn: createEdge(sourceId, targetId, label = '') [exported]
 |   |   |   |   |-- nodePositioning.js
 |   |   |   |   |   |-- module:nodePositioning.js
 |   |   |   |   |   |-- fn: getNodePositionForType(type, bounds, existingNodes) [exported]
@@ -97,22 +156,37 @@
 |   |   |   |   |   |-- fn: createEdge(sourceId, targetId, label = '') [exported]
 |   |   |   |   |   |-- fn: getNodeTypePalette() [exported]
 |   |   |   |   |   |-- component:NODE_TYPES [exported]
-|   |   |   |   +-- sequenceDiagramUtils.js
-|   |   |   |       |-- fn: generateMermaidCode(nodes, edges) [internal]
-|   |   |   |       |-- fn: mermaidToReactFlow(mermaidCode) [internal]
-|   |   |   |       |-- fn: findClosestParticipant(note, participants) [internal]
-|   |   |   |       |-- fn: findParticipantsInFragment(fragment, participants) [internal]
-|   |   |   |       |-- fn: normalizeSequenceDiagram(nodes, edges) [internal]
-|   |   |   |       |-- method: generateMermaidCode(nodes, edges)
-|   |   |   |       |-- method: forEach(participant => {
+|   |   |   |   |-- participantValidator.js
+|   |   |   |   |   |-- class:ParticipantValidator [exported]
+|   |   |   |   |   |-- method: validateParticipant(participant, existingParticipants)
+|   |   |   |   |   |-- method: hasRequiredFields(participant)
+|   |   |   |   |   |-- method: isDuplicateName(name, existingParticipants)
+|   |   |   |   |   |-- method: isValidType(type)
+|   |   |   |   |   |-- method: isValidPosition(participant, existingParticipants)
+|   |   |   |   |-- sequenceDiagramConstants.js
+|   |   |   |   |   |-- module:sequenceDiagramConstants.js
+|   |   |   |   |   |-- fn: validateParticipant(participant, existingParticipants) [exported]
+|   |   |   |   |   |-- fn: validateConnection(connection) [exported]
+|   |   |   |   |   |-- fn: validateNodeMovement(node, newPosition) [exported]
+|   |   |   |   |-- sequenceDiagramUtils.js
+|   |   |   |   |   |-- fn: generateMermaidCode(nodes, edges) [internal]
+|   |   |   |   |   |-- fn: mermaidToReactFlow(mermaidCode) [internal]
+|   |   |   |   |   |-- fn: findClosestParticipant(note, participants) [internal]
+|   |   |   |   |   |-- fn: findParticipantsInFragment(fragment, participants) [internal]
+|   |   |   |   |   |-- fn: normalizeSequenceDiagram(nodes, edges) [internal]
+|   |   |   |   |   |-- method: generateMermaidCode(nodes, edges)
+|   |   |   |   |   |-- method: forEach(participant => {
       if (participant.type === 'actor')
-|   |   |   |       |-- method: mermaidToReactFlow(mermaidCode)
-|   |   |   |       |-- method: findClosestParticipant(note, participants)
-|   |   |   |       |-- method: findParticipantsInFragment(fragment, participants)
-|   |   |   |       |-- method: normalizeSequenceDiagram(nodes, edges)
-|   |   |   |       |-- method: map(node => {
+|   |   |   |   |   |-- method: mermaidToReactFlow(mermaidCode)
+|   |   |   |   |   |-- method: findClosestParticipant(note, participants)
+|   |   |   |   |   |-- method: findParticipantsInFragment(fragment, participants)
+|   |   |   |   |   |-- method: normalizeSequenceDiagram(nodes, edges)
+|   |   |   |   |   |-- method: map(node => {
       // Fix participant positions
       if (node.type === 'actor' || node.type === 'participant')
+|   |   |   |   +-- systemDiagramUtils.ts
+|   |   |   |       |-- fn: mermaidToReactFlow(mermaidCode: string) [internal]
+|   |   |   |       |-- fn: reactFlowToMermaid(nodes: Node[], edges: Edge[]) [internal]
 |   |   |   |-- AiSuggestionsPanel.js
 |   |   |   |   |-- module:AiSuggestionsPanel.js
 |   |   |   |   |-- fn: AiSuggestionsPanel({
@@ -126,11 +200,6 @@
 |   |   |   |   |-- fn: renderAiSuggestions(aiSuggestions) [internal]
 |   |   |   |   |-- fn: renderProposedChanges(changes) [internal]
 |   |   |   |   |-- component:AiSuggestionsPanel [internal]
-|   |   |   |-- CustomNode.js
-|   |   |   |   |-- module:CustomNode.js
-|   |   |   |   |-- fn: CustomNode({ data }) [internal]
-|   |   |   |   |-- component:CustomNode [internal]
-|   |   |   |   |-- component:NodeIcon [internal]
 |   |   |   |-- DiagramAnalysis.js
 |   |   |   |   |-- module:DiagramAnalysis.js
 |   |   |   |   |-- fn: AnalysisSection({ title, items, icon: Icon }) [internal]
@@ -151,6 +220,26 @@
 |   |   |   |   |-- fn: renderSuggestionCard(suggestion) [internal]
 |   |   |   |   |-- fn: renderAnalysisSection(title, items, icon) [internal]
 |   |   |   |   |-- component:DiagramAnalysisPanel [internal]
+|   |   |   |-- DiagramContainer.js
+|   |   |   |   |-- module:DiagramContainer.js
+|   |   |   |   |-- fn: DiagramContainer({ 
+  initialDiagramData,
+  onDiagramChange,
+  diagramType = 'system'
+}) [internal]
+|   |   |   |   |-- component:DiagramContainer [internal]
+|   |   |   |-- DiagramEditor.js
+|   |   |   |   |-- module:DiagramEditor.js
+|   |   |   |   |-- fn: DiagramEditor({ 
+  initialNodes, 
+  initialEdges, 
+  onNodesChange: onNodesChangeCallback,
+  onEdgesChange: onEdgesChangeCallback,
+  diagramType = 'system'
+}) [internal]
+|   |   |   |   |-- fn: DiagramEditorWrapper(props) [internal]
+|   |   |   |   |-- component:DiagramEditor [internal]
+|   |   |   |   |-- component:DiagramEditorWrapper [internal]
 |   |   |   |-- DiagramEvaluation.js
 |   |   |   |   |-- module:DiagramEvaluation.js
 |   |   |   |   |-- fn: CriterionCard({ title, score, previousScore, feedback, suggestions }) [internal]
@@ -227,9 +316,10 @@
 |   |   |   |   |-- component:MermaidRenderer [internal]
 |   |   |   |-- NodePalette.js
 |   |   |   |   |-- module:NodePalette.js
-|   |   |   |   |-- fn: NodePalette({ onNodeAdd }) [exported]
-|   |   |   |   |-- method: NodePalette({ onNodeAdd })
+|   |   |   |   |-- fn: NodePalette({ onNodeAdd }) [internal]
+|   |   |   |   |-- fn: handleNodeAdd(nodeType, categoryData) [internal]
 |   |   |   |   |-- component:NodePalette [internal]
+|   |   |   |   |-- component:IconComponent [internal]
 |   |   |   |-- PatternVisualizer.js
 |   |   |   |   |-- module:PatternVisualizer.js
 |   |   |   |   |-- fn: PatternVisualizer({ patterns, suggestions }) [internal]
@@ -237,19 +327,13 @@
 |   |   |   |   |-- component:PatternVisualizer [internal]
 |   |   |   |-- ReactFlowDiagram.js
 |   |   |   |   |-- module:ReactFlowDiagram.js
-|   |   |   |   |-- fn: Flow({ 
-  initialNodes, 
-  initialEdges, 
-  onNodesChange, 
-  onEdgesChange, 
-  onConnect,
-  onDiagramUpdate 
-}) [internal]
-|   |   |   |   |-- fn: ReactFlowDiagramWithProvider(props) [internal]
-|   |   |   |   |-- method: map(n => {
-      if (n.id === selectedNode.id)
-|   |   |   |   |-- component:Flow [internal]
-|   |   |   |   |-- component:ReactFlowDiagramWithProvider [internal]
+|   |   |   |   |-- fn: CustomNode({ data }) [internal]
+|   |   |   |   |-- fn: getNodeConfig(type) [internal]
+|   |   |   |   |-- fn: ReactFlowDiagram() [internal]
+|   |   |   |   |-- fn: addNode(type) [internal]
+|   |   |   |   |-- component:CustomNode [internal]
+|   |   |   |   |-- component:NodeIcon [internal]
+|   |   |   |   |-- component:ReactFlowDiagram [internal]
 |   |   |   |-- ScorePanel.js
 |   |   |   |   |-- module:ScorePanel.js
 |   |   |   |   |-- fn: ScorePanel({ scores, improvements }) [internal]
@@ -257,54 +341,61 @@
 |   |   |   |   |-- component:ScorePanel [internal]
 |   |   |   |-- SequenceDiagram.js
 |   |   |   |   |-- module:SequenceDiagram.js
-|   |   |   |   |-- fn: generateMermaidCode(nodes, edges) [internal]
-|   |   |   |   |-- fn: return() [internal]
-|   |   |   |   |-- fn: MessageEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  data,
-  style = {},
-}) [internal]
-|   |   |   |   |-- fn: SequenceDiagram({ initialDiagram, onDiagramUpdate }) [internal]
-|   |   |   |   |-- fn: SequenceDiagramWrapped(props) [internal]
-|   |   |   |   |-- method: generateMermaidCode(nodes, edges)
-|   |   |   |   |-- method: forEach(participant => {
-    if (participant.type === 'actor')
-|   |   |   |   |-- component:ActorNode [internal]
-|   |   |   |   |-- component:ParticipantNode [internal]
-|   |   |   |   |-- component:LifelineNode [internal]
-|   |   |   |   |-- component:MessageEdge [internal]
+|   |   |   |   |-- fn: SequenceDiagram() [internal]
 |   |   |   |   |-- component:SequenceDiagram [internal]
-|   |   |   |   |-- component:SequenceDiagramWrapped [internal]
+|   |   |   |-- SequenceDiagramEditor.js
+|   |   |   |   |-- module:SequenceDiagramEditor.js
+|   |   |   |   |-- fn: SequenceDiagramEditor() [exported]
+|   |   |   |   |-- component:SequenceDiagramEditor [exported]
 |   |   |   |-- SequenceDiagramManager.js
 |   |   |   |   |-- module:SequenceDiagramManager.js
-|   |   |   |   |-- fn: SequenceDiagramManager({ initialDiagram, onDiagramUpdate }) [internal]
+|   |   |   |   |-- fn: SequenceDiagramManager({ initialDiagram, onDiagramUpdate, sessionId }) [internal]
+|   |   |   |   |-- fn: loadPersistedState() [internal]
+|   |   |   |   |-- fn: handleDiagramUpdate(newState) [internal]
 |   |   |   |   |-- method: map(node => {
       // If this is a lifeline, find its parent and update position
       if (node.type === 'lifeline' && node.data?.participantId)
 |   |   |   |   |-- component:SequenceDiagramManager [internal]
+|   |   |   |-- SequenceDiagramPlan.js
 |   |   |   |-- SystemArchitectureDiagram.js
 |   |   |   |   |-- module:SystemArchitectureDiagram.js
-|   |   |   |   |-- fn: SystemArchitectureDiagram({ initialNodes, initialEdges, onNodesChange, onEdgesChange, onConnect }) [exported]
-|   |   |   |   |-- method: SystemArchitectureDiagram({ initialNodes, initialEdges, onNodesChange, onEdgesChange, onConnect })
+|   |   |   |   |-- fn: SystemArchitectureDiagram({ problemId, userId }) [internal]
 |   |   |   |   |-- component:SystemArchitectureDiagram [internal]
+|   |   |   |-- SystemDesignPalette.tsx
+|   |   |   |   |-- module:SystemDesignPalette.tsx
+|   |   |   |   |-- fn: handleStartEdit() [internal]
+|   |   |   |   |-- fn: handleSaveEdit() [internal]
 |   |   |   +-- SystemSequenceDiagram.js
 |   |   |       |-- module:SystemSequenceDiagram.js
-|   |   |       |-- fn: SystemSequenceDiagram({ 
-  initialDiagram,
-  onDiagramUpdate 
-}) [internal]
-|   |   |       |-- fn: generateMermaidCode(nodes, edges) [internal]
+|   |   |       |-- fn: getNodeStyle(type) [internal]
+|   |   |       |-- fn: BaseNode({ data, selected, id }) [internal]
+|   |   |       |-- fn: MenuPanel({ 
+  onAddParticipant = () [internal]
+|   |   |       |-- fn: preventDrag(e) [internal]
+|   |   |       |-- fn: SystemSequenceDiagram({ onSave, initialData, sessionId }) [internal]
+|   |   |       |-- fn: handleSave() [internal]
+|   |   |       |-- fn: SystemSequenceDiagramWrapper() [internal]
+|   |   |       |-- component:BaseNode [internal]
+|   |   |       |-- component:EDGE_TYPES [internal]
+|   |   |       |-- component:NODE_TYPES [internal]
+|   |   |       |-- component:MenuPanel [internal]
 |   |   |       |-- component:SystemSequenceDiagram [internal]
+|   |   |       |-- component:SystemSequenceDiagramWrapper [internal]
 |   |   |-- evaluation
 |   |   |   +-- EvaluationSummary.js
 |   |   |       |-- module:EvaluationSummary.js
 |   |   |       |-- fn: EvaluationSummary({ evaluation, scores }) [internal]
 |   |   |       |-- fn: getScoreColor(score) [internal]
 |   |   |       |-- component:EvaluationSummary [internal]
+|   |   |-- workbook
+|   |   |   +-- DiagramSection.js
+|   |   |       |-- module:DiagramSection.js
+|   |   |       |-- fn: DiagramSection({ 
+  diagramData, 
+  onDiagramUpdate,
+  diagramType 
+}) [internal]
+|   |   |       |-- component:DiagramSection [internal]
 |   |   |-- CoachAgentInterface.js
 |   |   |   |-- module:CoachAgentInterface.js
 |   |   |   |-- fn: CoachAgentInterface() [exported]
@@ -318,6 +409,11 @@
 |   |   |   |-- module:ExperienceLevelSelector.js
 |   |   |   |-- fn: ExperienceLevelSelector({ currentLevel, onLevelChange }) [internal]
 |   |   |   |-- component:ExperienceLevelSelector [internal]
+|   |   |-- FeedbackStatus.jsx
+|   |   |   |-- module:FeedbackStatus.jsx
+|   |   |   |-- fn: FeedbackStatus({ section, score, suggestions }) [internal]
+|   |   |   |-- fn: getStatusColor(score) [internal]
+|   |   |   |-- component:FeedbackStatus [internal]
 |   |   |-- MermaidToolbar.js
 |   |   |   |-- module:MermaidToolbar.js
 |   |   |   |-- fn: ComponentButton({ icon, label, snippet, onInsert }) [internal]
@@ -332,6 +428,9 @@
 |   |   |   |-- module:RealTimeFeedback.js
 |   |   |   |-- fn: RealTimeFeedback({ section, content, onFeedback }) [internal]
 |   |   |   |-- component:RealTimeFeedback [internal]
+|   |   |-- ReviewButton.jsx
+|   |   |   |-- module:ReviewButton.jsx
+|   |   |   |-- fn: ReviewButton({ sectionId, onReview, isLoading }) [exported]
 |   |   |-- Sidebar.js
 |   |   |   |-- module:Sidebar.js
 |   |   |   |-- fn: Sidebar({ activeTab }) [internal]
@@ -344,13 +443,13 @@
 |   |   |   |-- method: SimpleFlowWithProvider()
 |   |   |   |-- component:Flow [internal]
 |   |   |   |-- component:SimpleFlowWithProvider [exported]
+|   |   |-- SomeParentComponent.js
 |   |   |-- SystemDesignDiagram.tsx
 |   |   |   |-- module:SystemDesignDiagram.tsx
 |   |   |-- TestConnection.js
 |   |   +-- Workbook.js
 |   |       |-- module:Workbook.js
 |   |       |-- fn: Workbook({ sessionId, userId, initialData }) [internal]
-|   |       |-- fn: handleFeedback(section, feedback) [internal]
 |   |       |-- component:Workbook [internal]
 |   |-- config
 |   |   +-- aiConfig.js
@@ -438,6 +537,8 @@
 |   |   |   |   |-- module:[id].js
 |   |   |   |   |-- fn: handleClickOutside(event) [internal]
 |   |   |   |   |-- fn: CoachingSessionPage() [internal]
+|   |   |   |   |-- fn: updateWorkbookState(section, data) [internal]
+|   |   |   |   |-- fn: updateDiagramState(diagramType, diagramData) [internal]
 |   |   |   |   |-- fn: setActiveDiagramTab(tabId) [internal]
 |   |   |   |   |-- fn: updateFormData(section, data) [internal]
 |   |   |   |   |-- fn: detectCurrentTopic(conversation) [internal]
@@ -483,9 +584,9 @@
 |   |   |       |-- component:InterviewsPage [exported]
 |   |   |-- _app.js
 |   |   |   |-- module:_app.js
-|   |   |   |-- fn: MyApp(props) [exported]
+|   |   |   |-- fn: MyApp(props) [internal]
 |   |   |   |-- method: MyApp(props)
-|   |   |   |-- component:MyApp [internal]
+|   |   |   |-- component:MyApp [exported]
 |   |   |-- APIDesignPage.js
 |   |   |   |-- module:APIDesignPage.js
 |   |   |   |-- fn: EnhancedAPIDesignPage({ data = {}, updateData }) [internal]
@@ -512,10 +613,15 @@
 |   |   |   |-- fn: EnhancedDataModelPage({ data = {}, updateData }) [internal]
 |   |   |   |-- fn: handleChange(e) [internal]
 |   |   |   |-- component:EnhancedDataModelPage [internal]
+|   |   |-- DiagramsPage.js
+|   |   |   |-- module:DiagramsPage.js
+|   |   |   |-- fn: DiagramsPage() [internal]
+|   |   |   |-- component:DiagramsPage [internal]
 |   |   |-- index.js
 |   |   |   |-- module:index.js
 |   |   |   |-- fn: Home() [internal]
 |   |   |   |-- method: Home()
+|   |   |   |-- component:WorkbookLayout [internal]
 |   |   |   |-- component:Home [exported]
 |   |   |-- ReliabilitySecurityPage.js
 |   |   |   |-- module:ReliabilitySecurityPage.js
@@ -538,7 +644,8 @@
 |   |   |   |-- component:ReliabilitySecurityPage [internal]
 |   |   |-- RequirementsPage.js
 |   |   |   |-- module:RequirementsPage.js
-|   |   |   |-- fn: EnhancedRequirementsPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: RequirementsPage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: handleBeforeUnload(e) [internal]
 |   |   |   |-- fn: updateFunctionalReq(id, text) [internal]
 |   |   |   |-- fn: toggleFunctionalReq(id) [internal]
 |   |   |   |-- fn: updateNonFunctionalReq(id, text) [internal]
@@ -547,7 +654,10 @@
 |   |   |   |-- fn: handleDeleteReq(index, type) [internal]
 |   |   |   |-- fn: handleDiagramOpen() [internal]
 |   |   |   |-- fn: handleDiagramClose() [internal]
-|   |   |   |-- component:EnhancedRequirementsPage [internal]
+|   |   |   |-- component:RequirementsPage [internal]
+|   |   |-- ScalabilityPage.js
+|   |   |   |-- module:ScalabilityPage.js
+|   |   |   |-- fn: ScalabilityPage({ data = {}, updateData }) [internal]
 |   |   |-- ScalingStrategyPage.js
 |   |   |   |-- module:ScalingStrategyPage.js
 |   |   |   |-- fn: EnhancedScalingStrategyPage({ data = {}, updateData }) [internal]
@@ -566,9 +676,9 @@
 |   |   |   |-- component:EnhancedScalingStrategyPage [internal]
 |   |   |-- SystemArchitecturePage.js
 |   |   |   |-- module:SystemArchitecturePage.js
-|   |   |   |-- fn: EnhancedSystemArchitecturePage({ data = {}, updateData }) [internal]
+|   |   |   |-- fn: SystemArchitecturePage({ data = {}, updateData }) [internal]
 |   |   |   |-- fn: handleChange(e) [internal]
-|   |   |   |-- component:EnhancedSystemArchitecturePage [internal]
+|   |   |   |-- component:SystemArchitecturePage [internal]
 |   |   |-- test-flow.js
 |   |   |   |-- module:test-flow.js
 |   |   |   |-- fn: TestPage() [internal]
@@ -578,22 +688,30 @@
 |   |   |-- WorkbookLayout.js
 |   |   |   |-- module:WorkbookLayout.js
 |   |   |   |-- fn: getTabStyles(tabId, isActive) [internal]
-|   |   |   |-- fn: getMobileTabStyles(tabId, isActive) [internal]
-|   |   |   |-- fn: getCoachButtonStyles(tabId) [internal]
-|   |   |   |-- fn: getProgressBarStyles(tabId) [internal]
-|   |   |   |-- fn: getExportButtonStyles(tabId) [internal]
-|   |   |   |-- fn: getCoachPanelBgStyle(tabId) [internal]
-|   |   |   |-- fn: getCoachPanelTextStyle(tabId) [internal]
-|   |   |   |-- fn: getCoachInputFocusStyle(tabId) [internal]
 |   |   |   |-- fn: WorkbookLayout({ onBack, sessionId }) [internal]
 |   |   |   |-- fn: updateFormData(section, data) [internal]
 |   |   |   |-- fn: getActivePageComponent() [internal]
 |   |   |   |-- component:WorkbookLayout [internal]
-|   |   +-- WorkbookPageWrapper.js
-|   |       |-- module:WorkbookPageWrapper.js
-|   |       |-- fn: WorkbookPageWrapper({ children }) [internal]
-|   |       |-- component:WorkbookPageWrapper [internal]
+|   |   |-- WorkbookPageWrapper.js
+|   |   |   |-- module:WorkbookPageWrapper.js
+|   |   |   |-- fn: WorkbookPageWrapper({ children, onSaveAndContinue, isValid, nextSection }) [internal]
+|   |   |   |-- component:WorkbookPageWrapper [internal]
+|   |   +-- your-parent-component.js
 |   |-- public
+|   |-- services
+|   |   +-- workbookService.js
+|   |       |-- module:workbookService.js
+|   |       |-- class:WorkbookService [internal]
+|   |       |-- method: constructor()
+|   |       |-- method: getStorageKey(userId, problemId, type)
+|   |       |-- method: saveDiagram(userId, problemId, diagramData, type = 'system')
+|   |       |-- method: getDiagram(userId, problemId, type = 'system')
+|   |       |-- method: saveChat(userId, problemId, chatData)
+|   |       |-- method: getChat(userId, problemId)
+|   |       |-- method: saveProgress(userId, problemId, progressData)
+|   |       |-- method: getProgress(userId, problemId)
+|   |       |-- method: clearProblemData(userId, problemId)
+|   |       |-- method: clearUserData(userId)
 |   |-- src
 |   |   +-- config
 |   |       +-- api.js
@@ -611,9 +729,11 @@
 |   |   +-- workbookStorage.js
 |   |       |-- module:workbookStorage.js
 |   |       |-- fn: executedFunction(...args) [internal]
-|   |       |-- fn: debounce(func, wait) [internal]
-|   |       |-- fn: later() [internal]
+|   |       |-- fn: debounce(func, wait, maxRetries = 3) [internal]
+|   |       |-- fn: computeChanges(currentData) [internal]
 |   |       |-- method: executedFunction(...args)
+|   |       |-- method: openDB('workbook_offline', 1, {
+    upgrade(db)
 |   |-- next.config.js
 |   |   |-- module:next.config.js
 |   |   |-- method: rewrites()
@@ -625,6 +745,21 @@
 |   +-- WorkbookLayout.js
 |       |-- fn: WorkbookLayout({ sessionId }) [internal]
 |-- data
+|   |-- AIReadMEs
+|   |   |-- AIAnalytics.md
+|   |   |-- AIDiagramSystem.md
+|   |   |-- AIFeedbackSystem.md
+|   |   |-- AIMemorySystem.md
+|   |   |-- AIModelIntegration.md
+|   |   |-- AIPatternDetection.md
+|   |   |-- AIPromptSystem.md
+|   |   |-- AISecurityGuidelines.md
+|   |   |-- AIService.md
+|   |   |-- AITesting.md
+|   |   |-- AIUserPersonalization.md
+|   |   |-- DiagramAnalysis.md
+|   |   |-- PersonaSystem.md
+|   |   +-- WorkbookSystem.md
 |   |-- knowledge_base
 |   |   +-- facebook
 |   |       |-- architecture
@@ -652,18 +787,42 @@
 |   |-- problems.js
 |   |   |-- module:problems.js
 |   +-- workbook_progress.js
+|-- docs
+|   +-- systems
+|       |-- 00-system-overview.md
+|       |-- 01-ai-system.md
+|       |-- 02-workbook-system.md
+|       |-- 03-grading-system.md
+|       |-- 04-auth-system.md
+|       |-- 05-coaching-system.md
+|       |-- 06-interview-system.md
+|       |-- 07-monitoring-system.md
+|       |-- 08-feedback-system.md
+|       |-- 09-infrastructure-core.md
+|       +-- 10-data-pipeline.md
+|-- examples
 |-- server
 |   |-- __pycache__
 |   |-- config
 |   |   |-- aiConfig.js
-|   |   |   |-- module:aiConfig.js
 |   |   +-- db.js
 |   |       |-- module:db.js
 |   |-- logs
 |   |-- middleware
 |   |   +-- auth.js
 |   |       |-- module:auth.js
+|   |-- mocks
+|   |   +-- indexedDB.js
+|   |       |-- module:indexedDB.js
+|   |       |-- class:MockIndexedDB [internal]
+|   |       |-- method: constructor()
+|   |       |-- method: clear()
+|   |       |-- method: put(storeName, value, key)
+|   |       |-- method: get(storeName, key)
+|   |       |-- method: delete(storeName, key)
 |   |-- models
+|   |   |-- validators
+|   |   |   +-- DiagramValidators.js
 |   |   |-- Diagram.js
 |   |   |   |-- module:Diagram.js
 |   |   |   |-- component:DiagramSchema [internal]
@@ -712,18 +871,51 @@
 |   |   +-- workbook.js
 |   |       |-- module:workbook.js
 |   |-- scripts
+|   |   |-- database
+|   |   |   +-- index.js
+|   |   |       |-- module:index.js
+|   |   |       |-- method: setupComplete()
 |   |   |-- seedData
 |   |   |   |-- problems.js
 |   |   |   |   |-- module:problems.js
 |   |   |   +-- workbookTemplate.js
 |   |   |       |-- module:workbookTemplate.js
-|   |   |-- checkConnection.js
-|   |   |   |-- module:checkConnection.js
-|   |   |   |-- fn: checkConnection() [exported]
-|   |   |   |-- method: checkConnection()
-|   |   |-- checkDatabase.js
-|   |   |   |-- fn: checkDatabase() [internal]
-|   |   |   |-- method: checkDatabase()
+|   |   |-- seeding
+|   |   |   |-- seeders
+|   |   |   |   |-- ProblemSeeder.js
+|   |   |   |   |   |-- module:ProblemSeeder.js
+|   |   |   |   |   |-- class:ProblemSeeder [internal]
+|   |   |   |   |   |-- method: constructor()
+|   |   |   |   |   |-- method: seed(config, session)
+|   |   |   |   |-- UserSeeder.js
+|   |   |   |   |   |-- module:UserSeeder.js
+|   |   |   |   |   |-- class:UserSeeder [internal]
+|   |   |   |   |   |-- method: constructor()
+|   |   |   |   |   |-- method: seed(config, session)
+|   |   |   |   |   |-- method: getAdminUserId()
+|   |   |   |   +-- WorkbookSeeder.js
+|   |   |   |       |-- module:WorkbookSeeder.js
+|   |   |   |       |-- class:WorkbookSeeder [internal]
+|   |   |   |       |-- method: constructor()
+|   |   |   |       |-- method: seed(config, session)
+|   |   |   |       |-- method: createProgressEntries(workbookId, session)
+|   |   |   |-- validators
+|   |   |   |   +-- SchemaValidator.js
+|   |   |   |       |-- module:SchemaValidator.js
+|   |   |   |       |-- class:SchemaValidator [internal]
+|   |   |   |       |-- method: constructor()
+|   |   |   |       |-- method: validate(session)
+|   |   |   |       |-- method: validateDocument(doc, rules)
+|   |   |   |       |-- method: validateType(value, expectedType)
+|   |   |   +-- SeedingManager.js
+|   |   |       |-- module:SeedingManager.js
+|   |   |       |-- class:SeedingManager [internal]
+|   |   |       |-- method: constructor(config)
+|   |   |       |-- method: initialize()
+|   |   |       |-- method: validateConfig()
+|   |   |       |-- method: runMigrations()
+|   |   |       |-- method: seedData()
+|   |   |       |-- method: verifySeeding(session)
 |   |   |-- initializeDatabase.js
 |   |   |   |-- module:initializeDatabase.js
 |   |   |   |-- fn: recreateIndexes() [internal]
@@ -734,22 +926,9 @@
 |   |   |   |-- method: seedInitialData()
 |   |   |   |-- method: verifySetup()
 |   |   |   |-- method: initializeDatabase()
-|   |   |-- seedDatabase.js
-|   |   |   |-- module:seedDatabase.js
-|   |   |   |-- fn: seedProblems() [internal]
-|   |   |   |-- fn: seedDatabase() [exported]
-|   |   |   |-- method: seedProblems()
-|   |   |   |-- method: seedDatabase()
-|   |   |-- seedProblems.js
-|   |   |   |-- fn: seedDatabase() [internal]
-|   |   |   |-- method: seedDatabase()
-|   |   |-- setupDatabase.js
-|   |   |   |-- module:setupDatabase.js
-|   |   |   |-- fn: setupDatabase() [exported]
-|   |   |   |-- method: setupDatabase()
-|   |   |-- testConnection.js
-|   |   |   |-- fn: testConnection() [internal]
-|   |   |   |-- method: testConnection()
+|   |   |-- seed.js
+|   |   |   |-- fn: runSeeding() [internal]
+|   |   |   |-- method: runSeeding()
 |   |   |-- testDiagramAnalysis.js
 |   |   |   |-- module:testDiagramAnalysis.js
 |   |   |   |-- fn: testDiagramAnalysis() [exported]
@@ -776,16 +955,23 @@
 |   |   |   |       |-- method: sendMessage(messages, options = {})
 |   |   |   |       |-- method: generateResponse(messages, context, options = {})
 |   |   |   |       |-- method: generateContent(prompt, options = {})
+|   |   |   |-- prompts
+|   |   |   |   |-- coachExamples.js
+|   |   |   |   +-- contextConfig.js
+|   |   |   |-- testing
+|   |   |   |   +-- personaValidator.js
+|   |   |   |       |-- class:PersonaValidator [internal]
+|   |   |   |       |-- method: validateResponse(persona, conversation, response)
+|   |   |   |       |-- method: runTestScenarios(persona)
 |   |   |   |-- aiFactory.js
 |   |   |   |   |-- module:aiFactory.js
 |   |   |   |   |-- class:AIFactory [internal]
-|   |   |   |   |-- method: createService()
+|   |   |   |   |-- method: create(provider)
 |   |   |   |-- aiService.js
 |   |   |   |   |-- module:aiService.js
 |   |   |   |   |-- class:AIService [internal]
 |   |   |   |   |-- method: constructor(config)
 |   |   |   |   |-- method: sendMessage(messages, options = {})
-|   |   |   |   |-- method: analyzeDiagram(diagramData, context = {})
 |   |   |   |-- claudeService.js
 |   |   |   |   |-- module:claudeService.js
 |   |   |   |   |-- class:ClaudeService extends AIService [internal]
@@ -796,17 +982,40 @@
 |   |   |   |   |-- class:CoachingEngine extends BaseEngine [internal]
 |   |   |   |   |-- method: constructor(config = {})
 |   |   |   |   |-- method: processMessage(sessionId, message, options = {})
-|   |   |   |   |-- method: _updateWorkbookProgress(sessionId, message, response)
+|   |   |   |   |-- method: _updateWorkbookProgress(sessionId, message, response, saveStatus)
+|   |   |   |   |-- method: _shouldTriggerEvaluation(message, workbook)
+|   |   |   |   |-- method: _triggerEvaluation(sessionId, workbook)
+|   |   |   |-- diagramAiService.js
+|   |   |   |   |-- module:diagramAiService.js
+|   |   |   |   |-- class:DiagramAiService [internal]
+|   |   |   |   |-- method: constructor(aiService)
+|   |   |   |   |-- method: analyzeDiagram(sessionId, diagramType)
+|   |   |   |   |-- method: getSuggestions(sessionId, diagramData, context)
+|   |   |   |   |-- component:DiagramDataProcessor [internal]
+|   |   |   |   |-- component:WorkbookDiagramService [internal]
+|   |   |   |-- diagramAnalyzer.js
+|   |   |   |   |-- module:diagramAnalyzer.js
+|   |   |   |   |-- class:DiagramAnalyzer [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: analyzeDiagram(nodes, edges, type = 'system')
+|   |   |   |   |-- method: _analyzeComponents(nodes)
+|   |   |   |   |-- method: _analyzeConnections(edges)
+|   |   |   |   |-- method: _detectPatterns(nodes, edges)
+|   |   |   |   |-- method: _calculateMetrics(nodes, edges)
+|   |   |   |   |-- method: _hasLoadBalancing(nodes, edges)
+|   |   |   |   |-- method: _hasCaching(nodes)
+|   |   |   |   |-- method: _hasMicroservices(nodes, edges)
+|   |   |   |   |-- method: _calculateComplexity(nodes, edges)
+|   |   |   |   |-- method: _calculateConnectivity(nodes, edges)
+|   |   |   |   |-- method: _calculateModularity(nodes, edges)
 |   |   |   +-- index.js
 |   |   |       |-- module:index.js
 |   |   |-- coaching
 |   |   |   |-- coachingService.js
 |   |   |   |   |-- module:coachingService.js
 |   |   |   |   |-- class:CoachingService [internal]
-|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: constructor(aiService)
 |   |   |   |   |-- method: processMessage(sessionId, message, context = {})
-|   |   |   |   |-- method: analyzeDiagram(sessionId, diagram)
-|   |   |   |   |-- method: _logInteraction(sessionId, message, response)
 |   |   |   +-- WorkbookService.js
 |   |   |       |-- module:WorkbookService.js
 |   |   |       |-- class:WorkbookService [internal]
@@ -900,6 +1109,15 @@
 |   |   |   |   |-- class:DiagramAnalyzer [internal]
 |   |   |   |   |-- method: constructor()
 |   |   |   |   |-- method: analyzeDiagram(nodes, edges, type)
+|   |   |   |-- diagramDataProcessor.js
+|   |   |   |   |-- module:diagramDataProcessor.js
+|   |   |   |   |-- class:DiagramDataProcessor [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: reactFlowToMermaid(nodes, edges, type)
+|   |   |   |   |-- method: _processSequenceDiagram(nodes, edges)
+|   |   |   |   |-- method: _processSystemDiagram(nodes, edges)
+|   |   |   |   |-- method: mermaidToReactFlow(mermaidCode, type)
+|   |   |   |   |-- method: validateDiagramData(nodes, edges, type)
 |   |   |   |-- diagramEvaluationService.js
 |   |   |   |   |-- module:diagramEvaluationService.js
 |   |   |   |   |-- class:DiagramEvaluationService [internal]
@@ -986,6 +1204,10 @@
 |   |   |   |   |-- method: _detectCaching(nodes, edges, requirements)
 |   |   |   |   |-- method: _detectMessageQueue(nodes, edges, requirements)
 |   |   |   |   |-- method: _detectApiGateway(nodes, edges, requirements)
+|   |   |   |-- sequenceDiagramUtils.js
+|   |   |   |   |-- module:sequenceDiagramUtils.js
+|   |   |   |   |-- fn: calculateTimePosition(messages) [internal]
+|   |   |   |   |-- fn: generateMermaidCode(nodes, edges) [internal]
 |   |   |   +-- templates.js
 |   |   |       |-- module:templates.js
 |   |   |-- engines
@@ -1092,8 +1314,8 @@
 |   |   |   +-- progressTrackingService.js
 |   |   |       |-- module:progressTrackingService.js
 |   |   |       |-- class:ProgressTrackingService [internal]
-|   |   |       |-- method: trackProgress(sessionId, userId)
-|   |   |       |-- method: getProgressTimeline(sessionId)
+|   |   |       |-- method: trackSectionProgress(sessionId, sectionId, review)
+|   |   |       |-- method: _calculateTrend(previousReviews, currentScore)
 |   |   |-- skills
 |   |   |   |-- skillEvaluationService.js
 |   |   |   |   |-- module:skillEvaluationService.js
@@ -1124,11 +1346,25 @@
 |   |   |       |-- method: generateErDiagram(entities, title)
 |   |   |       |-- method: generateApiDiagram(entities, title)
 |   |   |-- workbook
-|   |   |   +-- workbookDiagramService.js
-|   |   |       |-- module:workbookDiagramService.js
-|   |   |       |-- class:WorkbookDiagramService [internal]
-|   |   |       |-- method: getDiagram(sessionId, diagramType)
-|   |   |       |-- method: saveDiagram(sessionId, diagramType, diagramData)
+|   |   |   |-- workbookDiagramService.js
+|   |   |   |   |-- module:workbookDiagramService.js
+|   |   |   |   |-- class:WorkbookDiagramService [internal]
+|   |   |   |   |-- method: getDiagram(sessionId, diagramType)
+|   |   |   |   |-- method: saveDiagram(sessionId, diagramType, diagramData)
+|   |   |   |-- workbookService.js
+|   |   |   |   |-- module:workbookService.js
+|   |   |   |   |-- class:WorkbookService [internal]
+|   |   |   |   |-- method: constructor()
+|   |   |   |   |-- method: saveWorkbook(sessionId, data, userId)
+|   |   |   |   |-- method: saveWithRetry(sessionId, data, userId)
+|   |   |   |   |-- method: getWorkbook(sessionId)
+|   |   |   |   |-- method: getVersionHistory(sessionId)
+|   |   |   |   |-- method: calculateChanges(oldData, newData)
+|   |   |   +-- workbookStorage.js
+|   |   |       |-- module:workbookStorage.js
+|   |   |       |-- class:WorkbookStorage [internal]
+|   |   |       |-- method: saveWorkbookData(sessionId, data, userId)
+|   |   |       |-- method: autoSaveWorkbook(sessionId, data, userId)
 |   |   |-- CoachEngine.js
 |   |   |   |-- module:CoachEngine.js
 |   |   |   |-- class:CoachEngine [internal]
@@ -1140,7 +1376,31 @@
 |   |       |-- fn: formatSystemPrompt(prompt) [internal]
 |   |-- tempresults
 |   |-- tests
-|   |   +-- ai.test.js
+|   |   |-- e2e
+|   |   |   +-- api.test.js
+|   |   |-- integration
+|   |   |   |-- ai.test.js
+|   |   |   |   |-- method: constructor(config)
+|   |   |   |   |-- method: sendMessage(messages, options = {})
+|   |   |   |   |-- method: processMessage(sessionId, message, context)
+|   |   |   +-- workbook.test.js
+|   |   |-- unit
+|   |   |   +-- services
+|   |   |       +-- aiService.test.js
+|   |   |-- utils
+|   |   |   +-- mockIndexedDB.js
+|   |   |       |-- module:mockIndexedDB.js
+|   |   |       |-- method: clear()
+|   |   |       |-- method: put(storeName, value, key)
+|   |   |       |-- method: get(storeName, key)
+|   |   |-- ai.test.js
+|   |   |   |-- method: constructor(config)
+|   |   |   |-- method: sendMessage(messages, options = {})
+|   |   |   |-- method: processMessage(sessionId, message, context)
+|   |   |-- jest.setup.js
+|   |   |-- setup.js
+|   |   |-- structure.js
+|   |   +-- structure.md
 |   |-- utils
 |   |   |-- dbHealth.js
 |   |   |   |-- module:dbHealth.js
@@ -1152,17 +1412,24 @@
 |   |-- app.js
 |   |   |-- module:app.js
 |   |-- index.js
+|   |-- jest.config.js
+|   |   |-- module:jest.config.js
 |   +-- testAnthropic.js
 |       |-- fn: testAnthropic() [internal]
 |       |-- method: testAnthropic()
 |-- tests
+|   |-- services
+|   |   +-- diagram
+|   |       +-- diagramDataProcessor.test.js
+|   |           |-- component:DiagramDataProcessor [internal]
 |   +-- diagram.test.js
 |-- advanced_tree_structure.txt
 |-- all_source_code.txt
 |-- folders.txt
+|-- jest.setup.js
 |-- js_files.txt
 |-- md_files.txt
-|-- project_overview.txt
+|-- prompt.txt
 |-- README.md
 |-- sysdesignsummarydata.txt
 |-- todolist-phase1.md

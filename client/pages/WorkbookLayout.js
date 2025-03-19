@@ -20,35 +20,37 @@ import WorkbookPageWrapper from './WorkbookPageWrapper';
 
 // The color mapping function for tabs
 const getTabStyles = (tabId, isActive) => {
+  const baseStyle = "flex items-center py-4 px-4 text-sm font-medium rounded-lg transition-colors";
+  
   switch(tabId) {
     case 'requirements':
-      return isActive 
-        ? "border-indigo-500 text-indigo-600" 
-        : "text-gray-500 hover:text-indigo-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-indigo-100 text-indigo-700 border-indigo-500" 
+        : "text-gray-500 hover:bg-indigo-50 hover:text-indigo-700"}`;
     case 'api':
-      return isActive 
-        ? "border-green-500 text-green-600" 
-        : "text-gray-500 hover:text-green-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-green-100 text-green-700 border-green-500" 
+        : "text-gray-500 hover:bg-green-50 hover:text-green-700"}`;
     case 'data':
-      return isActive 
-        ? "border-purple-500 text-purple-600" 
-        : "text-gray-500 hover:text-purple-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-purple-100 text-purple-700 border-purple-500" 
+        : "text-gray-500 hover:bg-purple-50 hover:text-purple-700"}`;
     case 'architecture':
-      return isActive 
-        ? "border-blue-500 text-blue-600" 
-        : "text-gray-500 hover:text-blue-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-blue-100 text-blue-700 border-blue-500" 
+        : "text-gray-500 hover:bg-blue-50 hover:text-blue-700"}`;
     case 'scaling':
-      return isActive 
-        ? "border-orange-500 text-orange-600" 
-        : "text-gray-500 hover:text-orange-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-orange-100 text-orange-700 border-orange-500" 
+        : "text-gray-500 hover:bg-orange-50 hover:text-orange-700"}`;
     case 'reliability':
-      return isActive 
-        ? "border-red-500 text-red-600" 
-        : "text-gray-500 hover:text-red-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-red-100 text-red-700 border-red-500" 
+        : "text-gray-500 hover:bg-red-50 hover:text-red-700"}`;
     default:
-      return isActive 
-        ? "border-gray-500 text-gray-600" 
-        : "text-gray-500 hover:text-gray-700 hover:border-gray-300";
+      return `${baseStyle} ${isActive 
+        ? "bg-gray-100 text-gray-700" 
+        : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"}`;
   }
 };
 
@@ -192,11 +194,7 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center py-4 px-4 text-sm font-medium relative ${
-                  activeTab === tab.id
-                    ? `border-b-2 ${getTabStyles(tab.id, true)}`
-                    : getTabStyles(tab.id, false)
-                }`}
+                className={getTabStyles(tab.id, activeTab === tab.id)}
               >
                 {tab.icon}
                 <span className="ml-2">{tab.label}</span>

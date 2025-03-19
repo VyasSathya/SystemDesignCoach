@@ -1030,9 +1030,38 @@ const CoachingSessionPage = () => {
                       key={tab.id}
                       onClick={() => setActiveWorkbookTab(tab.id)}
                       className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                        activeWorkbookTab === tab.id
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-600 hover:bg-gray-100'
+                        (() => {
+                          switch(tab.id) {
+                            case 'requirements':
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-indigo-100 text-indigo-700' 
+                                : 'text-gray-600 hover:bg-indigo-50';
+                            case 'api':
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'text-gray-600 hover:bg-green-50';
+                            case 'data':
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-purple-100 text-purple-700' 
+                                : 'text-gray-600 hover:bg-purple-50';
+                            case 'architecture':
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : 'text-gray-600 hover:bg-blue-50';
+                            case 'scaling':
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-orange-100 text-orange-700' 
+                                : 'text-gray-600 hover:bg-orange-50';
+                            case 'reliability':
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-red-100 text-red-700' 
+                                : 'text-gray-600 hover:bg-red-50';
+                            default:
+                              return activeWorkbookTab === tab.id 
+                                ? 'bg-gray-100 text-gray-700' 
+                                : 'text-gray-600 hover:bg-gray-50';
+                          }
+                        })()
                       }`}
                     >
                       {tab.icon}
