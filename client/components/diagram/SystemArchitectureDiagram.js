@@ -16,14 +16,6 @@ import 'reactflow/dist/style.css';
 import { workbookService } from '../../services/workbookService';
 import { toast } from 'react-toastify';
 
-// Define nodeTypes outside the component
-const nodeTypes = {
-  custom: CustomNode,
-  user: BaseNode,
-  system: BaseNode,
-  database: BaseNode
-};
-
 const SystemArchitectureDiagram = ({ userId, problemId }) => {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -34,6 +26,14 @@ const SystemArchitectureDiagram = ({ userId, problemId }) => {
   const [pendingNodeType, setPendingNodeType] = useState(null);
   const [newNodeName, setNewNodeName] = useState('');
   const [nodeData, setNodeData] = useState(null);
+
+  // Memoize node types
+  const memoizedNodeTypes = useMemo(() => ({
+    custom: CustomNode,
+    user: BaseNode,
+    system: BaseNode,
+    database: BaseNode
+  }), []);
 
   // Create a memoized storage key
   const storageKey = useMemo(() => 
