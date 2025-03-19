@@ -1,9 +1,9 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import workbookService from '../services/workbookService';
 
-const WorkbookContext = createContext(null);
+const WorkbookContext = createContext();
 
 const initialState = {
   currentProblem: null,
@@ -115,9 +115,18 @@ const workbookReducer = (state, action) => {
 };
 
 export const WorkbookProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(workbookReducer, initialState);
+  const [state, dispatch] = useReducer(workbookReducer, {
+    currentProblem: null,
+    user: null,
+    ...initialState
+  });
   const router = useRouter();
   const { user } = useAuth();
+
+  // Initialize workbook service
+  const workbookService = useMemo(() => ({
+    // ... your workbook service methods
+  }), []);
 
   const updatePageContent = (pageId, content) => {
     dispatch({

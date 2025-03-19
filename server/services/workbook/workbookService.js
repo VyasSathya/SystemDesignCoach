@@ -34,7 +34,7 @@ class WorkbookService {
     }
   }
 
-  async saveDiagram(userId, problemId, type, diagramData) {
+  async saveDiagram(userId, problemId, diagramData, type) {
     try {
       const update = {
         [`diagrams.${type}`]: {
@@ -52,7 +52,17 @@ class WorkbookService {
 
       return workbook.diagrams[type];
     } catch (error) {
-      logger.error('Error saving diagram:', error);
+      logger.error(`Error saving ${type} diagram:`, error);
+      throw error;
+    }
+  }
+
+  async getDiagram(userId, problemId, type) {
+    try {
+      const workbook = await WorkbookData.findOne({ userId, problemId });
+      return workbook?.diagrams?.[type] || null;
+    } catch (error) {
+      logger.error(`Error getting ${type} diagram:`, error);
       throw error;
     }
   }

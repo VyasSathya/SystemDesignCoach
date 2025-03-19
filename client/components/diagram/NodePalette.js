@@ -88,7 +88,7 @@ const NodePalette = ({ onNodeAdd }) => {
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+    <div className="bg-white border-t border-gray-200">
       <div className="flex justify-between items-center px-4 py-3">
         {nodeCategories.map((categoryData) => {
           const IconComponent = categoryData.icon;
