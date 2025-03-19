@@ -624,8 +624,9 @@ const CoachingSessionPage = () => {
       return (
         <div className="relative h-full">
           <SystemSequenceDiagram 
-            initialDiagram={currentDiagramState}
+            initialData={currentDiagramState}
             onDiagramUpdate={handleDiagramUpdate}
+            sessionId={sessionId}
           />
         </div>
       );

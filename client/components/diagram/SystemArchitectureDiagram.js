@@ -13,6 +13,7 @@ import NodePalette from './NodePalette';
 import CustomNode from './NodeTypes/CustomNode';
 import BaseNode from './NodeTypes/BaseNode';
 import 'reactflow/dist/style.css';
+import { workbookService } from '../../services/workbookService';
 
 // Define nodeTypes outside the component
 const nodeTypes = {
@@ -22,34 +23,16 @@ const nodeTypes = {
   database: BaseNode
 };
 
-const SystemArchitectureDiagram = () => {
-  // Initialize state from localStorage if available
+const SystemArchitectureDiagram = ({ problemId, userId }) => {
+  // Initialize state from workbookService
   const [nodes, setNodes] = useState(() => {
-    const savedState = localStorage.getItem('currentSystemDiagramState');
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        return parsed.nodes || [];
-      } catch (e) {
-        console.error('Failed to parse saved state:', e);
-        return [];
-      }
-    }
-    return [];
+    const saved = workbookService.getDiagram(userId, problemId, 'system');
+    return saved?.nodes || [];
   });
 
   const [edges, setEdges] = useState(() => {
-    const savedState = localStorage.getItem('currentSystemDiagramState');
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        return parsed.edges || [];
-      } catch (e) {
-        console.error('Failed to parse saved state:', e);
-        return [];
-      }
-    }
-    return [];
+    const saved = workbookService.getDiagram(userId, problemId, 'system');
+    return saved?.edges || [];
   });
 
   const [selectedNode, setSelectedNode] = useState(null);
@@ -163,7 +146,7 @@ const SystemArchitectureDiagram = () => {
         nodes,
         edges
       };
-      localStorage.setItem('currentSystemDiagramState', JSON.stringify(diagramData));
+      localStorage.setItem(storageKey, JSON.stringify(diagramData));
       console.log('Diagram saved successfully');
     } catch (error) {
       console.error('Error saving diagram:', error);
@@ -176,8 +159,8 @@ const SystemArchitectureDiagram = () => {
       nodes,
       edges
     };
-    localStorage.setItem('currentSystemDiagramState', JSON.stringify(state));
-  }, [nodes, edges]);
+    workbookService.saveDiagram(userId, problemId, state, 'system');
+  }, [nodes, edges, userId, problemId]);
 
   return (
     <div style={{ width: '100%', height: '77vh' }} className="relative">  {/* Changed from 80vh to 75vh */}

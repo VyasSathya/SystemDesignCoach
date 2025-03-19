@@ -13,7 +13,8 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Server, Database, Users, GitMerge, GitPullRequest, MessageSquare, Save } from 'lucide-react';
 import MessageEdge from './components/MessageEdge';
-
+import { workbookService } from '../../services/workbookService';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Node styles definition
 const getNodeStyle = (type) => {
@@ -278,52 +279,38 @@ const MenuPanel = ({
 };
 
 // Main Sequence Diagram Component
-const SystemSequenceDiagram = ({ initialState = null, onSave }) => {
-  // Initialize state from props first, then localStorage as fallback
+const SystemSequenceDiagram = ({ onSave, initialData, sessionId }) => {
+  const { user } = useAuth(); // Get user from auth context
+  
+  // Initialize state using initialData or defaults
   const [nodes, setNodes] = useState(() => {
-    if (initialState?.nodes) {
-      return initialState.nodes;
-    }
     const savedState = localStorage.getItem('currentSequenceDiagramState');
     if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        return parsed.nodes;
-      } catch (e) {
-        console.error('Failed to parse saved state:', e);
-      }
+      const parsed = JSON.parse(savedState);
+      return parsed.nodes || [];
     }
-    return [
-      {
-        id: '1',
-        type: 'user',
-        position: { x: 150, y: 50 },
-        data: { label: 'User' }
-      },
-      {
-        id: '2',
-        type: 'system',
-        position: { x: 300, y: 50 },
-        data: { label: 'System' }
-      }
-    ];
+    return initialData?.nodes || [];
   });
 
   const [edges, setEdges] = useState(() => {
-    if (initialState?.edges) {
-      return initialState.edges;
-    }
     const savedState = localStorage.getItem('currentSequenceDiagramState');
     if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        return parsed.edges;
-      } catch (e) {
-        console.error('Failed to parse saved state:', e);
-      }
+      const parsed = JSON.parse(savedState);
+      return parsed.edges || [];
     }
-    return [];
+    return initialData?.edges || [];
   });
+
+  // Persistence effect
+  useEffect(() => {
+    if (!user?.id || !sessionId) return; // Add guard clause
+    
+    const state = {
+      nodes,
+      edges
+    };
+    workbookService.saveDiagram(user.id, sessionId, state, 'sequence');
+  }, [nodes, edges, user?.id, sessionId]);
 
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -373,7 +360,7 @@ const SystemSequenceDiagram = ({ initialState = null, onSave }) => {
     const state = {
       nodes,
       edges,
-      mermaidCode: initialState?.mermaidCode || ''
+      mermaidCode: initialData?.mermaidCode || ''  // Use initialData instead of initialState
     };
     
     // Save to localStorage
@@ -383,7 +370,7 @@ const SystemSequenceDiagram = ({ initialState = null, onSave }) => {
     if (onSave) {
       onSave(state);
     }
-  }, [nodes, edges, initialState?.mermaidCode, onSave]);
+  }, [nodes, edges, initialData?.mermaidCode, onSave]);
 
   const handleSave = () => {
     // Implement your save logic here
@@ -467,7 +454,7 @@ const SystemSequenceDiagram = ({ initialState = null, onSave }) => {
       const diagramData = {
         nodes,
         edges,
-        mermaidCode: initialState?.mermaidCode || ''
+        mermaidCode: initialData?.mermaidCode || ''  // Use initialData instead of initialState
       };
       
       // Save to localStorage
@@ -483,7 +470,7 @@ const SystemSequenceDiagram = ({ initialState = null, onSave }) => {
       console.error('Error saving diagram:', error);
       // Here you might want to show an error notification to the user
     }
-  }, [nodes, edges, initialState?.mermaidCode, onSave]);
+  }, [nodes, edges, initialData?.mermaidCode, onSave]);
 
   return (
     <div className="h-full flex flex-col">
