@@ -1,498 +1,448 @@
 import React, { useState } from 'react';
-import { MessageSquare, Save, ChevronDown, ChevronUp, Check, Plus, Trash2, PenTool } from 'lucide-react';
 
-const EnhancedScalingStrategyPage = ({ data = {}, updateData }) => {
-  // Preserve original state management for functionality
-  const [sections, setSections] = useState(
-    data.sections ? JSON.parse(data.sections) : [
-      {
-        id: 'traffic',
-        title: 'Traffic Estimation',
-        description: 'Estimate the scale and volume of your system',
-        expanded: true,
-        fields: [
-          { id: 'dau', label: 'Daily Active Users (DAU)', value: '', unit: 'users' },
-          { id: 'requestsPerUser', label: 'Requests per user per day', value: '', unit: 'requests' },
-          { id: 'peakQPS', label: 'Peak QPS (Queries Per Second)', value: '', unit: 'QPS' }
-        ]
-      },
-      {
-        id: 'storage',
-        title: 'Storage Requirements',
-        description: 'Calculate how much data you need to store',
-        expanded: false,
-        fields: [
-          { id: 'objectSize', label: 'Average object size', value: '', unit: 'KB' },
-          { id: 'dailyNewData', label: 'New data per day', value: '', unit: 'GB' },
-          { id: 'retentionPeriod', label: 'Data retention period', value: '', unit: 'days' },
-          { id: 'totalStorage', label: 'Total storage needed', value: '', unit: 'TB' }
-        ]
-      },
-      {
-        id: 'bandwidth',
-        title: 'Bandwidth Estimation',
-        description: 'Estimate inbound and outbound network traffic',
-        expanded: false,
-        fields: [
-          { id: 'inboundTraffic', label: 'Inbound traffic per day', value: '', unit: 'GB' },
-          { id: 'outboundTraffic', label: 'Outbound traffic per day', value: '', unit: 'GB' },
-          { id: 'peakBandwidth', label: 'Peak bandwidth requirement', value: '', unit: 'Mbps' }
-        ]
-      },
-      {
-        id: 'memory',
-        title: 'Memory Requirements',
-        description: 'Estimate cache and working memory needs',
-        expanded: false,
-        fields: [
-          { id: 'cacheSize', label: 'Total cache size', value: '', unit: 'GB' },
-          { id: 'cacheHitRate', label: 'Target cache hit rate', value: '', unit: '%' }
-        ]
-      }
-    ]
-  );
-
-  const [strategies, setStrategies] = useState(
-    data.strategies ? JSON.parse(data.strategies) : [
-      {
-        id: 'horizontal',
-        title: 'Horizontal Scaling',
-        applied: false,
-        description: '',
-        components: []
-      },
-      {
-        id: 'vertical',
-        title: 'Vertical Scaling',
-        applied: false,
-        description: '',
-        components: []
-      },
-      {
-        id: 'caching',
-        title: 'Caching Strategy',
-        applied: false,
-        description: '',
-        layers: []
-      },
-      {
-        id: 'database',
-        title: 'Database Scaling',
-        applied: false,
-        description: '',
-        techniques: []
-      }
-    ]
-  );
-
-  const [bottlenecks, setBottlenecks] = useState(
-    data.bottlenecks ? JSON.parse(data.bottlenecks) : [
-      { id: 1, description: '', solution: '' }
-    ]
-  );
-
-  // Toggle section expansion
-  const toggleSection = (sectionId) => {
-    const updatedSections = sections.map(section => 
-      section.id === sectionId 
-        ? { ...section, expanded: !section.expanded } 
-        : section
-    );
-    setSections(updatedSections);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        sections: JSON.stringify(updatedSections)
-      });
-    }
+const ScalingStrategyPage = () => {
+  const [previewMode, setPreviewMode] = useState(true);
+  
+  // Toggle preview mode
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
   };
-
-  // Update field value
-  const updateFieldValue = (sectionId, fieldId, value) => {
-    const updatedSections = sections.map(section => 
-      section.id === sectionId 
-        ? {
-            ...section,
-            fields: section.fields.map(field => 
-              field.id === fieldId ? { ...field, value } : field
-            )
-          } 
-        : section
-    );
-    setSections(updatedSections);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        sections: JSON.stringify(updatedSections)
-      });
-    }
-  };
-
-  // Toggle a scaling strategy's applied status
-  const toggleStrategy = (strategyId) => {
-    const updatedStrategies = strategies.map(strategy => 
-      strategy.id === strategyId 
-        ? { ...strategy, applied: !strategy.applied } 
-        : strategy
-    );
-    setStrategies(updatedStrategies);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        strategies: JSON.stringify(updatedStrategies)
-      });
-    }
-  };
-
-  // Update strategy description
-  const updateStrategyDescription = (strategyId, description) => {
-    const updatedStrategies = strategies.map(strategy => 
-      strategy.id === strategyId 
-        ? { ...strategy, description } 
-        : strategy
-    );
-    setStrategies(updatedStrategies);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        strategies: JSON.stringify(updatedStrategies)
-      });
-    }
-  };
-
-  // Add a component to a strategy
-  const addStrategyComponent = (strategyId) => {
-    const updatedStrategies = strategies.map(strategy => {
-      if (strategy.id === strategyId) {
-        return {
-          ...strategy,
-          components: [
-            ...strategy.components,
-            { id: Date.now(), name: '', details: '' }
-          ]
-        };
-      }
-      return strategy;
-    });
-    
-    setStrategies(updatedStrategies);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        strategies: JSON.stringify(updatedStrategies)
-      });
-    }
-  };
-
-  // Update a component in a strategy
-  const updateStrategyComponent = (strategyId, componentId, field, value) => {
-    const updatedStrategies = strategies.map(strategy => {
-      if (strategy.id === strategyId) {
-        return {
-          ...strategy,
-          components: strategy.components.map(component => 
-            component.id === componentId 
-              ? { ...component, [field]: value } 
-              : component
-          )
-        };
-      }
-      return strategy;
-    });
-    
-    setStrategies(updatedStrategies);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        strategies: JSON.stringify(updatedStrategies)
-      });
-    }
-  };
-
-  // Remove a component from a strategy
-  const removeStrategyComponent = (strategyId, componentId) => {
-    const updatedStrategies = strategies.map(strategy => {
-      if (strategy.id === strategyId) {
-        return {
-          ...strategy,
-          components: strategy.components.filter(component => component.id !== componentId)
-        };
-      }
-      return strategy;
-    });
-    
-    setStrategies(updatedStrategies);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        strategies: JSON.stringify(updatedStrategies)
-      });
-    }
-  };
-
-  // Add a bottleneck
-  const addBottleneck = () => {
-    const updatedBottlenecks = [
-      ...bottlenecks,
-      { id: Date.now(), description: '', solution: '' }
-    ];
-    
-    setBottlenecks(updatedBottlenecks);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        bottlenecks: JSON.stringify(updatedBottlenecks)
-      });
-    }
-  };
-
-  // Update a bottleneck
-  const updateBottleneck = (bottleneckId, field, value) => {
-    const updatedBottlenecks = bottlenecks.map(bottleneck => 
-      bottleneck.id === bottleneckId 
-        ? { ...bottleneck, [field]: value } 
-        : bottleneck
-    );
-    
-    setBottlenecks(updatedBottlenecks);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        bottlenecks: JSON.stringify(updatedBottlenecks)
-      });
-    }
-  };
-
-  // Remove a bottleneck
-  const removeBottleneck = (bottleneckId) => {
-    const updatedBottlenecks = bottlenecks.filter(bottleneck => bottleneck.id !== bottleneckId);
-    
-    setBottlenecks(updatedBottlenecks);
-    
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        bottlenecks: JSON.stringify(updatedBottlenecks)
-      });
-    }
-  };
-
+  
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="flex-1 overflow-auto p-6 space-y-8">
-        {/* Coach tip box */}
-        <div className="bg-orange-50 border border-orange-100 rounded-md p-4 text-sm text-orange-700">
-          <strong className="font-medium">Coach tip:</strong> Focus on concrete metrics when estimating scale. Consider growth projections over time and identify potential bottlenecks early in your design.
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header with title and actions */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold text-orange-600">Scaling Strategy</h1>
+        <div className="flex space-x-3">
+          <button 
+            onClick={togglePreview}
+            className={`px-3 py-1.5 text-sm border rounded ${
+              previewMode ? 'bg-gray-100' : 'bg-white'
+            }`}
+          >
+            {previewMode ? 'Hide Preview' : 'Show Preview'}
+          </button>
+          <button className="px-3 py-1.5 text-sm border rounded bg-white">
+            Save Changes
+          </button>
+          <button className="px-3 py-1.5 text-sm bg-purple-50 text-purple-700 rounded">
+            Ask Coach
+          </button>
         </div>
-        
-        {/* Estimations Sections */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Scale Estimations</h2>
-            <button 
-              className="text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center"
-              onClick={() => {/* Add diagram functionality */}}
-            >
-              <PenTool size={14} className="mr-1" />
-              Add diagram
-            </button>
+      </div>
+      
+      {/* Coach tip */}
+      <div className="bg-orange-50 border border-orange-100 p-4 rounded-md text-orange-700 text-sm mb-6">
+        <strong className="font-medium">Coach tip:</strong> Plan for horizontal scaling where possible, as it tends to be more resilient than vertical scaling. Identify potential bottlenecks early and have strategies to address them.
+      </div>
+      
+      {/* Progress bar */}
+      <div className="bg-white p-4 border rounded-md mb-6">
+        <div className="flex justify-between mb-2">
+          <span className="text-sm text-gray-600">Overall Progress</span>
+          <span className="text-sm font-medium">70%</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full">
+          <div className="h-full bg-orange-500 rounded-full" style={{ width: '70%' }}></div>
+        </div>
+        <div className="mt-4 text-center text-sm text-gray-500">
+          <span className="font-medium">3</span> of <span className="font-medium">4</span> sections completed
+        </div>
+      </div>
+      
+      {/* Main content area */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left column: Scaling strategy forms */}
+        <div className="space-y-6">
+          {/* Scaling Strategies */}
+          <div className="bg-white border rounded-md overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
+              <h2 className="font-medium text-gray-800">Scaling Strategies</h2>
+              <button className="text-orange-600 text-sm font-medium">
+                + Add Strategy
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* First scaling strategy */}
+              <div className="border rounded-md p-3 bg-white">
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="col-span-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-md"
+                      defaultValue="API Services"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                    <select className="w-full px-2 py-1 text-sm border rounded-md">
+                      <option value="horizontal" selected>Horizontal</option>
+                      <option value="vertical">Vertical</option>
+                      <option value="database">Database</option>
+                    </select>
+                  </div>
+                  <div className="col-span-6">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Strategy</label>
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-md"
+                      defaultValue="Add more instances behind load balancer"
+                    />
+                  </div>
+                  <div className="col-span-1 flex items-end justify-center">
+                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Details</label>
+                  <textarea
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="Use auto-scaling based on CPU utilization (>70%) and request count"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              
+              {/* Second scaling strategy */}
+              <div className="border rounded-md p-3 bg-white">
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="col-span-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-md"
+                      defaultValue="Database"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                    <select className="w-full px-2 py-1 text-sm border rounded-md">
+                      <option value="horizontal">Horizontal</option>
+                      <option value="vertical" selected>Vertical</option>
+                      <option value="database">Database</option>
+                    </select>
+                  </div>
+                  <div className="col-span-6">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Strategy</label>
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-md"
+                      defaultValue="Increase database instance size"
+                    />
+                  </div>
+                  <div className="col-span-1 flex items-end justify-center">
+                    <input type="checkbox" className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Details</label>
+                  <textarea
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="Scale up when memory usage exceeds 80 percent or disk IO is high"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           
-          <div className="space-y-4">
-            {sections.map(section => (
-              <div key={section.id} className="border border-gray-300 rounded-md shadow-sm">
-                <div 
-                  className="flex justify-between items-center p-3 bg-gray-100 cursor-pointer"
-                  onClick={() => toggleSection(section.id)}
-                >
-                  <div>
-                    <h3 className="font-medium text-gray-800">{section.title}</h3>
-                    <p className="text-sm text-gray-600">{section.description}</p>
+          {/* Bottlenecks */}
+          <div className="bg-white border rounded-md overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
+              <h2 className="font-medium text-gray-800">Bottlenecks & Solutions</h2>
+              <button className="text-orange-600 text-sm font-medium">
+                + Add Bottleneck
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="border rounded-md p-3 bg-white">
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="col-span-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-md"
+                      defaultValue="Database"
+                    />
                   </div>
-                  <div>
-                    {section.expanded ? (
-                      <ChevronUp size={20} className="text-gray-500" />
-                    ) : (
-                      <ChevronDown size={20} className="text-gray-500" />
-                    )}
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                    <select className="w-full px-2 py-1 text-sm border rounded-md">
+                      <option value="high" selected>High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                  <div className="col-span-6">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Issue</label>
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-md"
+                      defaultValue="High read query volume during peak hours"
+                    />
+                  </div>
+                  <div className="col-span-1 flex items-end justify-center">
+                    <input type="checkbox" defaultChecked className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Solution</label>
+                  <textarea
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="Implement read replicas and connection pooling"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Performance Metrics */}
+          <div className="bg-white border rounded-md overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
+              <h2 className="font-medium text-gray-800">Performance Metrics</h2>
+              <button className="text-orange-600 text-sm font-medium">
+                + Add Metric
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-12 gap-2 items-center bg-white p-3 border rounded-md">
+                <div className="col-span-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Metric</label>
+                  <input
+                    type="text"
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="Response Time"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Target</label>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-l-md"
+                      defaultValue="200"
+                    />
+                    <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r-md text-sm">ms</span>
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Current</label>
+                  <input
+                    type="text"
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="180"
+                  />
+                </div>
+                <div className="col-span-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Context</label>
+                  <input
+                    type="text"
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="P95 API response time"
+                  />
+                </div>
+                <div className="col-span-1 flex items-end justify-center">
+                  <input type="checkbox" defaultChecked className="h-4 w-4" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-12 gap-2 items-center bg-white p-3 border rounded-md">
+                <div className="col-span-3">
+                  <input
+                    type="text"
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="Throughput"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <div className="flex">
+                    <input
+                      type="text"
+                      className="w-full px-2 py-1 text-sm border rounded-l-md"
+                      defaultValue="1000"
+                    />
+                    <span className="bg-gray-100 px-2 py-1 border border-l-0 rounded-r-md text-sm">req/s</span>
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <input
+                    type="text"
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="850"
+                  />
+                </div>
+                <div className="col-span-4">
+                  <input
+                    type="text"
+                    className="w-full px-2 py-1 text-sm border rounded-md"
+                    defaultValue="Maximum requests per second"
+                  />
+                </div>
+                <div className="col-span-1 flex items-end justify-center">
+                  <input type="checkbox" className="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Capacity Planning */}
+          <div className="bg-white border rounded-md overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b">
+              <h2 className="font-medium text-gray-800">Capacity Planning</h2>
+            </div>
+            <div className="p-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current Load</label>
+                <textarea
+                  className="w-full px-3 py-2 text-sm border rounded-md"
+                  defaultValue="Average 500 req/s with peaks of 850 req/s during business hours. 10,000 daily active users."
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Projected Growth</label>
+                <textarea
+                  className="w-full px-3 py-2 text-sm border rounded-md"
+                  defaultValue="20 percent user growth expected in next quarter. 50 percent increase in data storage needs annually."
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Scaling Triggers</label>
+                <textarea
+                  className="w-full px-3 py-2 text-sm border rounded-md"
+                  defaultValue="CPU utilization above 70 percent for 5 minutes, memory usage above 80 percent, response time above 300ms"
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cost Considerations</label>
+                <textarea
+                  className="w-full px-3 py-2 text-sm border rounded-md"
+                  defaultValue="Reserved instances for baseline load, spot instances for handling peaks. Estimated 15 percent cost increase next quarter."
+                  rows={2}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Right column: Preview */}
+        {previewMode && (
+          <div className="space-y-6">
+            <div className="bg-white border rounded-md overflow-hidden sticky top-6">
+              <div className="bg-gray-50 px-4 py-3 border-b">
+                <h3 className="font-medium text-gray-800">Scaling Strategy Preview</h3>
+              </div>
+              <div className="p-4">
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Scaling Strategies</h4>
+                  <div className="space-y-3">
+                    <div className="border-l-4 border-orange-500 pl-3">
+                      <div className="flex justify-between items-start">
+                        <h5 className="text-sm font-medium">API Services - Horizontal Scaling</h5>
+                        <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Implemented</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">Add more instances behind load balancer</p>
+                      <p className="text-xs text-gray-500 mt-1">Use auto-scaling based on CPU utilization (over 70%) and request count</p>
+                    </div>
+                    
+                    <div className="border-l-4 border-orange-500 pl-3">
+                      <div className="flex justify-between items-start">
+                        <h5 className="text-sm font-medium">Database - Vertical Scaling</h5>
+                        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-800 text-xs rounded-full">Planned</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">Increase database instance size</p>
+                      <p className="text-xs text-gray-500 mt-1">Scale up when memory usage exceeds 80 percent or disk IO is high</p>
+                    </div>
                   </div>
                 </div>
                 
-                {section.expanded && (
-                  <div className="p-3 border-t border-gray-300 bg-white">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {section.fields.map(field => (
-                        <div key={field.id} className="flex flex-col">
-                          <label className="text-sm font-medium text-gray-700 mb-1">{field.label}</label>
-                          <div className="flex">
-                            <input
-                              type="text"
-                              value={field.value}
-                              onChange={(e) => updateFieldValue(section.id, field.id, e.target.value)}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                              placeholder="Enter value"
-                            />
-                            <span className="bg-gray-100 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md text-gray-500">
-                              {field.unit}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Scaling Strategies */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Scaling Approaches</h2>
-          
-          <div className="space-y-4">
-            {strategies.map(strategy => (
-              <div key={strategy.id} className="border border-gray-300 rounded-md overflow-hidden shadow-sm">
-                <div className="p-3 bg-white">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start">
-                      <div className="mt-0.5 mr-3">
-                        <button 
-                          onClick={() => toggleStrategy(strategy.id)}
-                          className={`w-5 h-5 rounded flex items-center justify-center ${
-                            strategy.applied ? 'bg-orange-500 text-white' : 'border border-gray-300'
-                          }`}
-                        >
-                          {strategy.applied && <Check size={14} />}
-                        </button>
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Bottlenecks & Solutions</h4>
+                  <div className="space-y-3">
+                    <div className="p-3 border rounded-md">
+                      <div className="flex justify-between items-start">
+                        <h5 className="text-sm font-medium">Database</h5>
+                        <span className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">High Priority</span>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-800">{strategy.title}</h3>
-                        <textarea
-                          value={strategy.description}
-                          onChange={(e) => updateStrategyDescription(strategy.id, e.target.value)}
-                          placeholder={`Describe your ${strategy.title.toLowerCase()} approach...`}
-                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                          rows="3"
-                        />
+                      <p className="text-xs text-gray-600 mt-1">High read query volume during peak hours</p>
+                      <div className="mt-2 p-2 bg-green-50 rounded-md text-xs">
+                        <span className="font-medium">Solution:</span> Implement read replicas and connection pooling
                       </div>
                     </div>
                   </div>
-                  
-                  {strategy.applied && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Components to Scale</h4>
-                      
-                      {strategy.components.map(component => (
-                        <div key={component.id} className="flex items-start mb-2">
-                          <input
-                            type="text"
-                            value={component.name}
-                            onChange={(e) => updateStrategyComponent(strategy.id, component.id, 'name', e.target.value)}
-                            placeholder="Component name"
-                            className="w-48 px-3 py-2 border border-gray-300 rounded-l-md text-sm focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                          <input
-                            type="text"
-                            value={component.details}
-                            onChange={(e) => updateStrategyComponent(strategy.id, component.id, 'details', e.target.value)}
-                            placeholder="How to scale this component"
-                            className="flex-1 px-3 py-2 border-t border-b border-r border-gray-300 text-sm focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                          />
-                          <button 
-                            onClick={() => removeStrategyComponent(strategy.id, component.id)}
-                            className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 hover:text-red-500"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                      
-                      <button 
-                        onClick={() => addStrategyComponent(strategy.id)}
-                        className="flex items-center text-xs text-orange-600 hover:text-orange-800 mt-2 font-medium"
-                      >
-                        <Plus size={14} className="mr-1" />
-                        Add Component
-                      </button>
+                </div>
+                
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Performance Metrics</h4>
+                  <div className="border rounded-md overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Metric</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Current</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        <tr>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">
+                            <span className="font-medium">Response Time</span>
+                            <div className="text-xs text-gray-500">P95 API response time</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">200 ms</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">180 ms</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">
+                            <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Met</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">
+                            <span className="font-medium">Throughput</span>
+                            <div className="text-xs text-gray-500">Maximum requests per second</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">1000 req/s</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">850 req/s</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">In Progress</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-semibold border-b pb-2 mb-3">Capacity Planning</h4>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <h5 className="font-medium">Current Load</h5>
+                      <p className="text-gray-600 text-xs">Average 500 req/s with peaks of 850 req/s during business hours. 10,000 daily active users.</p>
                     </div>
-                  )}
+                    <div>
+                      <h5 className="font-medium">Projected Growth</h5>
+                      <p className="text-gray-600 text-xs">20 percent user growth expected in next quarter. 50 percent increase in data storage needs annually.</p>
+                    </div>
+                    <div>
+                      <h5 className="font-medium">Scaling Triggers</h5>
+                      <p className="text-gray-600 text-xs">CPU utilization above 70 percent for 5 minutes, memory usage above 80 percent, response time above 300ms</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-        
-        {/* Bottlenecks and Solutions */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Potential Bottlenecks & Solutions</h2>
-          
-          <div className="space-y-4">
-            {bottlenecks.map(bottleneck => (
-              <div key={bottleneck.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-300 rounded-md p-4 bg-white shadow-sm">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bottleneck</label>
-                  <textarea
-                    value={bottleneck.description}
-                    onChange={(e) => updateBottleneck(bottleneck.id, 'description', e.target.value)}
-                    placeholder="Describe a potential bottleneck"
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                    rows="3"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
-                  <textarea
-                    value={bottleneck.solution}
-                    onChange={(e) => updateBottleneck(bottleneck.id, 'solution', e.target.value)}
-                    placeholder="Describe your solution"
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                    rows="3"
-                  />
-                </div>
-                <div className="md:col-span-2 flex justify-end">
-                  <button 
-                    onClick={() => removeBottleneck(bottleneck.id)}
-                    className="text-red-500 hover:text-red-700 text-sm flex items-center"
-                  >
-                    <Trash2 size={14} className="mr-1" />
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            
-            <button 
-              onClick={addBottleneck}
-              className="flex items-center text-sm text-orange-600 hover:text-orange-800 mt-2 font-medium"
-            >
-              <Plus size={16} className="mr-1" />
-              Add Another Bottleneck
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default EnhancedScalingStrategyPage;
+export default ScalingStrategyPage;
