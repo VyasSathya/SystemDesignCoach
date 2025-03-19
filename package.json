@@ -28,5 +28,8 @@
         "setupFilesAfterEnv": [
             "<rootDir>/server/tests/jest.setup.js"
         ]
+    },
+    "dependencies": {
+        "react-feather": "^2.0.10"
     }
 }

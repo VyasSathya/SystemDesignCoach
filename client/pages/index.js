@@ -9,10 +9,23 @@ const WorkbookLayout = dynamic(() => import('./WorkbookLayout'), {
 
 export default function Home() {
   const [view, setView] = useState('dashboard');
+  const [sessionId, setSessionId] = useState(null);
   
   if (view === 'workbook') {
-    return <WorkbookLayout onBack={() => setView('dashboard')} />;
+    return (
+      <WorkbookLayout 
+        onBack={() => setView('dashboard')} 
+        sessionId={sessionId}
+      />
+    );
   }
   
-  return <Dashboard onSelectWorkbook={() => setView('workbook')} />;
+  return (
+    <Dashboard 
+      onSelectWorkbook={(id) => {
+        setSessionId(id);
+        setView('workbook');
+      }} 
+    />
+  );
 }

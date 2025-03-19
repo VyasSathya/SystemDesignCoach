@@ -58,19 +58,19 @@ const CoachingSessionPage = () => {
   // Safely extract session ID from router query
   const sessionId = router.query?.id;
 
-  // Session state
+  // All state declarations grouped together at the top
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // UI state
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [activeMaterial, setActiveMaterial] = useState(null);
   const [currentTopic, setCurrentTopic] = useState('REQUIREMENTS');
   const [includeDiagram, setIncludeDiagram] = useState(false);
   const [requestDiagramSuggestions, setRequestDiagramSuggestions] = useState(false);
-  
+  const [activeWorkbookTab, setActiveWorkbookTab] = useState('requirements');
+  const [rightPanelMode, setRightPanelMode] = useState('workbook');
+
   // Add state for TopicGuidedCoaching collapsible section
   const [topicGuidedOpen, setTopicGuidedOpen] = useState(false);
   
@@ -98,19 +98,15 @@ const CoachingSessionPage = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Workbook state
-  const [rightPanelMode, setRightPanelMode] = useState('workbook'); // 'workbook' or 'diagram'
-  const [activeWorkbookTab, setActiveWorkbookTab] = useState('requirements');
-  const [formData, setFormData] = useState({
+  const [workbookState, setWorkbookState] = useState({
+    // Section data
     requirements: {},
     api: {},
     data: {},
     architecture: {},
     scaling: {},
-    reliability: {}
-  });
-
-  // Add workbook state
-  const [workbookState, setWorkbookState] = useState({
+    reliability: {},
+    // Diagram data
     diagrams: {
       system: {
         nodes: [],
@@ -124,18 +120,41 @@ const CoachingSessionPage = () => {
       }
     }
   });
-  const [currentDiagramType, setCurrentDiagramType] = useState('system');
-  const [lastDiagramState, setLastDiagramState] = useState(null);
-  const [autoSave, setAutoSave] = useState(true);
+
+  // Update function for workbook sections
+  const updateWorkbookState = (section, data) => {
+    setWorkbookState(prev => ({
+      ...prev,
+      [section]: data
+    }));
+  };
+
+  // Update function for diagrams
+  const updateDiagramState = (diagramType, diagramData) => {
+    setWorkbookState(prev => ({
+      ...prev,
+      diagrams: {
+        ...prev.diagrams,
+        [diagramType]: {
+          ...diagramData,
+          metadata: {
+            lastUpdated: new Date(),
+            version: 1,
+            type: diagramType
+          }
+        }
+      }
+    }));
+  };
 
   // Define workbook tabs
   const workbookTabs = [
     { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
-    { id: 'api', label: 'API Design', icon: <Code size={18} /> },
-    { id: 'data', label: 'Data Model', icon: <Database size={18} /> },
+    { id: 'api', label: 'API', icon: <Code size={18} /> },
+    { id: 'data', label: 'Data', icon: <Database size={18} /> },
     { id: 'architecture', label: 'Architecture', icon: <Layout size={18} /> },
-    { id: 'scaling', label: 'Scaling Strategy', icon: <BarChart size={18} /> },
-    { id: 'reliability', label: 'Reliability & Security', icon: <Shield size={18} /> }
+    { id: 'scaling', label: 'Scaling', icon: <BarChart size={18} /> },
+    { id: 'reliability', label: 'Reliability', icon: <Shield size={18} /> }
   ];
   
   // Define diagram tabs
@@ -592,6 +611,8 @@ const CoachingSessionPage = () => {
     }
   };
 
+  const [lastDiagramState, setLastDiagramState] = useState(null);
+
   useEffect(() => {
     // When switching back to diagram mode, restore the last state
     if (rightPanelMode === 'diagram' && lastDiagramState) {
@@ -684,22 +705,59 @@ const CoachingSessionPage = () => {
 
   // Render active workbook component
   const getActiveWorkbookComponent = () => {
-    switch (activeWorkbookTab) {
-      case 'requirements':
-        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
-      case 'api':
-        return <APIDesignPage data={formData.api} updateData={(data) => updateFormData('api', data)} />;
-      case 'data':
-        return <DataModelPage data={formData.data} updateData={(data) => updateFormData('data', data)} />;
-      case 'architecture':
-        return <SystemArchitecturePage data={formData.architecture} updateData={(data) => updateFormData('architecture', data)} />;
-      case 'scaling':
-        return <ScalingStrategyPage data={formData.scaling} updateData={(data) => updateFormData('scaling', data)} />;
-      case 'reliability':
-        return <ReliabilitySecurityPage data={formData.reliability} updateData={(data) => updateFormData('reliability', data)} />;
-      default:
-        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
-    }
+    const commonProps = {
+      sessionId,
+      onSaveAndContinue: () => {
+        const currentIndex = workbookTabs.findIndex(tab => tab.id === activeWorkbookTab);
+        const nextTab = workbookTabs[currentIndex + 1];
+        if (nextTab) {
+          setActiveWorkbookTab(nextTab.id);
+        }
+      }
+    };
+
+    return (
+      <div className="flex flex-col h-full">
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow">
+            {(() => {
+              switch (activeWorkbookTab) {
+                case 'requirements':
+                  return <RequirementsPage {...commonProps} data={workbookState.requirements} updateData={(data) => updateWorkbookState('requirements', data)} />;
+                case 'api':
+                  return <APIDesignPage {...commonProps} data={workbookState.api} updateData={(data) => updateWorkbookState('api', data)} />;
+                case 'data':
+                  return <DataModelPage {...commonProps} data={workbookState.data} updateData={(data) => updateWorkbookState('data', data)} />;
+                case 'architecture':
+                  return <SystemArchitecturePage {...commonProps} data={workbookState.architecture} updateData={(data) => updateWorkbookState('architecture', data)} />;
+                case 'scaling':
+                  return <ScalingStrategyPage {...commonProps} data={workbookState.scaling} updateData={(data) => updateWorkbookState('scaling', data)} />;
+                case 'reliability':
+                  return <ReliabilitySecurityPage {...commonProps} data={workbookState.reliability} updateData={(data) => updateWorkbookState('reliability', data)} />;
+                default:
+                  return <RequirementsPage {...commonProps} data={workbookState.requirements} updateData={(data) => updateWorkbookState('requirements', data)} />;
+              }
+            })()}
+          </div>
+        </div>
+
+        {/* Fixed bottom buttons */}
+        <div className="border-t border-gray-200 p-4 bg-white flex justify-between items-center">
+          <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors">
+            <MessageSquare size={16} className="mr-2" />
+            Ask Coach
+          </button>
+          <button 
+            onClick={commonProps.onSaveAndContinue}
+            className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <Save size={16} className="mr-2" />
+            Save & Continue
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (loading && !session) {
@@ -926,7 +984,7 @@ const CoachingSessionPage = () => {
         </div>
 
         {/* Right panel - Diagram or Workbook */}
-        <div className="w-1/2 flex flex-col">
+        <div className="w-1/2 flex flex-col h-full">
           {rightPanelMode === 'diagram' ? (
             <>
               {/* Diagram mode controls */}
@@ -963,9 +1021,31 @@ const CoachingSessionPage = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1" style={{ display: rightPanelMode === 'diagram' ? 'none' : 'block' }}>
-              {/* Workbook content */}
-              {getActiveWorkbookComponent()}
+            <div className="flex flex-col h-full">
+              {/* Add Workbook Navigation Tabs */}
+              <div className="bg-white border-b border-gray-200">
+                <div className="flex space-x-1 p-2">
+                  {workbookTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveWorkbookTab(tab.id)}
+                      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                        activeWorkbookTab === tab.id
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {tab.icon}
+                      <span className="ml-2">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Workbook Content */}
+              <div className="flex-1 overflow-hidden">
+                {getActiveWorkbookComponent()}
+              </div>
             </div>
           )}
         </div>
