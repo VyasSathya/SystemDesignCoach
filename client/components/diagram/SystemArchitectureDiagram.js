@@ -296,7 +296,7 @@ const SystemArchitectureDiagram = ({ onSave, initialData, sessionId }) => {
       {/* ReactFlow container */}
       <div className="flex-1 relative">
         <ReactFlowProvider>
-          <div className="h-full relative">
+          <div className="h-full">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -314,21 +314,13 @@ const SystemArchitectureDiagram = ({ onSave, initialData, sessionId }) => {
         </ReactFlowProvider>
       </div>
 
-      {/* Menu Panel placed above the bottom control bar */}
-      <div className="w-full bg-white border-t border-gray-200">
-        <div className="max-w-[1200px] mx-auto">
-          <NodePalette onNodeAdd={handleAddNode} />
-        </div>
-      </div>
+      {/* Node Palette */}
+      <NodePalette onNodeAdd={handleAddNode} />
 
-      {/* Bottom control bar with Ask Coach and Save & Continue buttons */}
-      <div 
-        className="flex justify-between items-center bg-white border-t border-gray-200 p-4 shadow-md" 
-        style={{ position: 'relative', zIndex: 1000 }}
-      >
+      {/* Bottom control bar */}
+      <div className="flex justify-between items-center bg-white border-t border-gray-200 p-4">
         <button 
           className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
-          style={{ position: 'relative', zIndex: 1001 }}
         >
           <MessageSquare size={16} className="mr-2" />
           Ask Coach
@@ -336,7 +328,6 @@ const SystemArchitectureDiagram = ({ onSave, initialData, sessionId }) => {
         <button 
           onClick={onSaveAndContinue}
           className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
-          style={{ position: 'relative', zIndex: 1001 }}
         >
           <Save size={16} className="mr-2" />
           Save & Continue
