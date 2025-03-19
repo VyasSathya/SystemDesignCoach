@@ -5,3 +5,12 @@
 body {
   background-color: #f9fafb;
 }
+
+/* Override ReactFlow control styles */
+.react-flow__controls {
+  z-index: 1 !important;
+}
+
+.react-flow-container {
+  z-index: 0;
+}
