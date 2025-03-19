@@ -1,23 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
+import { useWorkbook } from '../context/WorkbookContext';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 
 const APIDesignPage = () => {
-  const [previewMode, setPreviewMode] = useState(false);
+  const { state, dispatch } = useWorkbook();
+  const { currentProblem, problems } = state;
   
-  // API type state
-  const [apiType, setApiType] = useState('REST');
-  
-  // Endpoints state
-  const [endpoints, setEndpoints] = useState([]);
-  
-  // Auth methods state
-  const [authMethods, setAuthMethods] = useState([]);
-  
-  // Error handling state
-  const [errorHandling, setErrorHandling] = useState([]);
-  
+  // Get data from context
+  const apiData = problems[currentProblem]?.sections?.api || {
+    apiType: 'REST',
+    endpoints: [],
+    authMethods: [],
+    errorHandling: [],
+    previewMode: false
+  };
+
+  // Initialize state from context data
+  const [apiType, setApiType] = useState(apiData.apiType);
+  const [endpoints, setEndpoints] = useState(apiData.endpoints);
+  const [authMethods, setAuthMethods] = useState(apiData.authMethods);
+  const [errorHandling, setErrorHandling] = useState(apiData.errorHandling);
+  const [previewMode, setPreviewMode] = useState(apiData.previewMode);
+
+  // Save state when data changes
+  useEffect(() => {
+    if (currentProblem) {
+      dispatch({
+        type: 'UPDATE_SECTION_DATA',
+        problemId: currentProblem,
+        section: 'api',
+        data: {
+          apiType,
+          endpoints,
+          authMethods,
+          errorHandling,
+          previewMode
+        }
+      });
+    }
+  }, [apiType, endpoints, authMethods, errorHandling, previewMode]);
+
   // Methods
   const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
   

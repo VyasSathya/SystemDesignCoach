@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
-import ProgressBar from '../components/ProgressBar';
+import React, { useState, useEffect } from 'react';
+import { Trash2, Plus } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
+import ProgressBar from '../components/ProgressBar';
 
 const RequirementsPage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
-  
   const [previewMode, setPreviewMode] = useState(false);
   
   // Get data from context
@@ -16,28 +15,10 @@ const RequirementsPage = () => {
     constraints: []
   };
 
-  // Initialize state from context data
-  const [functionalRequirements, setFunctionalRequirements] = useState(requirementsData.functional);
-  const [nonFunctionalRequirements, setNonFunctionalRequirements] = useState(requirementsData.nonFunctional);
-  const [constraints, setConstraints] = useState(requirementsData.constraints);
-
-  // Save state when data changes
-  useEffect(() => {
-    if (currentProblem) {
-      dispatch({
-        type: 'UPDATE_SECTION_DATA',
-        problemId: currentProblem,
-        section: 'requirements',
-        data: {
-          functional: functionalRequirements,
-          nonFunctional: nonFunctionalRequirements,
-          constraints: constraints
-        }
-      });
-    }
-  }, [functionalRequirements, nonFunctionalRequirements, constraints]);
-
-  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Helper function to generate unique IDs
+  const generateId = () => {
+    return Math.random().toString(36).substr(2, 9);
+  };
 
   const addFunctionalRequirement = () => {
     const newRequirement = {
@@ -63,6 +44,8 @@ const RequirementsPage = () => {
   };
 
   const updateFunctionalRequirement = (id, field, value) => {
+    console.log('Updating requirement:', id, field, value); // Debug log
+
     const updatedData = {
       ...requirementsData,
       functional: requirementsData.functional.map(req =>
@@ -70,6 +53,7 @@ const RequirementsPage = () => {
       )
     };
 
+    // Just dispatch to global state
     dispatch({
       type: 'UPDATE_SECTION_DATA',
       problemId: currentProblem,
@@ -330,18 +314,20 @@ const RequirementsPage = () => {
 
   // Progress calculation functions
   const calculateProgress = () => {
-    const totalRequirements = functionalRequirements.length + 
-      nonFunctionalRequirements.length + 
-      constraints.length;
+    // Get all requirements
+    const total = requirementsData.functional.length + 
+                  requirementsData.nonFunctional.length + 
+                  requirementsData.constraints.length;
+    
+    if (total === 0) return 0;
 
-    if (totalRequirements === 0) return 0;
+    // Count only completed requirements
+    const completed = 
+      requirementsData.functional.filter(req => req.status === 'complete').length +
+      requirementsData.nonFunctional.filter(req => req.status === 'complete').length +
+      requirementsData.constraints.filter(req => req.status === 'complete').length;
 
-    const completedRequirements = 
-      functionalRequirements.filter(req => req.status === 'complete').length +
-      nonFunctionalRequirements.filter(req => req.status === 'complete').length +
-      constraints.filter(req => req.status === 'complete').length;
-
-    return Math.round((completedRequirements / totalRequirements) * 100);
+    return Math.round((completed / total) * 100);
   };
 
   const getCompletedSections = () => {
@@ -424,24 +410,23 @@ const RequirementsPage = () => {
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
               <h2 className="font-medium text-gray-800">Functional Requirements</h2>
               <button 
-                className="text-indigo-600 text-sm font-medium"
+                className="text-indigo-600 text-sm font-medium hover:text-indigo-800 flex items-center"
                 onClick={addFunctionalRequirement}
+                type="button"
               >
-                + Add Requirement
+                <Plus size={16} className="mr-1" />
+                Add Requirement
               </button>
             </div>
             <div className="p-4">
               <div className="space-y-4">
-                {functionalRequirements.map(req => (
-                  <div 
-                    key={req.id} 
-                    className="border rounded-md p-3 bg-white"
-                  >
+                {requirementsData.functional.map(req => (
+                  <div key={req.id} className="border rounded-md p-3 bg-white">
                     <div className="flex justify-between mb-2">
                       <input
                         type="text"
                         className="w-2/3 p-2 border rounded-md"
-                        value={req.title}
+                        value={req.title || ''}
                         onChange={(e) => updateFunctionalRequirement(req.id, 'title', e.target.value)}
                         placeholder="Requirement Title"
                       />
@@ -467,7 +452,7 @@ const RequirementsPage = () => {
                     <div className="mb-3">
                       <textarea
                         className="w-full p-2 border rounded-md"
-                        value={req.description}
+                        value={req.description || ''}
                         onChange={(e) => updateFunctionalRequirement(req.id, 'description', e.target.value)}
                         placeholder="Describe what the system should do..."
                         rows={2}
@@ -512,7 +497,7 @@ const RequirementsPage = () => {
             </div>
             <div className="p-4">
               <div className="space-y-4">
-                {nonFunctionalRequirements.map(req => (
+                {requirementsData.nonFunctional.map(req => (
                   <div 
                     key={req.id} 
                     className="border rounded-md p-3 bg-white"
@@ -594,7 +579,7 @@ const RequirementsPage = () => {
             </div>
             <div className="p-4">
               <div className="space-y-3">
-                {constraints.map(constraint => (
+                {requirementsData.constraints.map(constraint => (
                   <div 
                     key={constraint.id} 
                     className="border rounded-md p-3 bg-white"
@@ -662,7 +647,7 @@ const RequirementsPage = () => {
                 <div className="mb-6">
                   <h4 className="text-sm font-semibold border-b pb-2 mb-3">Functional Requirements</h4>
                   <div className="space-y-4">
-                    {functionalRequirements.map(req => (
+                    {requirementsData.functional.map(req => (
                       <div key={`preview-fr-${req.id}`} className="border rounded-md p-3">
                         <div className="flex justify-between items-center mb-2">
                           <h5 className="font-medium">{req.title || 'Untitled Requirement'}</h5>
@@ -698,7 +683,7 @@ const RequirementsPage = () => {
                 <div className="mb-6">
                   <h4 className="text-sm font-semibold border-b pb-2 mb-3">Non-Functional Requirements</h4>
                   <div className="space-y-4">
-                    {nonFunctionalRequirements.map(req => (
+                    {requirementsData.nonFunctional.map(req => (
                       <div key={`preview-nfr-${req.id}`} className="border rounded-md p-3">
                         <div className="flex justify-between items-center mb-2">
                           <h5 className="font-medium">{req.title || 'Untitled Requirement'}</h5>
@@ -734,7 +719,7 @@ const RequirementsPage = () => {
                 <div>
                   <h4 className="text-sm font-semibold border-b pb-2 mb-3">Constraints</h4>
                   <div className="space-y-3">
-                    {constraints.map(constraint => (
+                    {requirementsData.constraints.map(constraint => (
                       <div key={`preview-c-${constraint.id}`} className="border rounded-md p-3">
                         <div className="flex justify-between items-center mb-2">
                           <h5 className="font-medium">{constraint.title || 'Untitled Constraint'}</h5>

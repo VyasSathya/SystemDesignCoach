@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
-import ProgressBar from '../components/ProgressBar';
 import { useWorkbook } from '../context/WorkbookContext';
+import ProgressBar from '../components/ProgressBar';
 
 const SystemArchitecturePage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
-  
-  // Add previewMode state
-  const [previewMode, setPreviewMode] = useState(false);
   
   // Get data from context
   const architectureData = problems[currentProblem]?.sections?.architecture || {
@@ -21,7 +18,8 @@ const SystemArchitecturePage = () => {
       containerization: '',
       regions: '',
       cicd: ''
-    }
+    },
+    previewMode: false
   };
 
   // Initialize state from context data
@@ -30,6 +28,7 @@ const SystemArchitecturePage = () => {
   const [selectedPattern, setSelectedPattern] = useState(architectureData.selectedPattern);
   const [patternDescription, setPatternDescription] = useState(architectureData.patternDescription);
   const [deploymentModel, setDeploymentModel] = useState(architectureData.deploymentModel);
+  const [previewMode, setPreviewMode] = useState(architectureData.previewMode);
 
   // Save state when data changes
   useEffect(() => {
@@ -43,11 +42,12 @@ const SystemArchitecturePage = () => {
           connections,
           selectedPattern,
           patternDescription,
-          deploymentModel
+          deploymentModel,
+          previewMode
         }
       });
     }
-  }, [components, connections, selectedPattern, patternDescription, deploymentModel]);
+  }, [components, connections, selectedPattern, patternDescription, deploymentModel, previewMode]);
 
   // Component type styles
   const getComponentTypeStyle = (type) => {

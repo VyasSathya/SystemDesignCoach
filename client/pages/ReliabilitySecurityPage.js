@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
-import { autoSaveWorkbook } from '../utils/workbookStorage';
-import ProgressBar from '../components/ProgressBar';
 import { useWorkbook } from '../context/WorkbookContext';
+import ProgressBar from '../components/ProgressBar';
 
 const ReliabilitySecurityPage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
   
-  // Add previewMode state
-  const [previewMode, setPreviewMode] = useState(false);
-  
   // Get data from context
   const reliabilityData = problems[currentProblem]?.sections?.reliability || {
     reliabilityMetrics: [],
     failureScenarios: [],
-    securityMeasures: []
+    securityMeasures: [],
+    previewMode: false
   };
 
   // Initialize state from context data
   const [reliabilityMetrics, setReliabilityMetrics] = useState(reliabilityData.reliabilityMetrics);
   const [failureScenarios, setFailureScenarios] = useState(reliabilityData.failureScenarios);
   const [securityMeasures, setSecurityMeasures] = useState(reliabilityData.securityMeasures);
+  const [previewMode, setPreviewMode] = useState(reliabilityData.previewMode);
 
   // Save state when data changes
   useEffect(() => {
@@ -33,11 +31,12 @@ const ReliabilitySecurityPage = () => {
         data: {
           reliabilityMetrics,
           failureScenarios,
-          securityMeasures
+          securityMeasures,
+          previewMode
         }
       });
     }
-  }, [reliabilityMetrics, failureScenarios, securityMeasures]);
+  }, [reliabilityMetrics, failureScenarios, securityMeasures, previewMode]);
 
   // Placeholder progress functions - to be refined later
   const calculateProgress = () => 0;

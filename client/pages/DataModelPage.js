@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useWorkbook } from '../context/WorkbookContext';
 import { Trash2 } from 'lucide-react';
+import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
 const DataModelPage = () => {
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
   
-  // Add previewMode state
-  const [previewMode, setPreviewMode] = useState(false);
-  
-  // Get data from context
-  const dataModelData = problems[currentProblem]?.sections?.data || {
+  // Get data from context with default values
+  const dataModelData = problems[currentProblem]?.sections?.dataModel || {
     entities: [],
     relationships: [],
     databaseChoice: '',
-    databaseJustification: ''
+    databaseJustification: '',
+    previewMode: false
   };
 
   // Initialize state from context data
@@ -23,6 +21,7 @@ const DataModelPage = () => {
   const [relationships, setRelationships] = useState(dataModelData.relationships);
   const [databaseChoice, setDatabaseChoice] = useState(dataModelData.databaseChoice);
   const [databaseJustification, setDatabaseJustification] = useState(dataModelData.databaseJustification);
+  const [previewMode, setPreviewMode] = useState(dataModelData.previewMode);
 
   // Save state when data changes
   useEffect(() => {
@@ -30,107 +29,122 @@ const DataModelPage = () => {
       dispatch({
         type: 'UPDATE_SECTION_DATA',
         problemId: currentProblem,
-        section: 'data',
+        section: 'dataModel',
         data: {
           entities,
           relationships,
           databaseChoice,
-          databaseJustification
+          databaseJustification,
+          previewMode
         }
       });
     }
-  }, [entities, relationships, databaseChoice, databaseJustification]);
+  }, [currentProblem, entities, relationships, databaseChoice, databaseJustification, previewMode, dispatch]);
 
-  // Toggle preview mode
-  const togglePreview = () => {
-    setPreviewMode(!previewMode);
-  };
+  // Re-initialize state when currentProblem changes
+  useEffect(() => {
+    const data = problems[currentProblem]?.sections?.dataModel || {
+      entities: [],
+      relationships: [],
+      databaseChoice: '',
+      databaseJustification: '',
+      previewMode: false
+    };
+    
+    setEntities(data.entities);
+    setRelationships(data.relationships);
+    setDatabaseChoice(data.databaseChoice);
+    setDatabaseJustification(data.databaseJustification);
+    setPreviewMode(data.previewMode);
+  }, [currentProblem, problems]);
+
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const addEntity = () => {
-    const newId = Math.max(...entities.map(e => e.id), 0) + 1;
-    setEntities([...entities, {
-      id: newId,
+    const newEntity = {
+      id: generateId(),
       name: 'New Entity',
-      attributes: [],
       text: '',
-      completed: false
-    }]);
-  };
-
-  const deleteEntity = (id) => {
-    setEntities(entities.filter(e => e.id !== id));
-    setRelationships(relationships.filter(r => r.from !== id && r.to !== id));
+      attributes: []
+    };
+    setEntities([...entities, newEntity]);
   };
 
   const updateEntity = (id, field, value) => {
-    setEntities(entities.map(e => 
-      e.id === id ? { ...e, [field]: value } : e
+    setEntities(entities.map(entity =>
+      entity.id === id ? { ...entity, [field]: value } : entity
+    ));
+  };
+
+  const deleteEntity = (id) => {
+    setEntities(entities.filter(entity => entity.id !== id));
+    setRelationships(relationships.filter(rel => 
+      rel.from !== id && rel.to !== id
     ));
   };
 
   const addRelationship = () => {
-    const newId = Math.max(...relationships.map(r => r.id), 0) + 1;
-    setRelationships([...relationships, {
-      id: newId,
+    const newRelationship = {
+      id: generateId(),
       from: '',
       to: '',
       type: '',
-      description: '',
-      completed: false
-    }]);
-  };
-
-  const deleteRelationship = (id) => {
-    setRelationships(relationships.filter(r => r.id !== id));
+      description: ''
+    };
+    setRelationships([...relationships, newRelationship]);
   };
 
   const updateRelationship = (id, field, value) => {
-    setRelationships(relationships.map(r => 
-      r.id === id ? { ...r, [field]: value } : r
+    setRelationships(relationships.map(rel =>
+      rel.id === id ? { ...rel, [field]: value } : rel
     ));
   };
 
-  const calculateProgress = () => {
-    // Add your progress calculation logic here
-    return 0;
+  const deleteRelationship = (id) => {
+    setRelationships(relationships.filter(rel => rel.id !== id));
   };
 
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
+  };
+
+  // Calculate progress
+  const calculateProgress = () => {
+    if (!entities.length) return 0;
+    
+    const totalItems = entities.length + relationships.length + (databaseChoice ? 1 : 0);
+    const completedEntities = entities.filter(e => e.name && e.text).length;
+    const completedRelationships = relationships.filter(r => r.from && r.to && r.type).length;
+    const completedDatabase = databaseChoice && databaseJustification ? 1 : 0;
+    
+    return Math.round(((completedEntities + completedRelationships + completedDatabase) / totalItems) * 100);
+  };
+
+  // Update progress when data changes
+  useEffect(() => {
+    if (currentProblem) {
+      const progress = calculateProgress();
+      dispatch({
+        type: 'UPDATE_PROGRESS',
+        problemId: currentProblem,
+        section: 'dataModel',
+        progress
+      });
+    }
+  }, [entities, relationships, databaseChoice, databaseJustification]);
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header with title and actions */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-purple-600">Data Model</h1>
-        <div className="flex space-x-3">
-          <button 
-            onClick={togglePreview}
-            className={`px-3 py-1.5 text-sm border rounded ${
-              previewMode ? 'bg-gray-100' : 'bg-white'
-            }`}
-          >
-            {previewMode ? 'Hide Preview' : 'Show Preview'}
-          </button>
-        </div>
-      </div>
-      
-      {/* Coach tip */}
-      <div className="bg-purple-50 border border-purple-100 p-4 rounded-md text-purple-700 text-sm mb-6">
-        <strong className="font-medium">Coach tip:</strong> Start by identifying the core entities in your system and their attributes. Then, establish clear relationships between these entities. Choose a database type that best suits your data structure and access patterns.
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <ProgressBar progress={calculateProgress()} />
       </div>
 
-      <ProgressBar 
-        progress={calculateProgress()}
-        completed={0}
-        total={3}
-      />
-      
-      {/* Main content area */}
-      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
-        {/* Left column: Content forms */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          {/* Entity Definition Section */}
+          {/* Entities Section */}
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
-              <h2 className="font-medium text-gray-800">Entity Definition</h2>
+              <h2 className="font-medium text-gray-800">Entities</h2>
               <button 
                 onClick={addEntity}
                 className="text-indigo-600 text-sm font-medium"
@@ -141,29 +155,27 @@ const DataModelPage = () => {
             <div className="p-4">
               <div className="space-y-4">
                 {entities.map(entity => (
-                  <div key={entity.id} className="border rounded-md p-3 bg-white">
+                  <div key={entity.id} className="border rounded-md p-3">
                     <div className="flex justify-between mb-2">
-                      <h3 className="text-sm font-medium">Entity Definition</h3>
-                      <div className="flex space-x-2">
-                        <button 
-                          onClick={() => deleteEntity(entity.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      <input
+                        type="text"
+                        className="w-full p-2 border rounded-md mr-2"
+                        value={entity.name}
+                        onChange={(e) => updateEntity(entity.id, 'name', e.target.value)}
+                        placeholder="Entity name..."
+                      />
+                      <button 
+                        onClick={() => deleteEntity(entity.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                     <textarea
                       className="w-full h-32 p-2 border rounded-md text-sm font-mono"
                       value={entity.text}
-                      onChange={(e) => {
-                        const updatedEntities = entities.map(e => 
-                          e.id === entity.id ? { ...e, text: e.target.value } : e
-                        );
-                        setEntities(updatedEntities);
-                      }}
+                      onChange={(e) => updateEntity(entity.id, 'text', e.target.value)}
+                      placeholder="Define your entity attributes here..."
                     />
                   </div>
                 ))}
