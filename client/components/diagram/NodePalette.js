@@ -4,10 +4,21 @@ import { Users, Network, Server, Database, Shield, Plus } from 'lucide-react';
 const NodePalette = ({ onNodeAdd }) => {
   const [expandedCategory, setExpandedCategory] = useState(null);
 
+  // Map of icons that we can reference
+  const icons = {
+    Users,
+    Network,
+    Server,
+    Database,
+    Shield,
+    Plus
+  };
+
   const nodeCategories = [
     {
       category: 'Clients',
-      icon: Users,
+      icon: Users,  // Use the actual component
+      iconName: 'Users', // Store name for data transfer
       color: 'border-blue-500',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
@@ -16,6 +27,7 @@ const NodePalette = ({ onNodeAdd }) => {
     {
       category: 'Network',
       icon: Network,
+      iconName: 'Network',
       color: 'border-green-500',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600',
@@ -24,6 +36,7 @@ const NodePalette = ({ onNodeAdd }) => {
     {
       category: 'Backend',
       icon: Server,
+      iconName: 'Server',
       color: 'border-purple-500',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
@@ -32,6 +45,7 @@ const NodePalette = ({ onNodeAdd }) => {
     {
       category: 'Data',
       icon: Database,
+      iconName: 'Database',
       color: 'border-yellow-500',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600',
@@ -40,6 +54,7 @@ const NodePalette = ({ onNodeAdd }) => {
     {
       category: 'Security',
       icon: Shield,
+      iconName: 'Shield',
       color: 'border-red-500',
       bgColor: 'bg-red-50',
       textColor: 'text-red-600',
@@ -48,6 +63,7 @@ const NodePalette = ({ onNodeAdd }) => {
     {
       category: 'Custom',
       icon: Plus,
+      iconName: 'Plus',
       color: 'border-gray-500',
       bgColor: 'bg-gray-50',
       textColor: 'text-gray-600',
@@ -57,10 +73,10 @@ const NodePalette = ({ onNodeAdd }) => {
 
   const handleNodeAdd = (nodeType, categoryData) => {
     const nodeData = {
-      type: 'custom', // This will use our CustomNode component
+      type: 'custom',
       data: {
         nodeType: nodeType,
-        categoryIcon: categoryData.icon,
+        iconName: categoryData.iconName,
         style: {
           borderColor: categoryData.color.replace('border-', ''),
           backgroundColor: categoryData.bgColor.replace('bg-', ''),
@@ -74,54 +90,57 @@ const NodePalette = ({ onNodeAdd }) => {
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200">
       <div className="flex justify-between items-center px-4 py-3">
-        {nodeCategories.map((categoryData) => (
-          <div
-            key={categoryData.category}
-            className="relative"
-            onClick={() => setExpandedCategory(expandedCategory === categoryData.category ? null : categoryData.category)}
-          >
-            <div className={`
-              flex items-center gap-2 px-4 py-2.5
-              border-2 rounded-md ${categoryData.color}
-              ${expandedCategory === categoryData.category ? categoryData.bgColor : 'hover:' + categoryData.bgColor}
-              transition-colors duration-150
-              cursor-pointer
-              w-28
-            `}>
-              <div className={categoryData.textColor}>
-                <categoryData.icon className="w-5 h-5" />
-              </div>
-              <span className="text-sm font-medium truncate">{categoryData.category}</span>
-            </div>
-
-            {expandedCategory === categoryData.category && (
+        {nodeCategories.map((categoryData) => {
+          const IconComponent = categoryData.icon;
+          return (
+            <div
+              key={categoryData.category}
+              className="relative"
+              onClick={() => setExpandedCategory(expandedCategory === categoryData.category ? null : categoryData.category)}
+            >
               <div className={`
-                absolute bottom-full mb-2 
-                ${categoryData.category === 'Custom' ? 'right-0' : 'left-0'} 
-                w-40 bg-white border border-gray-200 rounded-md shadow-lg p-2
+                flex items-center gap-2 px-4 py-2.5
+                border-2 rounded-md ${categoryData.color}
+                ${expandedCategory === categoryData.category ? categoryData.bgColor : 'hover:' + categoryData.bgColor}
+                transition-colors duration-150
+                cursor-pointer
+                w-28
               `}>
-                {categoryData.nodes.map((nodeType) => (
-                  <div
-                    key={nodeType}
-                    className={`
-                      px-4 py-2 text-sm rounded cursor-pointer
-                      border-2 ${categoryData.color} ${categoryData.bgColor} hover:${categoryData.bgColor}
-                      w-full truncate transition-colors duration-150
-                      mb-1 last:mb-0
-                    `}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNodeAdd(nodeType, categoryData);
-                      setExpandedCategory(null);
-                    }}
-                  >
-                    {nodeType}
-                  </div>
-                ))}
+                <div className={categoryData.textColor}>
+                  <IconComponent className="w-5 h-5" />
+                </div>
+                <span className="text-sm font-medium truncate">{categoryData.category}</span>
               </div>
-            )}
-          </div>
-        ))}
+
+              {expandedCategory === categoryData.category && (
+                <div className={`
+                  absolute bottom-full mb-2 
+                  ${categoryData.category === 'Custom' ? 'right-0' : 'left-0'} 
+                  w-40 bg-white border border-gray-200 rounded-md shadow-lg p-2
+                `}>
+                  {categoryData.nodes.map((nodeType) => (
+                    <div
+                      key={nodeType}
+                      className={`
+                        px-4 py-2 text-sm rounded cursor-pointer
+                        border-2 ${categoryData.color} ${categoryData.bgColor} hover:${categoryData.bgColor}
+                        w-full truncate transition-colors duration-150
+                        mb-1 last:mb-0
+                      `}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNodeAdd(nodeType, categoryData);
+                        setExpandedCategory(null);
+                      }}
+                    >
+                      {nodeType}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

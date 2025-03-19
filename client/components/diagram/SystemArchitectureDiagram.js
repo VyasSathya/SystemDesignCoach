@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -23,8 +23,35 @@ const nodeTypes = {
 };
 
 const SystemArchitectureDiagram = () => {
-  const [nodes, setNodes] = useState([]);
-  const [edges, setEdges] = useState([]);
+  // Initialize state from localStorage if available
+  const [nodes, setNodes] = useState(() => {
+    const savedState = localStorage.getItem('currentSystemDiagramState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        return parsed.nodes || [];
+      } catch (e) {
+        console.error('Failed to parse saved state:', e);
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const [edges, setEdges] = useState(() => {
+    const savedState = localStorage.getItem('currentSystemDiagramState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        return parsed.edges || [];
+      } catch (e) {
+        console.error('Failed to parse saved state:', e);
+        return [];
+      }
+    }
+    return [];
+  });
+
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [nodeName, setNodeName] = useState('');
@@ -136,13 +163,21 @@ const SystemArchitectureDiagram = () => {
         nodes,
         edges
       };
-      console.log('Saving diagram:', diagramData);
-      // Here you would typically make an API call to save the data
+      localStorage.setItem('currentSystemDiagramState', JSON.stringify(diagramData));
       console.log('Diagram saved successfully');
     } catch (error) {
       console.error('Error saving diagram:', error);
     }
   };
+
+  // Add persistence effect
+  useEffect(() => {
+    const state = {
+      nodes,
+      edges
+    };
+    localStorage.setItem('currentSystemDiagramState', JSON.stringify(state));
+  }, [nodes, edges]);
 
   return (
     <div style={{ width: '100%', height: '77vh' }} className="relative">  {/* Changed from 80vh to 75vh */}

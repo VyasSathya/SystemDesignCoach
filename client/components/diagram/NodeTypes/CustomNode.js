@@ -1,14 +1,16 @@
 import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
+import { Server } from 'lucide-react';
+import { getIconComponent } from '../utils/iconMapping';
 
 const CustomNode = ({ data, isConnectable = true }) => {
-  console.log('CustomNode render:', { data, isConnectable }); // Add this log
-
-  // Add safety checks
   if (!data) {
     console.error('CustomNode received null or undefined data');
     return null;
   }
+
+  // Get the icon component from the name
+  const IconComponent = data.iconName ? getIconComponent(data.iconName) : Server;
 
   const borderColorClass = `border-${data.style?.borderColor?.replace('border-', '') || 'gray-300'}`;
   const bgColorClass = `bg-${data.style?.backgroundColor?.replace('bg-', '') || 'white'}`;
@@ -47,9 +49,7 @@ const CustomNode = ({ data, isConnectable = true }) => {
       />
       
       <div className="flex items-center">
-        {data.categoryIcon && (
-          <data.categoryIcon className={`w-5 h-5 ${textColorClass} mr-2`} />
-        )}
+        <IconComponent className={`w-5 h-5 ${textColorClass} mr-2`} />
         <div>
           <div className={`text-xs ${textColorClass} font-medium ${bgColorClass} px-1 rounded mb-1`}>
             {data.nodeType}
@@ -91,5 +91,4 @@ const CustomNode = ({ data, isConnectable = true }) => {
   );
 };
 
-// Ensure the component is memoized
 export default memo(CustomNode);
