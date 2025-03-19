@@ -851,6 +851,12 @@ const CoachingSessionPage = ({ userId, problemId }) => {
     );
   }
 
+  const calculateProgress = () => {
+    const sections = Object.values(workbookState.sections);
+    const completedSections = sections.filter(s => s.completed).length;
+    return sections.length ? Math.round((completedSections / sections.length) * 100) : 0;
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}

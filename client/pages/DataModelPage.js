@@ -59,6 +59,11 @@ const DataModelPage = () => {
     setPreviewMode(!previewMode);
   };
   
+  // Placeholder progress functions - to be refined later
+  const calculateProgress = () => 0;
+  const getCompletedSections = () => 0;
+  const getTotalSections = () => 3;
+  
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header with title and actions */}
@@ -82,18 +87,10 @@ const DataModelPage = () => {
       </div>
       
       {/* Progress bar */}
-      <div className="bg-white p-4 border rounded-md mb-6">
-        <div className="flex justify-between mb-2">
-          <span className="text-sm text-gray-600">Overall Progress</span>
-          <span className="text-sm font-medium">67%</span>
-        </div>
-        <div className="h-2 bg-gray-200 rounded-full">
-          <div className="h-full bg-purple-500 rounded-full" style={{ width: '67%' }}></div>
-        </div>
-        <div className="mt-4 text-center text-sm text-gray-500">
-          <span className="font-medium">2</span> of <span className="font-medium">3</span> sections completed
-        </div>
-      </div>
+      <ProgressBar 
+        progress={calculateProgress()}
+        color="purple"
+      />
       
       {/* Main content area */}
       <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>

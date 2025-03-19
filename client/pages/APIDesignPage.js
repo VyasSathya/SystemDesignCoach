@@ -118,15 +118,10 @@ const APIDesignPage = () => {
     }
   };
 
-  const calculateProgress = () => {
-    if (!endpoints.length) return 0;
-    const completedEndpoints = endpoints.filter(endpoint => {
-      return endpoint.path && 
-             endpoint.responseFormat && 
-             (endpoint.method === 'GET' || endpoint.requestBody);
-    }).length;
-    return (completedEndpoints / endpoints.length) * 100;
-  };
+  // Placeholder progress functions - to be refined later
+  const calculateProgress = () => 0;
+  const getCompletedSections = () => 0;
+  const getTotalSections = () => 3;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -154,13 +149,13 @@ const APIDesignPage = () => {
       <div className="bg-white p-4 border rounded-md mb-6">
         <div className="flex justify-between mb-2">
           <span className="text-sm text-gray-600">Overall Progress</span>
-          <span className="text-sm font-medium">75%</span>
+          <span className="text-sm font-medium">{calculateProgress()}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full">
-          <div className="h-full bg-green-500 rounded-full" style={{ width: '75%' }}></div>
+          <div className="h-full bg-green-500 rounded-full" style={{ width: `${calculateProgress()}%` }}></div>
         </div>
         <div className="mt-4 text-center text-sm text-gray-500">
-          <span className="font-medium">2</span> of <span className="font-medium">3</span> endpoints fully documented
+          <span className="font-medium">{getCompletedSections()}</span> of <span className="font-medium">{getTotalSections()}</span> sections completed
         </div>
       </div>
       

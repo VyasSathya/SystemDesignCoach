@@ -5,10 +5,13 @@ import ProgressBar from '../components/ProgressBar';
 const ScalingStrategyPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [strategies, setStrategies] = useState([]);
-
   const [metrics, setMetrics] = useState([]);
-
   const [bottlenecks, setBottlenecks] = useState([]);
+
+  // Placeholder progress functions - to be refined later
+  const calculateProgress = () => 0;
+  const getCompletedSections = () => 0;
+  const getTotalSections = () => 3;
 
   const deleteStrategy = (id) => {
     setStrategies(strategies.filter(s => s.id !== id));
@@ -86,13 +89,16 @@ const ScalingStrategyPage = () => {
       <div className="bg-white p-4 border rounded-md mb-6">
         <div className="flex justify-between mb-2">
           <span className="text-sm text-gray-600">Overall Progress</span>
-          <span className="text-sm font-medium">70%</span>
+          <span className="text-sm font-medium">{calculateProgress()}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full">
-          <div className="h-full bg-orange-500 rounded-full" style={{ width: '70%' }}></div>
+          <div 
+            className="h-full bg-orange-500 rounded-full" 
+            style={{ width: `${calculateProgress()}%` }}
+          ></div>
         </div>
         <div className="mt-4 text-center text-sm text-gray-500">
-          <span className="font-medium">3</span> of <span className="font-medium">4</span> sections completed
+          <span className="font-medium">{getCompletedSections()}</span> of <span className="font-medium">{getTotalSections()}</span> sections completed
         </div>
       </div>
       

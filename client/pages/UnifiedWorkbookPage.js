@@ -33,8 +33,8 @@ const UnifiedWorkbookPage = ({
   const [previewMode, setPreviewMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle', 'saving', 'saved', 'error'
   const [progress, setProgress] = useState({
-    overall: 70,
-    sections: Object.fromEntries(sections.map(section => [section.id, 65 + Math.floor(Math.random() * 20)]))
+    overall: 0,
+    sections: Object.fromEntries(sections.map(section => [section.id, 0]))
   });
 
   const [sections, setSections] = useState([]);
@@ -50,8 +50,9 @@ const UnifiedWorkbookPage = ({
   // Demo calculation of overall progress
   const calculateProgress = () => {
     const sectionsProgress = Object.values(progress.sections);
-    const overall = sectionsProgress.reduce((sum, val) => sum + val, 0) / sectionsProgress.length;
-    return Math.round(overall);
+    return sectionsProgress.length ? 
+      Math.round(sectionsProgress.reduce((sum, val) => sum + val, 0) / sectionsProgress.length) : 
+      0;
   };
 
   const toggleSection = (sectionId) => {
@@ -371,14 +372,21 @@ const UnifiedWorkbookPage = ({
                   </div>
                   <div className="flex items-center space-x-3">
                     {/* Progress indicator in section header */}
-                    <div className="flex items-center">
-                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
+                    <div className="flex items-center space-x-2">
+                      <div className="w-24 h-2 bg-gray-200 rounded-full">
+                        <div
                           className={`h-full ${accentColor === 'green' ? 'bg-green-400' : accentColor === 'blue' ? 'bg-blue-400' : accentColor === 'red' ? 'bg-red-400' : accentColor === 'purple' ? 'bg-purple-400' : accentColor === 'indigo' ? 'bg-indigo-400' : accentColor === 'orange' ? 'bg-orange-400' : 'bg-gray-400'}`}
                           style={{ width: `${progress.sections[section.id] || 0}%` }}
                         ></div>
                       </div>
-                      <span className="ml-2 text-xs text-gray-500">{progress.sections[section.id] || 0}%</span>
+                      <span className="text-xs text-gray-500">{progress.sections[section.id] || 0}%</span>
+                      
+                      {/* New approval indicator */}
+                      {section.approved && (
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+                          <Check size={12} className="text-green-600" />
+                        </div>
+                      )}
                     </div>
                     
                     {section.addButton && (
@@ -439,6 +447,9 @@ const UnifiedWorkbookPage = ({
 };
 
 export default UnifiedWorkbookPage;
+
+
+
 
 
 

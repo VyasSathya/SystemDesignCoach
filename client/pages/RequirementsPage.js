@@ -311,18 +311,10 @@ const RequirementsPage = () => {
     );
   };
 
-  const calculateProgress = () => {
-    const allRequirements = [
-      ...requirementsData.functional,
-      ...requirementsData.nonFunctional,
-      ...requirementsData.constraints
-    ];
-    
-    if (allRequirements.length === 0) return 0;
-    
-    const completed = allRequirements.filter(req => req.status === 'complete').length;
-    return Math.round((completed / allRequirements.length) * 100);
-  };
+  // Placeholder progress functions - to be refined later
+  const calculateProgress = () => 0;
+  const getCompletedSections = () => 0;
+  const getTotalSections = () => 3;
 
   useEffect(() => {
     const progress = calculateProgress();
