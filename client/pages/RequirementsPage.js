@@ -3,21 +3,62 @@ import { Trash2, Plus } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
-const RequirementsPage = ({ data, updateData }) => {
-  const handleChange = (newData) => {
-    updateData(newData);
-  };
-
-  const { state, dispatch } = useWorkbook();
+const RequirementsPage = () => {
+  const { state, dispatch, workbookService } = useWorkbook();
   const { currentProblem, problems } = state;
-  const [previewMode, setPreviewMode] = useState(false);
   
   // Get data from context
   const requirementsData = problems[currentProblem]?.sections?.requirements || {
     functional: [],
     nonFunctional: [],
-    constraints: []
+    constraints: [],
+    previewMode: false
   };
+
+  // Initialize state
+  const [functional, setFunctional] = useState(requirementsData.functional);
+  const [nonFunctional, setNonFunctional] = useState(requirementsData.nonFunctional);
+  const [constraints, setConstraints] = useState(requirementsData.constraints);
+  const [previewMode, setPreviewMode] = useState(requirementsData.previewMode);
+
+  // Toggle preview mode
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
+  };
+
+  // Add centralized save function
+  const saveData = async (updatedData) => {
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'requirements',
+      data: updatedData
+    });
+
+    if (workbookService) {
+      try {
+        await workbookService.saveAllData(
+          currentProblem,
+          'requirements',
+          {
+            sections: {
+              requirements: updatedData
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save requirements data:', error);
+      }
+    }
+  };
+
+  // Update effect
+  useEffect(() => {
+    setFunctional(requirementsData.functional);
+    setNonFunctional(requirementsData.nonFunctional);
+    setConstraints(requirementsData.constraints);
+    setPreviewMode(requirementsData.previewMode);
+  }, [currentProblem, problems]);
 
   // Helper function to generate unique IDs
   const generateId = () => {
@@ -39,31 +80,17 @@ const RequirementsPage = ({ data, updateData }) => {
       functional: [...requirementsData.functional, newRequirement]
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const updateFunctionalRequirement = (id, field, value) => {
-    console.log('Updating requirement:', id, field, value); // Debug log
-
     const updatedData = {
       ...requirementsData,
       functional: requirementsData.functional.map(req =>
         req.id === id ? { ...req, [field]: value } : req
       )
     };
-
-    // Just dispatch to global state
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const updateFunctionalRequirementAcceptance = (id, value) => {
@@ -76,12 +103,7 @@ const RequirementsPage = ({ data, updateData }) => {
       )
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const deleteFunctionalRequirement = (id) => {
@@ -90,12 +112,7 @@ const RequirementsPage = ({ data, updateData }) => {
       functional: requirementsData.functional.filter(req => req.id !== id)
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const toggleRequirementStatus = (type, id) => {
@@ -108,12 +125,7 @@ const RequirementsPage = ({ data, updateData }) => {
       )
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   // Helper function for priority colors
@@ -145,12 +157,7 @@ const RequirementsPage = ({ data, updateData }) => {
       nonFunctional: [...requirementsData.nonFunctional, newRequirement]
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const updateNonFunctionalRequirement = (id, field, value) => {
@@ -160,13 +167,7 @@ const RequirementsPage = ({ data, updateData }) => {
         req.id === id ? { ...req, [field]: value } : req
       )
     };
-
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const updateNonFunctionalRequirementCriteria = (id, value) => {
@@ -179,12 +180,7 @@ const RequirementsPage = ({ data, updateData }) => {
       )
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const deleteNonFunctionalRequirement = (id) => {
@@ -193,12 +189,7 @@ const RequirementsPage = ({ data, updateData }) => {
       nonFunctional: requirementsData.nonFunctional.filter(req => req.id !== id)
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   // Helper function for category colors
@@ -233,12 +224,7 @@ const RequirementsPage = ({ data, updateData }) => {
       constraints: [...requirementsData.constraints, newConstraint]
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const updateConstraint = (id, field, value) => {
@@ -248,13 +234,7 @@ const RequirementsPage = ({ data, updateData }) => {
         constraint.id === id ? { ...constraint, [field]: value } : constraint
       )
     };
-
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   const deleteConstraint = (id) => {
@@ -263,12 +243,7 @@ const RequirementsPage = ({ data, updateData }) => {
       constraints: requirementsData.constraints.filter(constraint => constraint.id !== id)
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
+    saveData(updatedData);
   };
 
   // Helper function for constraint type colors
@@ -285,10 +260,6 @@ const RequirementsPage = ({ data, updateData }) => {
     }
   };
 
-  const togglePreview = () => {
-    setPreviewMode(!previewMode);
-  };
-
   const updateRequirementStatus = (type, id, newStatus) => {
     const updatedData = {
       ...requirementsData,
@@ -297,23 +268,7 @@ const RequirementsPage = ({ data, updateData }) => {
       )
     };
 
-    dispatch({
-      type: 'UPDATE_SECTION_DATA',
-      problemId: currentProblem,
-      section: 'requirements',
-      data: updatedData
-    });
-
-    // Auto-save to backend
-    workbookService.saveAllData(
-      currentProblem,
-      'requirements',
-      {
-        sections: {
-          requirements: updatedData
-        }
-      }
-    );
+    saveData(updatedData);
   };
 
   // Progress calculation functions

@@ -1,66 +1,199 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
+import { useWorkbook } from '../context/WorkbookContext';
 
 const ScalingStrategyPage = () => {
-  const [previewMode, setPreviewMode] = useState(false);
-  const [strategies, setStrategies] = useState([]);
-  const [metrics, setMetrics] = useState([]);
-  const [bottlenecks, setBottlenecks] = useState([]);
+  const { state, dispatch, workbookService } = useWorkbook();
+  const { currentProblem, problems } = state;
 
-  // Placeholder progress functions - to be refined later
-  const calculateProgress = () => 0;
-  const getCompletedSections = () => 0;
-  const getTotalSections = () => 3;
-
-  const deleteStrategy = (id) => {
-    setStrategies(strategies.filter(s => s.id !== id));
+  // Initialize data from context
+  const scalingData = problems[currentProblem]?.sections?.scaling || {
+    strategies: [],
+    bottlenecks: [],
+    metrics: [],
+    capacityPlanning: {
+      currentLoad: '',
+      projectedGrowth: '',
+      scalingTriggers: '',
+      costConsiderations: ''
+    },
+    previewMode: false
   };
 
-  const deleteMetric = (id) => {
-    setMetrics(metrics.filter(m => m.id !== id));
-  };
+  // Initialize all state variables
+  const [strategies, setStrategies] = useState(scalingData.strategies);
+  const [bottlenecks, setBottlenecks] = useState(scalingData.bottlenecks);
+  const [metrics, setMetrics] = useState(scalingData.metrics);
+  const [previewMode, setPreviewMode] = useState(scalingData.previewMode);
 
-  const deleteBottleneck = (id) => {
-    setBottlenecks(bottlenecks.filter(b => b.id !== id));
-  };
-
-  const addStrategy = () => {
-    const newId = Math.max(0, ...strategies.map(s => s.id)) + 1;
-    setStrategies([...strategies, {
-      id: newId,
-      name: '',
-      description: '',
-      details: '',
-      status: 'planned'
-    }]);
-  };
-
-  const addMetric = () => {
-    const newId = Math.max(0, ...metrics.map(m => m.id)) + 1;
-    setMetrics([...metrics, {
-      id: newId,
-      name: '',
-      target: '',
-      current: '',
-      status: 'pending'
-    }]);
-  };
-
-  const addBottleneck = () => {
-    const newId = Math.max(0, ...bottlenecks.map(b => b.id)) + 1;
-    setBottlenecks([...bottlenecks, {
-      id: newId,
-      component: '',
-      issue: '',
-      solution: '',
-      priority: 'medium'
-    }]);
-  };
-  
   // Toggle preview mode
   const togglePreview = () => {
     setPreviewMode(!previewMode);
+  };
+
+  // Save data function
+  const saveData = async (updatedData) => {
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'scaling',
+      data: updatedData
+    });
+
+    if (workbookService) {
+      try {
+        await workbookService.saveAllData(currentProblem, 'scaling', {
+          sections: {
+            scaling: updatedData
+          }
+        });
+      } catch (error) {
+        console.error('Failed to save scaling data:', error);
+      }
+    }
+  };
+
+  // Update effect
+  useEffect(() => {
+    setStrategies(scalingData.strategies);
+    setBottlenecks(scalingData.bottlenecks);
+    setMetrics(scalingData.metrics);
+    setPreviewMode(scalingData.previewMode);
+  }, [currentProblem, problems]);
+
+  // Helper function to generate unique IDs
+  const generateId = () => {
+    return Math.random().toString(36).substr(2, 9);
+  };
+
+  // Strategy management functions
+  const addStrategy = () => {
+    const newStrategy = {
+      id: generateId(),
+      component: '',
+      type: 'horizontal',
+      description: '',
+      details: ''
+    };
+    const updatedData = {
+      ...scalingData,
+      strategies: [...scalingData.strategies, newStrategy]
+    };
+    saveData(updatedData);
+  };
+
+  const updateStrategy = (id, field, value) => {
+    const updatedData = {
+      ...scalingData,
+      strategies: scalingData.strategies.map(strategy =>
+        strategy.id === id ? { ...strategy, [field]: value } : strategy
+      )
+    };
+    saveData(updatedData);
+  };
+
+  const deleteStrategy = (id) => {
+    const updatedData = {
+      ...scalingData,
+      strategies: scalingData.strategies.filter(strategy => strategy.id !== id)
+    };
+    saveData(updatedData);
+  };
+
+  // Bottleneck management functions
+  const addBottleneck = () => {
+    const newBottleneck = {
+      id: generateId(),
+      component: '',
+      priority: 'medium',
+      issue: '',
+      solution: ''
+    };
+    const updatedData = {
+      ...scalingData,
+      bottlenecks: [...scalingData.bottlenecks, newBottleneck]
+    };
+    saveData(updatedData);
+  };
+
+  const updateBottleneck = (id, field, value) => {
+    const updatedData = {
+      ...scalingData,
+      bottlenecks: scalingData.bottlenecks.map(bottleneck =>
+        bottleneck.id === id ? { ...bottleneck, [field]: value } : bottleneck
+      )
+    };
+    saveData(updatedData);
+  };
+
+  const deleteBottleneck = (id) => {
+    const updatedData = {
+      ...scalingData,
+      bottlenecks: scalingData.bottlenecks.filter(bottleneck => bottleneck.id !== id)
+    };
+    saveData(updatedData);
+  };
+
+  // Metric management functions
+  const addMetric = () => {
+    const newMetric = {
+      id: generateId(),
+      name: '',
+      target: '',
+      current: '',
+      notes: ''
+    };
+    const updatedData = {
+      ...scalingData,
+      metrics: [...scalingData.metrics, newMetric]
+    };
+    saveData(updatedData);
+  };
+
+  const updateMetric = (id, field, value) => {
+    const updatedData = {
+      ...scalingData,
+      metrics: scalingData.metrics.map(metric =>
+        metric.id === id ? { ...metric, [field]: value } : metric
+      )
+    };
+    saveData(updatedData);
+  };
+
+  const deleteMetric = (id) => {
+    const updatedData = {
+      ...scalingData,
+      metrics: scalingData.metrics.filter(metric => metric.id !== id)
+    };
+    saveData(updatedData);
+  };
+
+  // Capacity planning update function
+  const updateCapacityPlanning = (field, value) => {
+    const updatedData = {
+      ...scalingData,
+      capacityPlanning: {
+        ...scalingData.capacityPlanning,
+        [field]: value
+      }
+    };
+    saveData(updatedData);
+  };
+
+  // Progress calculation functions
+  const calculateProgress = () => {
+    // Add your progress calculation logic here
+    return 0;
+  };
+
+  const getCompletedSections = () => {
+    // Add your completed sections calculation logic here
+    return 0;
+  };
+
+  const getTotalSections = () => {
+    return 4;
   };
   
   return (
@@ -125,7 +258,8 @@ const ScalingStrategyPage = () => {
                       <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
                       <input
                         type="text"
-                        defaultValue={strategy.component}
+                        value={strategy.component || ''}
+                        onChange={(e) => updateStrategy(strategy.id, 'component', e.target.value)}
                         placeholder="e.g., API Services, Database"
                         className="w-full px-2 py-1 text-sm border rounded"
                       />
@@ -133,7 +267,8 @@ const ScalingStrategyPage = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
                       <select
-                        defaultValue={strategy.type}
+                        value={strategy.type || ''}
+                        onChange={(e) => updateStrategy(strategy.id, 'type', e.target.value)}
                         className="w-full px-2 py-1 text-sm border rounded"
                       >
                         <option value="horizontal">Horizontal Scaling</option>
@@ -146,7 +281,8 @@ const ScalingStrategyPage = () => {
                   <div className="mb-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Strategy Description</label>
                     <textarea
-                      defaultValue={strategy.description}
+                      value={strategy.description || ''}
+                      onChange={(e) => updateStrategy(strategy.id, 'description', e.target.value)}
                       placeholder="Describe the scaling strategy..."
                       className="w-full px-2 py-1 text-sm border rounded"
                       rows={2}
@@ -156,7 +292,8 @@ const ScalingStrategyPage = () => {
                   <div className="mb-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Implementation Details</label>
                     <textarea
-                      defaultValue={strategy.details}
+                      value={strategy.details || ''}
+                      onChange={(e) => updateStrategy(strategy.id, 'details', e.target.value)}
                       placeholder="Specific implementation steps and triggers..."
                       className="w-full px-2 py-1 text-sm border rounded"
                       rows={2}
@@ -195,7 +332,8 @@ const ScalingStrategyPage = () => {
                       <label className="block text-xs font-medium text-gray-700 mb-1">Component</label>
                       <input
                         type="text"
-                        defaultValue={bottleneck.component}
+                        value={bottleneck.component || ''}
+                        onChange={(e) => updateBottleneck(bottleneck.id, 'component', e.target.value)}
                         placeholder="e.g., Database, Cache"
                         className="w-full px-2 py-1 text-sm border rounded"
                       />
@@ -203,7 +341,8 @@ const ScalingStrategyPage = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
                       <select
-                        defaultValue={bottleneck.priority}
+                        value={bottleneck.priority || ''}
+                        onChange={(e) => updateBottleneck(bottleneck.id, 'priority', e.target.value)}
                         className="w-full px-2 py-1 text-sm border rounded"
                       >
                         <option value="high">High</option>
@@ -216,7 +355,8 @@ const ScalingStrategyPage = () => {
                   <div className="mb-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Issue Description</label>
                     <textarea
-                      defaultValue={bottleneck.issue}
+                      value={bottleneck.issue || ''}
+                      onChange={(e) => updateBottleneck(bottleneck.id, 'issue', e.target.value)}
                       placeholder="Describe the bottleneck..."
                       className="w-full px-2 py-1 text-sm border rounded"
                       rows={2}
@@ -226,7 +366,8 @@ const ScalingStrategyPage = () => {
                   <div className="mb-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Solution</label>
                     <textarea
-                      defaultValue={bottleneck.solution}
+                      value={bottleneck.solution || ''}
+                      onChange={(e) => updateBottleneck(bottleneck.id, 'solution', e.target.value)}
                       placeholder="Proposed solution..."
                       className="w-full px-2 py-1 text-sm border rounded"
                       rows={2}
@@ -265,7 +406,8 @@ const ScalingStrategyPage = () => {
                       <label className="block text-xs font-medium text-gray-700 mb-1">Metric Name</label>
                       <input
                         type="text"
-                        defaultValue={metric.name}
+                        value={metric.name || ''}
+                        onChange={(e) => updateMetric(metric.id, 'name', e.target.value)}
                         placeholder="e.g., Response Time"
                         className="w-full px-2 py-1 text-sm border rounded"
                       />
@@ -274,7 +416,8 @@ const ScalingStrategyPage = () => {
                       <label className="block text-xs font-medium text-gray-700 mb-1">Target Value</label>
                       <input
                         type="text"
-                        defaultValue={metric.target}
+                        value={metric.target || ''}
+                        onChange={(e) => updateMetric(metric.id, 'target', e.target.value)}
                         placeholder="e.g., 200ms"
                         className="w-full px-2 py-1 text-sm border rounded"
                       />
@@ -283,7 +426,8 @@ const ScalingStrategyPage = () => {
                       <label className="block text-xs font-medium text-gray-700 mb-1">Current Value</label>
                       <input
                         type="text"
-                        defaultValue={metric.current}
+                        value={metric.current || ''}
+                        onChange={(e) => updateMetric(metric.id, 'current', e.target.value)}
                         placeholder="e.g., 180ms"
                         className="w-full px-2 py-1 text-sm border rounded"
                       />
@@ -293,7 +437,8 @@ const ScalingStrategyPage = () => {
                   <div className="mb-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Additional Notes</label>
                     <textarea
-                      defaultValue={metric.notes}
+                      value={metric.notes || ''}
+                      onChange={(e) => updateMetric(metric.id, 'notes', e.target.value)}
                       placeholder="Any additional context or notes..."
                       className="w-full px-2 py-1 text-sm border rounded"
                       rows={2}
@@ -323,7 +468,17 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current Load</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue=""
+                  value={scalingData.capacityPlanning?.currentLoad || ''}
+                  onChange={(e) => {
+                    const updatedData = {
+                      ...scalingData,
+                      capacityPlanning: {
+                        ...scalingData.capacityPlanning,
+                        currentLoad: e.target.value
+                      }
+                    };
+                    saveData(updatedData);
+                  }}
                   placeholder="Describe current system load, e.g., requests per second, daily active users"
                   rows={2}
                 />
@@ -333,7 +488,17 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Projected Growth</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue=""
+                  value={scalingData.capacityPlanning?.projectedGrowth || ''}
+                  onChange={(e) => {
+                    const updatedData = {
+                      ...scalingData,
+                      capacityPlanning: {
+                        ...scalingData.capacityPlanning,
+                        projectedGrowth: e.target.value
+                      }
+                    };
+                    saveData(updatedData);
+                  }}
                   placeholder="Describe expected growth, e.g., user growth, data storage needs"
                   rows={2}
                 />
@@ -343,7 +508,17 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Scaling Triggers</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue=""
+                  value={scalingData.capacityPlanning?.scalingTriggers || ''}
+                  onChange={(e) => {
+                    const updatedData = {
+                      ...scalingData,
+                      capacityPlanning: {
+                        ...scalingData.capacityPlanning,
+                        scalingTriggers: e.target.value
+                      }
+                    };
+                    saveData(updatedData);
+                  }}
                   placeholder="Describe conditions for scaling, e.g., CPU utilization, memory usage, response time"
                   rows={2}
                 />
@@ -353,7 +528,17 @@ const ScalingStrategyPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cost Considerations</label>
                 <textarea
                   className="w-full px-3 py-2 text-sm border rounded-md"
-                  defaultValue=""
+                  value={scalingData.capacityPlanning?.costConsiderations || ''}
+                  onChange={(e) => {
+                    const updatedData = {
+                      ...scalingData,
+                      capacityPlanning: {
+                        ...scalingData.capacityPlanning,
+                        costConsiderations: e.target.value
+                      }
+                    };
+                    saveData(updatedData);
+                  }}
                   placeholder="Describe cost considerations, e.g., reserved instances, spot instances, cost projections"
                   rows={2}
                 />

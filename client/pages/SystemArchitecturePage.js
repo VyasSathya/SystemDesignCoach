@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
 const SystemArchitecturePage = () => {
-  const { state, dispatch } = useWorkbook();
+  const { state, dispatch, workbookService } = useWorkbook();
   const { currentProblem, problems } = state;
   
-  // Get data from context
   const architectureData = problems[currentProblem]?.sections?.architecture || {
     components: [],
     connections: [],
@@ -22,7 +21,7 @@ const SystemArchitecturePage = () => {
     previewMode: false
   };
 
-  // Initialize state from context data
+  // State hooks
   const [components, setComponents] = useState(architectureData.components);
   const [connections, setConnections] = useState(architectureData.connections);
   const [selectedPattern, setSelectedPattern] = useState(architectureData.selectedPattern);
@@ -30,26 +29,134 @@ const SystemArchitecturePage = () => {
   const [deploymentModel, setDeploymentModel] = useState(architectureData.deploymentModel);
   const [previewMode, setPreviewMode] = useState(architectureData.previewMode);
 
-  // Save state when data changes
-  useEffect(() => {
-    if (currentProblem) {
-      dispatch({
-        type: 'UPDATE_SECTION_DATA',
-        problemId: currentProblem,
-        section: 'architecture',
-        data: {
-          components,
-          connections,
-          selectedPattern,
-          patternDescription,
-          deploymentModel,
-          previewMode
-        }
-      });
-    }
-  }, [components, connections, selectedPattern, patternDescription, deploymentModel, previewMode]);
+  // Centralized save function
+  const saveData = async (updatedData) => {
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'architecture',
+      data: updatedData
+    });
 
-  // Component type styles
+    if (workbookService) {
+      try {
+        await workbookService.saveAllData(
+          currentProblem,
+          'architecture',
+          {
+            sections: {
+              architecture: updatedData
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save architecture data:', error);
+      }
+    }
+  };
+
+  // Component management functions
+  const addComponent = () => {
+    const newId = Math.max(...components.map(c => c.id), 0) + 1;
+    const newComponent = {
+      id: newId,
+      name: 'New Component',
+      type: 'service',
+      description: '',
+      technologies: [],
+      responsibilities: []
+    };
+    
+    const updatedData = {
+      ...architectureData,
+      components: [...components, newComponent]
+    };
+    setComponents(updatedData.components);
+    saveData(updatedData);
+  };
+
+  const updateComponent = (id, field, value) => {
+    const updatedData = {
+      ...architectureData,
+      components: components.map(component =>
+        component.id === id ? { ...component, [field]: value } : component
+      )
+    };
+    setComponents(updatedData.components);
+    saveData(updatedData);
+  };
+
+  const deleteComponent = (id) => {
+    const updatedData = {
+      ...architectureData,
+      components: components.filter(component => component.id !== id),
+      connections: connections.filter(connection => 
+        connection.from !== id && connection.to !== id
+      )
+    };
+    setComponents(updatedData.components);
+    setConnections(updatedData.connections);
+    saveData(updatedData);
+  };
+
+  // Connection management functions
+  const addConnection = () => {
+    if (components.length < 2) return;
+    
+    const newId = Math.max(...connections.map(c => c.id), 0) + 1;
+    const newConnection = {
+      id: newId,
+      from: components[0].id,
+      to: components[1].id,
+      type: 'REST API',
+      description: ''
+    };
+
+    const updatedData = {
+      ...architectureData,
+      connections: [...connections, newConnection]
+    };
+    setConnections(updatedData.connections);
+    saveData(updatedData);
+  };
+
+  const updateConnection = (id, field, value) => {
+    const updatedData = {
+      ...architectureData,
+      connections: connections.map(connection =>
+        connection.id === id ? { ...connection, [field]: value } : connection
+      )
+    };
+    setConnections(updatedData.connections);
+    saveData(updatedData);
+  };
+
+  const deleteConnection = (id) => {
+    const updatedData = {
+      ...architectureData,
+      connections: connections.filter(connection => connection.id !== id)
+    };
+    setConnections(updatedData.connections);
+    saveData(updatedData);
+  };
+
+  // Component array fields update
+  const updateComponentArray = (id, field, value) => {
+    const updatedData = {
+      ...architectureData,
+      components: components.map(component => {
+        if (component.id === id) {
+          const items = value.split(/[,\n]/).map(item => item.trim()).filter(item => item);
+          return { ...component, [field]: items };
+        }
+        return component;
+      })
+    };
+    setComponents(updatedData.components);
+    saveData(updatedData);
+  };
+
+  // Utility functions
   const getComponentTypeStyle = (type) => {
     switch(type) {
       case 'ui':
@@ -66,88 +173,55 @@ const SystemArchitecturePage = () => {
         return 'bg-gray-50 border-gray-200';
     }
   };
-  
+
+  // Deployment model update
+  const updateDeploymentModel = (field, value) => {
+    const updatedData = {
+      ...architectureData,
+      deploymentModel: {
+        ...deploymentModel,
+        [field]: value
+      }
+    };
+    setDeploymentModel(updatedData.deploymentModel);
+    saveData(updatedData);
+  };
+
   // Toggle preview mode
   const togglePreview = () => {
+    const updatedData = {
+      ...architectureData,
+      previewMode: !previewMode
+    };
     setPreviewMode(!previewMode);
+    saveData(updatedData);
   };
-  
-  // Handle adding a new component
-  const addComponent = () => {
-    const newId = Math.max(...components.map(c => c.id), 0) + 1;
-    setComponents([...components, {
-      id: newId,
-      name: 'New Component',
-      type: 'service',
-      description: '',
-      technologies: [],
-      responsibilities: []
-    }]);
-  };
-  
-  // Handle adding a new connection
-  const addConnection = () => {
-    if (components.length < 2) return;
-    
-    const newId = Math.max(...connections.map(c => c.id), 0) + 1;
-    setConnections([...connections, {
-      id: newId,
-      from: components[0].id,
-      to: components[1].id,
-      type: 'REST API',
-      description: ''
-    }]);
-  };
-  
-  // Handle updating a component
-  const updateComponent = (id, field, value) => {
-    setComponents(components.map(component => 
-      component.id === id ? { ...component, [field]: value } : component
-    ));
-  };
-  
-  // Handle updating a component's array field
-  const updateComponentArray = (id, field, value) => {
-    setComponents(components.map(component => {
-      if (component.id === id) {
-        // Split by commas and new lines, then trim and filter empty strings
-        const items = value.split(/[,\n]/).map(item => item.trim()).filter(item => item);
-        return { ...component, [field]: items };
-      }
-      return component;
-    }));
-  };
-  
-  // Handle deleting a component
-  const deleteComponent = (id) => {
-    // Remove component
-    setComponents(components.filter(component => component.id !== id));
-    
-    // Remove associated connections
-    setConnections(connections.filter(connection => 
-      connection.from !== id && connection.to !== id
-    ));
-  };
-  
-  // Handle updating a connection
-  const updateConnection = (id, field, value) => {
-    setConnections(connections.map(connection => 
-      connection.id === id ? { ...component, [field]: value } : connection
-    ));
-  };
-  
-  // Handle deleting a connection
-  const deleteConnection = (id) => {
-    setConnections(connections.filter(connection => connection.id !== id));
-  };
-  
-  // Handle updating deployment model
-  const updateDeploymentModel = (field, value) => {
-    setDeploymentModel({
-      ...deploymentModel,
+
+  // Update the selectedPattern and patternDescription handling
+  const updatePattern = (field, value) => {
+    const updatedData = {
+      ...architectureData,
       [field]: value
-    });
+    };
+    
+    if (field === 'selectedPattern') {
+      setSelectedPattern(value);
+    } else if (field === 'patternDescription') {
+      setPatternDescription(value);
+    }
+    
+    saveData(updatedData);
   };
+
+  // Sync state with context
+  useEffect(() => {
+    setComponents(architectureData.components);
+    setConnections(architectureData.connections);
+    setSelectedPattern(architectureData.selectedPattern);
+    setPatternDescription(architectureData.patternDescription);
+    setDeploymentModel(architectureData.deploymentModel);
+    setPreviewMode(architectureData.previewMode);
+  }, [currentProblem, problems]);
 
   // Placeholder progress functions - to be refined later
   const calculateProgress = () => 0;
@@ -205,7 +279,7 @@ const SystemArchitecturePage = () => {
                 <select 
                   className="w-full p-2 border rounded-md"
                   value={selectedPattern}
-                  onChange={(e) => setSelectedPattern(e.target.value)}
+                  onChange={(e) => updatePattern('selectedPattern', e.target.value)}
                 >
                   <option value="microservices">Microservices</option>
                   <option value="monolith">Monolithic</option>
@@ -219,10 +293,11 @@ const SystemArchitecturePage = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Pattern Description</label>
                 <textarea
-                  className="w-full p-2 border rounded-md bg-gray-50"
+                  className="w-full p-2 border rounded-md"
                   value={patternDescription}
-                  onChange={(e) => setPatternDescription(e.target.value)}
+                  onChange={(e) => updatePattern('patternDescription', e.target.value)}
                   rows={3}
+                  placeholder="Describe the chosen architecture pattern and its benefits..."
                 />
               </div>
             </div>

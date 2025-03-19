@@ -1,151 +1,230 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
-import { ChevronUp, ChevronDown } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 
 const APIDesignPage = () => {
-  const { state, dispatch } = useWorkbook();
+  const { state, dispatch, workbookService } = useWorkbook();
   const { currentProblem, problems } = state;
+
+  // Define HTTP methods
+  const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
   
+  // Define parameter types (will be needed later based on the code)
+  const paramTypes = ['string', 'number', 'boolean', 'object', 'array'];
+
   // Get data from context
   const apiData = problems[currentProblem]?.sections?.api || {
-    apiType: 'REST',
+    apiType: '',
     endpoints: [],
-    authMethods: [],
-    errorHandling: [],
     previewMode: false
   };
 
-  // Initialize state from context data
+  // Helper function for HTTP method colors
+  const getMethodColor = (method) => {
+    switch (method?.toUpperCase()) {
+      case 'GET':
+        return 'bg-blue-100 text-blue-800';
+      case 'POST':
+        return 'bg-green-100 text-green-800';
+      case 'PUT':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'PATCH':
+        return 'bg-orange-100 text-orange-800';
+      case 'DELETE':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Initialize state
   const [apiType, setApiType] = useState(apiData.apiType);
   const [endpoints, setEndpoints] = useState(apiData.endpoints);
-  const [authMethods, setAuthMethods] = useState(apiData.authMethods);
-  const [errorHandling, setErrorHandling] = useState(apiData.errorHandling);
   const [previewMode, setPreviewMode] = useState(apiData.previewMode);
 
-  // Save state when data changes
-  useEffect(() => {
-    if (currentProblem) {
-      dispatch({
-        type: 'UPDATE_SECTION_DATA',
-        problemId: currentProblem,
-        section: 'api',
-        data: {
-          apiType,
-          endpoints,
-          authMethods,
-          errorHandling,
-          previewMode
-        }
-      });
-    }
-  }, [apiType, endpoints, authMethods, errorHandling, previewMode]);
+  // Progress calculation functions
+  const calculateProgress = () => {
+    const total = endpoints.length;
+    if (total === 0) return 0;
 
-  // Methods
-  const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-  
-  // Parameter types
-  const paramTypes = ['string', 'number', 'boolean', 'object', 'array', 'date'];
-  
+    const completed = endpoints.filter(endpoint => 
+      endpoint.method && 
+      endpoint.path && 
+      endpoint.description && 
+      endpoint.responseFormat
+    ).length;
+
+    return Math.round((completed / total) * 100);
+  };
+
+  const getCompletedSections = () => {
+    let completed = 0;
+    if (apiType) completed++;
+    if (endpoints.length > 0) completed++;
+    // Add other completion criteria as needed
+    return completed;
+  };
+
+  const getTotalSections = () => 4; // API Overview, Endpoints, Authentication Methods, Error Handling
+
+  // Save data function
+  const saveData = async (updatedData) => {
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'api',
+      data: updatedData
+    });
+
+    if (workbookService) {
+      try {
+        await workbookService.saveAllData(
+          currentProblem,
+          'api',
+          {
+            sections: {
+              api: updatedData
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save API data:', error);
+      }
+    }
+  };
+
   // Toggle preview mode
   const togglePreview = () => {
     setPreviewMode(!previewMode);
   };
-  
-  // Handle API type change
-  const handleApiTypeChange = (type) => {
-    setApiType(type);
+
+  // Helper function to generate unique IDs
+  const generateId = () => {
+    return Math.random().toString(36).substr(2, 9);
   };
-  
-  // Handle endpoint expansion
-  const toggleExpand = (id) => {
-    setEndpoints(endpoints.map(endpoint => 
-      endpoint.id === id ? { ...endpoint, expanded: !endpoint.expanded } : endpoint
-    ));
-  };
-  
-  // Add new endpoint
+
+  // Endpoint management functions
   const addEndpoint = () => {
-    const newId = Math.max(...endpoints.map(e => e.id), 0) + 1;
-    setEndpoints([...endpoints, {
-      id: newId,
-      path: '',
+    const newEndpoint = {
+      id: generateId(),
       method: 'GET',
+      path: '',
       description: '',
       requestParams: [],
       requestBody: '',
-      responseFormat: '{}',
+      responseFormat: '',
       expanded: true
-    }]);
-  };
-  
-  // Update endpoint
-  const updateEndpoint = (id, field, value) => {
-    setEndpoints(endpoints.map(endpoint => 
-      endpoint.id === id ? { ...endpoint, [field]: value } : endpoint
-    ));
-  };
-  
-  // Delete endpoint
-  const deleteEndpoint = (id) => {
-    setEndpoints(endpoints.filter(endpoint => endpoint.id !== id));
-  };
-  
-  // Add request parameter
-  const addRequestParam = (endpointId) => {
-    const endpoint = endpoints.find(e => e.id === endpointId);
-    if (!endpoint) return;
-    
-    const newParamId = endpoint.requestParams.length > 0 
-      ? Math.max(...endpoint.requestParams.map(p => p.id)) + 1 
-      : 1;
-    
-    const updatedParams = [
-      ...endpoint.requestParams, 
-      { id: newParamId, name: '', type: 'string', required: false, description: '' }
-    ];
-    
-    updateEndpoint(endpointId, 'requestParams', updatedParams);
-  };
-  
-  // Update request parameter
-  const updateRequestParam = (endpointId, paramId, field, value) => {
-    const endpoint = endpoints.find(e => e.id === endpointId);
-    if (!endpoint) return;
-    
-    const updatedParams = endpoint.requestParams.map(param => 
-      param.id === paramId ? { ...param, [field]: value } : param
-    );
-    
-    updateEndpoint(endpointId, 'requestParams', updatedParams);
-  };
-  
-  // Delete request parameter
-  const deleteRequestParam = (endpointId, paramId) => {
-    const endpoint = endpoints.find(e => e.id === endpointId);
-    if (!endpoint) return;
-    
-    const updatedParams = endpoint.requestParams.filter(param => param.id !== paramId);
-    updateEndpoint(endpointId, 'requestParams', updatedParams);
-  };
-  
-  // Method badge color
-  const getMethodColor = (method) => {
-    switch(method) {
-      case 'GET': return 'bg-blue-100 text-blue-800';
-      case 'POST': return 'bg-green-100 text-green-800';
-      case 'PUT': return 'bg-yellow-100 text-yellow-800';
-      case 'PATCH': return 'bg-orange-100 text-orange-800';
-      case 'DELETE': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    };
+
+    const updatedData = {
+      ...apiData,
+      endpoints: [...endpoints, newEndpoint]
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
   };
 
-  // Placeholder progress functions - to be refined later
-  const calculateProgress = () => 0;
-  const getCompletedSections = () => 0;
-  const getTotalSections = () => 4; // API Overview, Endpoints, Authentication Methods, Error Handling
+  const updateEndpoint = (id, field, value) => {
+    const updatedData = {
+      ...apiData,
+      endpoints: endpoints.map(endpoint =>
+        endpoint.id === id ? { ...endpoint, [field]: value } : endpoint
+      )
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
+  };
+
+  const deleteEndpoint = (id) => {
+    const updatedData = {
+      ...apiData,
+      endpoints: endpoints.filter(endpoint => endpoint.id !== id)
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
+  };
+
+  const toggleExpand = (id) => {
+    const updatedData = {
+      ...apiData,
+      endpoints: endpoints.map(endpoint =>
+        endpoint.id === id ? { ...endpoint, expanded: !endpoint.expanded } : endpoint
+      )
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
+  };
+
+  // Request parameter management functions
+  const addRequestParam = (endpointId) => {
+    const updatedData = {
+      ...apiData,
+      endpoints: endpoints.map(endpoint => {
+        if (endpoint.id === endpointId) {
+          return {
+            ...endpoint,
+            requestParams: [
+              ...endpoint.requestParams,
+              {
+                id: generateId(),
+                name: '',
+                type: 'string',
+                required: false,
+                description: ''
+              }
+            ]
+          };
+        }
+        return endpoint;
+      })
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
+  };
+
+  const updateRequestParam = (endpointId, paramId, field, value) => {
+    const updatedData = {
+      ...apiData,
+      endpoints: endpoints.map(endpoint => {
+        if (endpoint.id === endpointId) {
+          return {
+            ...endpoint,
+            requestParams: endpoint.requestParams.map(param =>
+              param.id === paramId ? { ...param, [field]: value } : param
+            )
+          };
+        }
+        return endpoint;
+      })
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
+  };
+
+  const deleteRequestParam = (endpointId, paramId) => {
+    const updatedData = {
+      ...apiData,
+      endpoints: endpoints.map(endpoint => {
+        if (endpoint.id === endpointId) {
+          return {
+            ...endpoint,
+            requestParams: endpoint.requestParams.filter(param => param.id !== paramId)
+          };
+        }
+        return endpoint;
+      })
+    };
+    setEndpoints(updatedData.endpoints);
+    saveData(updatedData);
+  };
+
+  // Update effect
+  useEffect(() => {
+    setApiType(apiData.apiType);
+    setEndpoints(apiData.endpoints);
+    setPreviewMode(apiData.previewMode);
+  }, [currentProblem, problems]);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -176,7 +255,10 @@ const APIDesignPage = () => {
           <span className="text-sm font-medium">{calculateProgress()}%</span>
         </div>
         <div className="h-2 bg-gray-200 rounded-full">
-          <div className="h-full bg-green-500 rounded-full" style={{ width: `${calculateProgress()}%` }}></div>
+          <div 
+            className="h-full bg-green-500 rounded-full" 
+            style={{ width: `${calculateProgress()}%` }}
+          />
         </div>
         <div className="mt-4 text-center text-sm text-gray-500">
           <span className="font-medium">{getCompletedSections()}</span> of <span className="font-medium">{getTotalSections()}</span> sections completed
@@ -255,7 +337,10 @@ const APIDesignPage = () => {
                       <div className="flex items-center space-x-2">
                         <button 
                           className="p-1 text-gray-500 hover:text-gray-700"
-                          onClick={() => toggleExpand(endpoint.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(endpoint.id);
+                          }}
                         >
                           {endpoint.expanded ? (
                             <ChevronUp size={20} />
