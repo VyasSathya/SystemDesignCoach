@@ -5,12 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    
+    "dev": "nodemon --config nodemon.json index.js",
     "db:init": "node scripts/database/initialize.js",
     "db:verify": "node scripts/verifyDatabase.js",
     "db:seed": "node scripts/database/seed.js",
-    
     "test": "jest --detectOpenHandles",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",

@@ -6,8 +6,9 @@ const knowledgeService = require('../knowledge/knowledgeService');
 const PersonaService = require('./PersonaService');
 const path = require('path');
 
-const coachPersona = require(path.join(__dirname, '../../../data/persona/coachPersona'));
-const problems = require(path.join(__dirname, '../../../data/problems'));
+// Use path.resolve for absolute paths
+const coachPersona = require(path.resolve(__dirname, '../../../data/persona/coachPersona'));
+const problems = require(path.resolve(__dirname, '../../../data/problems'));
 
 const sessions = {};
 
@@ -401,8 +402,9 @@ class CoachEngine extends BaseEngine {
   }
 }
 
+// Export a new instance with configuration
 module.exports = new CoachEngine({
-  provider: 'claude', // Default provider
+  provider: 'claude',
   stages: [
     'introduction',
     'requirements',

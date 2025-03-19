@@ -1,12 +1,22 @@
-const AIService = require('./aiService');
-const aiConfig = require('../../config/aiConfig');
+const ClaudeService = require('./claudeService');
+const { config } = require('../../config/aiConfig');
 
 class AIFactory {
-  static create(provider) {  // Changed from createService to create
+  static createService(provider, providerConfig) {
     if (provider !== 'claude') {
       throw new Error(`Unsupported AI provider: ${provider}`);
     }
-    return new AIService(aiConfig.config);
+    
+    const serviceConfig = {
+      ...config,
+      ...providerConfig
+    };
+    
+    if (!serviceConfig) {
+      throw new Error('AI configuration is missing');
+    }
+    
+    return new ClaudeService(serviceConfig);
   }
 }
 

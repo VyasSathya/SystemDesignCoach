@@ -1,147 +1,67 @@
-const PatternRegistry = require('./PatternRegistry');
-
 class PatternLibrary {
   constructor() {
-    this.registry = new PatternRegistry();
-  }
-
-  getPatternSuggestions(nodes, edges) {
-    const suggestions = [];
-    const detectedPatterns = this.detectPatterns(nodes, edges);
-    const missingPatterns = this._identifyMissingPatterns(nodes, edges);
-    
-    // Analyze existing pattern implementations
-    for (const pattern of detectedPatterns) {
-      const analysis = this.analyzePatternImplementation(pattern, nodes, edges);
-      if (analysis.improvements.length > 0) {
-        suggestions.push({
-          type: 'improvement',
-          pattern: pattern.id,
-          suggestions: analysis.improvements,
-          priority: analysis.priority
-        });
-      }
-    }
-
-    return this.prioritizeSuggestions(suggestions);
-  }
-
-  analyzePatternImplementation(pattern, nodes, edges) {
-    const analysis = {
-      improvements: [],
-      priority: 'low'
+    this.patterns = {
+      microservices: this._detectMicroservices,
+      loadBalancing: this._detectLoadBalancing,
+      caching: this._detectCaching,
+      messageQueue: this._detectMessageQueue,
+      apiGateway: this._detectApiGateway
     };
-
-    switch (pattern.name.toLowerCase()) {
-      case 'caching':
-        this._analyzeCachingPattern(nodes, edges, analysis);
-        break;
-      case 'message queue':
-        this._analyzeQueuePattern(nodes, edges, analysis);
-        break;
-      case 'microservices':
-        this._analyzeMicroservicesPattern(nodes, edges, analysis);
-        break;
-    }
-
-    return analysis;
   }
 
-  _analyzeCachingPattern(nodes, edges, analysis) {
-    const cacheNodes = nodes.filter(n => n.type === 'cache');
-    const dbNodes = nodes.filter(n => n.type === 'database');
-
-    if (cacheNodes.length === 1 && dbNodes.length > 1) {
-      analysis.improvements.push({
-        type: 'optimization',
-        details: 'Consider distributed caching for multiple databases',
-        priority: 'medium'
-      });
+  detectPatterns(diagram) {
+    const detectedPatterns = {};
+    
+    for (const [patternName, detector] of Object.entries(this.patterns)) {
+      detectedPatterns[patternName] = detector.call(this, diagram);
     }
-
-    // Check cache connections
-    const cacheConnections = edges.filter(e => 
-      nodes.find(n => n.id === e.source && n.type === 'cache') ||
-      nodes.find(n => n.id === e.target && n.type === 'cache')
-    );
-
-    if (cacheConnections.length < dbNodes.length) {
-      analysis.improvements.push({
-        type: 'missing_components',
-        details: 'Not all database operations are cached',
-        priority: 'high'
-      });
-    }
+    
+    return detectedPatterns;
   }
 
-  _analyzeQueuePattern(nodes, edges, analysis) {
-    const queueNodes = nodes.filter(n => n.type === 'queue');
-    const serviceNodes = nodes.filter(n => n.type === 'service');
-
-    // Check for dead letter queue
-    const hasDeadLetterQueue = queueNodes.some(n => 
-      n.data?.properties?.includes('deadLetter')
-    );
-
-    if (!hasDeadLetterQueue) {
-      analysis.improvements.push({
-        type: 'missing_components',
-        details: 'Add dead letter queue for error handling',
-        priority: 'high'
-      });
-    }
-
-    // Check queue connections
-    if (queueNodes.length === 1 && serviceNodes.length > 3) {
-      analysis.improvements.push({
-        type: 'optimization',
-        details: 'Consider multiple queues for better load distribution',
-        priority: 'medium'
-      });
-    }
+  _detectMicroservices(diagram) {
+    const services = diagram.nodes.filter(n => n.type === 'service');
+    return {
+      detected: services.length > 1,
+      count: services.length,
+      services: services.map(s => s.id)
+    };
   }
 
-  _analyzeMicroservicesPattern(nodes, edges, analysis) {
-    const serviceNodes = nodes.filter(n => n.type === 'service');
-    const lbNodes = nodes.filter(n => n.type === 'loadBalancer');
-
-    if (serviceNodes.length > 2 && lbNodes.length === 0) {
-      analysis.improvements.push({
-        type: 'missing_components',
-        details: 'Add load balancer for better request distribution',
-        priority: 'high'
-      });
-    }
-
-    // Check service isolation
-    const directServiceConnections = edges.filter(e =>
-      serviceNodes.find(n => n.id === e.source) &&
-      serviceNodes.find(n => n.id === e.target)
-    );
-
-    if (directServiceConnections.length > serviceNodes.length) {
-      analysis.improvements.push({
-        type: 'optimization',
-        details: 'Consider using API Gateway or Message Queue for service communication',
-        priority: 'medium'
-      });
-    }
+  _detectLoadBalancing(diagram) {
+    const loadBalancers = diagram.nodes.filter(n => n.type === 'loadBalancer');
+    return {
+      detected: loadBalancers.length > 0,
+      count: loadBalancers.length,
+      instances: loadBalancers.map(lb => lb.id)
+    };
   }
 
-  prioritizeSuggestions(suggestions) {
-    return suggestions.sort((a, b) => {
-      const priorities = { high: 3, medium: 2, low: 1 };
-      return priorities[b.priority] - priorities[a.priority];
-    });
+  _detectCaching(diagram) {
+    const caches = diagram.nodes.filter(n => n.type === 'cache');
+    return {
+      detected: caches.length > 0,
+      count: caches.length,
+      instances: caches.map(c => c.id)
+    };
   }
 
-  detectPatterns(nodes, edges) {
-    return this.registry.detectPatterns({ nodes, edges });
+  _detectMessageQueue(diagram) {
+    const queues = diagram.nodes.filter(n => n.type === 'queue');
+    return {
+      detected: queues.length > 0,
+      count: queues.length,
+      instances: queues.map(q => q.id)
+    };
   }
 
-  _identifyMissingPatterns(nodes, edges) {
-    // Implementation of missing pattern identification
-    return [];
+  _detectApiGateway(diagram) {
+    const gateways = diagram.nodes.filter(n => n.type === 'gateway');
+    return {
+      detected: gateways.length > 0,
+      count: gateways.length,
+      instances: gateways.map(g => g.id)
+    };
   }
 }
 

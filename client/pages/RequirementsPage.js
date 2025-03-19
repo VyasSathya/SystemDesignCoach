@@ -6,68 +6,126 @@ import { toast } from 'react-toastify';
 import { useSession } from '../hooks/useSession';
 
 const RequirementsPage = ({ data = {}, updateData }) => {
-  const [functionalReqs, setFunctionalReqs] = useState(
-    data.functionalReqs ? JSON.parse(data.functionalReqs) : [
-      { id: 1, text: '', completed: false }
-    ]
-  );
+  // Initialize state with default values
+  const [functionalReqs, setFunctionalReqs] = useState(() => {
+    try {
+      return data.functionalReqs ? JSON.parse(data.functionalReqs) : [
+        { id: 1, text: '', completed: false }
+      ];
+    } catch {
+      return [{ id: 1, text: '', completed: false }];
+    }
+  });
   
-  const [nonFunctionalReqs, setNonFunctionalReqs] = useState(
-    data.nonFunctionalReqs ? JSON.parse(data.nonFunctionalReqs) : [
-      { id: 1, category: 'Performance', text: '' },
-      { id: 2, category: 'Scalability', text: '' },
-      { id: 3, category: 'Reliability', text: '' },
-      { id: 4, category: 'Security', text: '' }
-    ]
-  );
-  
+  const [nonFunctionalReqs, setNonFunctionalReqs] = useState(() => {
+    try {
+      return data.nonFunctionalReqs ? JSON.parse(data.nonFunctionalReqs) : [
+        { id: 1, category: 'Performance', text: '' },
+        { id: 2, category: 'Scalability', text: '' },
+        { id: 3, category: 'Security', text: '' }
+      ];
+    } catch {
+      return [
+        { id: 1, category: 'Performance', text: '' },
+        { id: 2, category: 'Scalability', text: '' },
+        { id: 3, category: 'Security', text: '' }
+      ];
+    }
+  });
+
   const [constraints, setConstraints] = useState(data.constraints || '');
   const [assumptions, setAssumptions] = useState(data.assumptions || '');
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle');
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState(null);
   const [showDiagramPanel, setShowDiagramPanel] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const { sessionId, sessionType } = useSession();
   const [isDiagramOpen, setIsDiagramOpen] = useState(false);
-  const [hasLocalChanges, setHasLocalChanges] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('idle');
 
-  // Handle unsaved changes warning
+  // Load initial data
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (hasLocalChanges) {
-        e.preventDefault();
-        const message = 'You have unsaved changes. Are you sure you want to leave?';
-        e.returnValue = message;
-        return message;
+    if (!data) return;
+    
+    try {
+      if (data.functionalReqs) {
+        setFunctionalReqs(JSON.parse(data.functionalReqs));
       }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [hasLocalChanges]);
-
-  // Track changes
-  useEffect(() => {
-    setHasLocalChanges(true);
-  }, [functionalReqs, nonFunctionalReqs, constraints, assumptions]);
-
-  const updateFunctionalReq = (id, text) => {
-    const updatedReqs = functionalReqs.map(req =>
-      req.id === id ? { ...req, text } : req
-    );
-    setFunctionalReqs(updatedReqs);
-
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        functionalReqs: JSON.stringify(updatedReqs)
-      });
+      if (data.nonFunctionalReqs) {
+        setNonFunctionalReqs(JSON.parse(data.nonFunctionalReqs));
+      }
+      if (data.constraints) {
+        setConstraints(data.constraints);
+      }
+      if (data.assumptions) {
+        setAssumptions(data.assumptions);
+      }
+    } catch (error) {
+      console.error('Error parsing initial data:', error);
     }
-  };
+  }, [data]);
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!hasLocalChanges || isSaving) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        setIsSaving(true);
+        setSaveStatus('saving');
+
+        const formattedData = {
+          functionalReqs: JSON.stringify(functionalReqs),
+          nonFunctionalReqs: JSON.stringify(nonFunctionalReqs),
+          constraints,
+          assumptions,
+          lastUpdated: new Date().toISOString()
+        };
+
+        // Save to localStorage
+        localStorage.setItem('requirements_backup', JSON.stringify(formattedData));
+
+        if (updateData) {
+          await updateData(formattedData);
+        }
+
+        setHasLocalChanges(false);
+        setSaveStatus('saved');
+      } catch (error) {
+        console.error('Auto-save error:', error);
+        setSaveStatus('error');
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [hasLocalChanges, functionalReqs, nonFunctionalReqs, constraints, assumptions, updateData]);
+
+  // Update handlers
+  const updateFunctionalReq = useCallback((id, text) => {
+    setFunctionalReqs(prev => prev.map(req =>
+      req.id === id ? { ...req, text } : req
+    ));
+    setHasLocalChanges(true);
+  }, []);
+
+  const updateNonFunctionalReq = useCallback((id, text) => {
+    setNonFunctionalReqs(prev => prev.map(req =>
+      req.id === id ? { ...req, text } : req
+    ));
+    setHasLocalChanges(true);
+  }, []);
+
+  const handleConstraintsChange = useCallback((value) => {
+    setConstraints(value);
+    setHasLocalChanges(true);
+  }, []);
+
+  const handleAssumptionsChange = useCallback((value) => {
+    setAssumptions(value);
+    setHasLocalChanges(true);
+  }, []);
 
   const toggleFunctionalReq = (id) => {
     const updatedReqs = functionalReqs.map(req =>
@@ -84,108 +142,29 @@ const RequirementsPage = ({ data = {}, updateData }) => {
     }
   };
 
-  const updateNonFunctionalReq = (id, text) => {
-    const updatedReqs = nonFunctionalReqs.map(req =>
-      req.id === id ? { ...req, text } : req
-    );
-    setNonFunctionalReqs(updatedReqs);
-
-    // Update parent component's data
-    if (updateData) {
-      updateData({
-        ...data,
-        nonFunctionalReqs: JSON.stringify(updatedReqs)
-      });
-    }
-  };
-
-  // Auto-save functionality
-  useEffect(() => {
-    const saveTimer = setTimeout(async () => {
-      if (hasUnsavedChanges()) {
-        await handleAutoSave();
-      }
-    }, 30000); // Auto-save every 30 seconds if there are changes
-
-    return () => clearTimeout(saveTimer);
-  }, [functionalReqs, nonFunctionalReqs, constraints, assumptions]);
-
-  const hasUnsavedChanges = useCallback(() => {
-    return hasLocalChanges;
-  }, [hasLocalChanges]);
-
-  const handleAutoSave = async () => {
-    if (isSaving) return;
-
-    setIsSaving(true);
-    setSaveStatus('saving');
-    
-    try {
-      const formattedData = {
-        functionalReqs: JSON.stringify(functionalReqs),
-        nonFunctionalReqs: JSON.stringify(nonFunctionalReqs),
-        constraints,
-        assumptions,
-        lastUpdated: new Date().toISOString()
-      };
-
-      await updateData(formattedData);
-      setLastSaved(new Date());
-      setHasLocalChanges(false);
-      setSaveStatus('saved');
-      
-      toast({
-        title: "Progress Saved",
-        description: "Your changes have been automatically saved",
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
-    } catch (error) {
-      setSaveStatus('error');
-      toast({
-        title: "Auto-save Failed",
-        description: "Changes couldn't be saved automatically. Please save manually.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Manual save checkpoint
-  const handleManualSave = async () => {
-    try {
-      setSaveStatus('saving');
-      await handleAutoSave();
-      // Create a named checkpoint
-      await createSaveCheckpoint({
-        name: `Manual Save - ${new Date().toLocaleString()}`,
-        type: 'manual'
-      });
-    } catch (error) {
-      setSaveStatus('error');
-    }
-  };
-
   const handleAddFunctionalReq = () => {
     const newId = Math.max(...functionalReqs.map(req => req.id), 0) + 1;
-    setFunctionalReqs([...functionalReqs, { id: newId, text: '', completed: false }]);
+    const updatedReqs = [...functionalReqs, { id: newId, text: '', completed: false }];
+    setFunctionalReqs(updatedReqs);
+    setHasLocalChanges(true);
   };
 
   const handleAddNonFunctionalReq = () => {
     const newId = Math.max(...nonFunctionalReqs.map(req => req.id), 0) + 1;
-    setNonFunctionalReqs([...nonFunctionalReqs, { id: newId, category: 'Other', text: '' }]);
+    const updatedReqs = [...nonFunctionalReqs, { id: newId, category: 'Other', text: '' }];
+    setNonFunctionalReqs(updatedReqs);
+    setHasLocalChanges(true);
   };
 
-  const handleDeleteReq = (index, type) => {
+  const handleDeleteReq = (id, type) => {
     if (type === 'functional') {
-      setFunctionalReqs(functionalReqs.filter((_, i) => i !== index));
+      const updatedReqs = functionalReqs.filter(req => req.id !== id);
+      setFunctionalReqs(updatedReqs);
     } else {
-      setNonFunctionalReqs(nonFunctionalReqs.filter((_, i) => i !== index));
+      const updatedReqs = nonFunctionalReqs.filter(req => req.id !== id);
+      setNonFunctionalReqs(updatedReqs);
     }
+    setHasLocalChanges(true);
   };
 
   const handleDiagramOpen = () => setIsDiagramOpen(true);
@@ -292,12 +271,12 @@ const RequirementsPage = ({ data = {}, updateData }) => {
         </div>
         
         {/* Functional Requirements */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold text-gray-800">Functional Requirements</h2>
             <button 
               className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
-              onClick={() => {/* Add diagram functionality */}}
+              onClick={handleDiagramOpen}
             >
               <PenTool size={14} className="mr-1" />
               Add diagram
@@ -308,7 +287,8 @@ const RequirementsPage = ({ data = {}, updateData }) => {
           <div className="space-y-2">
             {functionalReqs.map(req => (
               <div key={req.id} className="flex items-start gap-2">
-                <div className={`mt-1.5 rounded-md w-5 h-5 flex items-center justify-center border ${req.completed ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300'}`}
+                <div 
+                  className={`mt-1.5 rounded-md w-5 h-5 flex items-center justify-center border cursor-pointer ${req.completed ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300'}`}
                   onClick={() => toggleFunctionalReq(req.id)}
                 >
                   {req.completed && <Check size={14} className="text-white" />}
@@ -340,24 +320,40 @@ const RequirementsPage = ({ data = {}, updateData }) => {
         </div>
         
         {/* Non-Functional Requirements */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-3">Non-Functional Requirements</h2>
           <p className="text-sm text-gray-600 mb-4">Quality attributes that define how the system should perform</p>
           
           <div className="space-y-3">
             {nonFunctionalReqs.map(req => (
-              <div key={req.id} className="flex flex-col">
-                <label className="font-medium text-sm text-gray-700">{req.category}</label>
-                <input
-                  type="text"
-                  value={req.text}
-                  onChange={(e) => updateNonFunctionalReq(req.id, e.target.value)}
-                  placeholder={`Enter ${req.category.toLowerCase()} requirements...`}
-                  className="p-2 border border-gray-300 rounded text-sm mt-1 w-full"
-                />
+              <div key={req.id} className="flex items-start gap-2">
+                <div className="flex-1">
+                  <label className="font-medium text-sm text-gray-700">{req.category}</label>
+                  <input
+                    type="text"
+                    value={req.text}
+                    onChange={(e) => updateNonFunctionalReq(req.id, e.target.value)}
+                    placeholder={`Enter ${req.category.toLowerCase()} requirements...`}
+                    className="w-full p-2 border border-gray-300 rounded text-sm mt-1"
+                  />
+                </div>
+                <button 
+                  onClick={() => handleDeleteReq(req.id, 'non-functional')}
+                  className="p-1 mt-6 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             ))}
           </div>
+          
+          <button 
+            onClick={handleAddNonFunctionalReq}
+            className="mt-3 flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            <Plus size={16} className="mr-1" />
+            Add Requirement
+          </button>
         </div>
         
         {/* Constraints & Assumptions */}
@@ -367,7 +363,7 @@ const RequirementsPage = ({ data = {}, updateData }) => {
             <p className="text-sm text-gray-600 mb-4">What limitations must be considered?</p>
             <textarea
               value={constraints}
-              onChange={(e) => updateConstraints(e.target.value)}
+              onChange={(e) => handleConstraintsChange(e.target.value)}
               placeholder="Enter system constraints..."
               className="w-full h-32 p-2 border border-gray-300 rounded text-sm"
             />
@@ -375,11 +371,11 @@ const RequirementsPage = ({ data = {}, updateData }) => {
           
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800 mb-3">Assumptions</h2>
-            <p className="text-sm text-gray-600 mb-4">What are you assuming about the system?</p>
+            <p className="text-sm text-gray-600 mb-4">What assumptions are being made?</p>
             <textarea
               value={assumptions}
-              onChange={(e) => updateAssumptions(e.target.value)}
-              placeholder="Enter your assumptions..."
+              onChange={(e) => handleAssumptionsChange(e.target.value)}
+              placeholder="Enter system assumptions..."
               className="w-full h-32 p-2 border border-gray-300 rounded text-sm"
             />
           </div>

@@ -17,6 +17,7 @@ import SystemArchitecturePage from './SystemArchitecturePage';
 import ScalingStrategyPage from './ScalingStrategyPage';
 import ReliabilitySecurityPage from './ReliabilitySecurityPage';
 import WorkbookPageWrapper from './WorkbookPageWrapper';
+import { useWorkbook } from '../context/WorkbookContext';
 
 // The color mapping function for tabs
 const getTabStyles = (tabId, isActive) => {
@@ -55,33 +56,54 @@ const getTabStyles = (tabId, isActive) => {
 };
 
 const WorkbookLayout = ({ onBack, sessionId }) => {
-  // State management
-  const [activeTab, setActiveTab] = useState('requirements');
-  const [workbookState, setWorkbookState] = useState({
-    diagrams: {
-      system: {
-        nodes: [],
-        edges: [],
-        mermaidCode: ''
-      },
-      sequence: {
-        nodes: [],
-        edges: [],
-        mermaidCode: ''
-      }
-    }
-  });
-  
-  const [formData, setFormData] = useState({
-    requirements: {},
-    api: {},
-    data: {},
-    architecture: {},
-    scaling: {},
-    reliability: {}
-  });
+  const { state, dispatch, markPageAsSaved } = useWorkbook();
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Define tabs for navigation
+  const saveCurrentPageState = async () => {
+    if (!state.activePage) return;
+    
+    setIsSaving(true);
+    try {
+      const currentPageData = {
+        pageId: state.activePage,
+        content: state.pages[state.activePage].content,
+        diagrams: state.diagrams[state.activePage] || {},
+        lastModified: new Date().toISOString()
+      };
+
+      await workbookService.savePage(
+        sessionId,
+        state.activePage,
+        currentPageData
+      );
+
+      markPageAsSaved(state.activePage);
+    } catch (error) {
+      console.error('Failed to save page:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save when switching tabs if current page is dirty
+  const handleTabChange = async (newTabId) => {
+    if (state.pages[state.activePage]?.isDirty) {
+      await saveCurrentPageState();
+    }
+    dispatch({ type: 'SET_ACTIVE_PAGE', page: newTabId });
+  };
+
+  // Auto-save dirty pages
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      if (state.pages[state.activePage]?.isDirty) {
+        saveCurrentPageState();
+      }
+    }, 30000);
+
+    return () => clearInterval(saveInterval);
+  }, [state.activePage, state.pages]);
+
   const tabs = [
     { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
     { id: 'api', label: 'API Design', icon: <Code size={18} /> },
@@ -90,23 +112,6 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
     { id: 'scaling', label: 'Scaling Strategy', icon: <BarChart size={18} /> },
     { id: 'reliability', label: 'Reliability & Security', icon: <Shield size={18} /> }
   ];
-
-  const updateFormData = (section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: data
-    }));
-  };
-
-  const handleSaveAndContinue = async () => {
-    // Get the next tab index
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    const nextTab = tabs[currentIndex + 1];
-    
-    if (nextTab) {
-      setActiveTab(nextTab.id);
-    }
-  };
 
   const getActivePageComponent = () => {
     const commonProps = {
@@ -182,6 +187,11 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
                 Save Progress
               </button>
             </div>
+            {isSaving && (
+              <span className="ml-2 text-gray-500">
+                Saving...
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -193,11 +203,14 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={getTabStyles(tab.id, activeTab === tab.id)}
+                onClick={() => handleTabChange(tab.id)}
+                className={getTabStyles(tab.id, state.activePage === tab.id)}
               >
                 {tab.icon}
                 <span className="ml-2">{tab.label}</span>
+                {state.pages[tab.id]?.isDirty && (
+                  <span className="ml-2 h-2 w-2 bg-blue-500 rounded-full" />
+                )}
               </button>
             ))}
           </div>

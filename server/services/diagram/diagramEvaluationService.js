@@ -1,12 +1,13 @@
 const DiagramAnalyzer = require('./diagramAnalyzer');
 const PatternLibrary = require('./patterns/PatternLibrary');
-const { diagramStructure } = require('../../../data/diagram_structure');
+const { diagramStructure } = require('../../data/diagram_structure');
 const WorkbookService = require('./WorkbookService');
 
 class DiagramEvaluationService {
   constructor() {
     this.analyzer = new DiagramAnalyzer();
-    this.workbookService = new WorkbookService();
+    this.workbookService = WorkbookService;
+    this.patternLibrary = new PatternLibrary();
   }
 
   async evaluateDiagram(diagram, type, context) {
@@ -57,29 +58,13 @@ class DiagramEvaluationService {
   }
 
   _getCriteriaForType(type) {
-    const commonCriteria = ['scalability', 'reliability', 'security'];
-    
-    switch (type) {
-      case 'system':
-        return [...commonCriteria, 'performance', 'maintainability'];
-      case 'sequence':
-        return [...commonCriteria, 'consistency', 'communication'];
-      default:
-        return commonCriteria;
-    }
+    return ['complexity', 'patterns', 'bestPractices'];
   }
 
   _getCriterionConfig(criterion) {
     return {
-      weights: {
-        complexity: 0.3,
-        patterns: 0.3,
-        bestPractices: 0.4
-      },
-      thresholds: {
-        warning: 0.6,
-        error: 0.4
-      }
+      weight: 1,
+      checks: []
     };
   }
 
@@ -125,29 +110,6 @@ class DiagramEvaluationService {
     });
   }
 
-  _calculateOverallScore(scores) {
-    const weights = {
-      scalability: 0.25,
-      reliability: 0.2,
-      security: 0.25,
-      performance: 0.15,
-      maintainability: 0.15
-    };
-
-    let totalScore = 0;
-    let totalWeight = 0;
-
-    for (const [criterion, score] of Object.entries(scores)) {
-      if (criterion !== 'overall') {
-        const weight = weights[criterion] || 0.1;
-        totalScore += score.value * weight;
-        totalWeight += weight;
-      }
-    }
-
-    return totalWeight > 0 ? totalScore / totalWeight : 0;
-  }
-
   _normalizeDiagram(diagram, type) {
     const structure = diagramStructure[type];
     if (!structure) {
@@ -167,29 +129,6 @@ class DiagramEvaluationService {
     };
   }
 
-  async _storeEvaluation(evaluation, context) {
-    try {
-      // Store evaluation in database
-      const Diagram = require('../../models/Diagram');
-      await Diagram.findOneAndUpdate(
-        { diagramId: evaluation.diagramId },
-        {
-          $set: { currentScore: evaluation.scores.overall },
-          $push: { 
-            snapshots: {
-              timestamp: evaluation.timestamp,
-              scores: evaluation.scores,
-              analysis: evaluation.analysis
-            }
-          }
-        },
-        { upsert: true }
-      );
-    } catch (error) {
-      console.error('Failed to store evaluation:', error);
-    }
-  }
-
   _analyzeRelationships(nodes, edges) {
     return {
       connectivity: this._calculateConnectivity(nodes, edges),
@@ -198,20 +137,42 @@ class DiagramEvaluationService {
     };
   }
 
-  _calculateComplexity(diagram) {
-    const nodeComplexity = diagram.nodes.length;
-    const edgeComplexity = diagram.edges.length;
-    const patternComplexity = this._identifyPatterns(diagram).length;
+  _calculateConnectivity(nodes, edges) {
+    return edges.length / (nodes.length * (nodes.length - 1));
+  }
 
+  _analyzeDependencies(nodes, edges) {
     return {
-      value: (nodeComplexity * 0.4) + (edgeComplexity * 0.4) + (patternComplexity * 0.2),
-      details: {
-        nodes: nodeComplexity,
-        edges: edgeComplexity,
-        patterns: patternComplexity
-      }
+      count: edges.length,
+      density: edges.length / nodes.length
     };
+  }
+
+  _identifyBottlenecks(nodes, edges) {
+    return nodes
+      .filter(node => {
+        const incomingEdges = edges.filter(e => e.target === node.id);
+        const outgoingEdges = edges.filter(e => e.source === node.id);
+        return incomingEdges.length > 2 && outgoingEdges.length === 1;
+      })
+      .map(node => node.id);
+  }
+
+  _calculateComplexity(diagram) {
+    return {
+      cyclomatic: this._calculateCyclomaticComplexity(diagram),
+      cognitive: this._calculateCognitiveComplexity(diagram)
+    };
+  }
+
+  _calculateCyclomaticComplexity(diagram) {
+    return diagram.edges.length - diagram.nodes.length + 2;
+  }
+
+  _calculateCognitiveComplexity(diagram) {
+    return diagram.edges.length * 0.5 + diagram.nodes.length * 0.3;
   }
 }
 
 module.exports = DiagramEvaluationService;
+

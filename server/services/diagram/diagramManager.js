@@ -1,5 +1,4 @@
 const { diagramStructure } = require('../../../data/diagram_structure');
-const mermaid = require('mermaid');
 
 class DiagramManager {
   constructor() {
@@ -21,7 +20,7 @@ class DiagramManager {
       components: this._initializeComponents(type, initialData),
       mermaid: {
         template: structure.mermaid.template,
-        generated: this._generateMermaid(type, in,itialData)
+        generated: this._generateMermaid(type, initialData)
       }
     };
 
@@ -73,10 +72,6 @@ class DiagramManager {
       return '';
     }
 
-    // Basic template replacement - in real implementation, 
-    // would use a proper template engine like Handlebars
-    let code = structure.mermaid.template;
-    
     if (type === 'sequence') {
       const actorLines = components.actors
         .map(actor => `participant ${actor.id} as ${actor.name}`)
@@ -84,27 +79,27 @@ class DiagramManager {
       const messageLines = components.messages
         .map(msg => `${msg.from}->>${msg.to}: ${msg.label}`)
         .join('\n');
-      code = `sequenceDiagram\n${actorLines}\n${messageLines}`;
-    } else if (type === 'system') {
+      return `sequenceDiagram\n${actorLines}\n${messageLines}`;
+    } 
+    
+    if (type === 'system') {
       const nodeLines = components.nodes
         .map(node => `${node.id}[${node.label}]`)
         .join('\n');
       const connectionLines = components.connections
         .map(conn => `${conn.from} -->|${conn.label}| ${conn.to}`)
         .join('\n');
-      code = `graph TD\n${nodeLines}\n${connectionLines}`;
+      return `graph TD\n${nodeLines}\n${connectionLines}`;
     }
 
-    return code;
+    return '';
   }
 
   _mergeComponents(existing, updates) {
-    // Deep merge of components while preserving structure
     return {
       ...existing,
       ...Object.entries(updates).reduce((acc, [key, value]) => {
         if (Array.isArray(existing[key]) && Array.isArray(value)) {
-          // Merge arrays by id if objects have ids, otherwise concat
           acc[key] = value.map(item => {
             if (item.id) {
               const existingItem = existing[key].find(e => e.id === item.id);
@@ -129,4 +124,5 @@ class DiagramManager {
   }
 }
 
-module.exports = new DiagramManager();
+module.exports = DiagramManager;
+

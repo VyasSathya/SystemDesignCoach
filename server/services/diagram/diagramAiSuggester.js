@@ -5,7 +5,10 @@ const DiagramAnalyzer = require('./diagramAnalyzer');
 class DiagramAiSuggester {
   constructor() {
     this.analyzer = new DiagramAnalyzer();
-    this.ai = AIFactory.create('diagram');
+    this.ai = AIFactory.createService('claude', {
+      temperature: 0.3,
+      maxTokens: 2000
+    });
   }
 
   async generateSuggestions(diagram, context) {

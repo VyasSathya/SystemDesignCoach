@@ -1,143 +1,342 @@
-import Cookies from 'js-cookie';
-
 class WorkbookService {
   constructor() {
-    this.baseStorageKey = 'workbook';
-    this.syncQueue = new Map();
-    this.apiBase = process.env.NEXT_PUBLIC_API_URL || '';
-    this.offlineKey = 'workbook_offline_queue';
+    this.currentData = null;
+    this.currentProblemId = null;
+    this.currentUserId = null;
+    this.saveQueue = [];
+    this.isSaving = false;
   }
 
-  // Get diagram from local storage
-  getDiagram(userId, problemId, type) {
-    const key = `${this.baseStorageKey}_${userId}_${problemId}_${type}`;
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : null;
+  async switchProblem(userId, problemId) {
+    // Save current problem data if exists
+    if (this.currentProblemId && this.currentUserId) {
+      await this.saveAllData(this.currentUserId, this.currentProblemId);
+    }
+
+    // Load new problem data
+    this.currentProblemId = problemId;
+    this.currentUserId = userId;
+    
+    // Try loading from localStorage first
+    const localData = this.loadFromLocal(userId, problemId);
+    
+    // Then fetch from server and merge if newer
+    if (navigator.onLine) {
+      const serverData = await this.fetchFromServer(userId, problemId);
+      this.currentData = this.mergeData(localData, serverData);
+    } else {
+      this.currentData = localData;
+    }
+
+    return this.currentData;
   }
 
-  // Save diagram to local storage and sync with backend
+  async getDiagram(userId, problemId, type) {
+    try {
+      // Validate user
+      if (userId !== this.currentUserId) return null;
+
+      // Return from memory if available
+      if (this.currentData?.diagrams?.[type]) {
+        return this.currentData.diagrams[type];
+      }
+
+      // Try localStorage
+      const key = `diagram_${userId}_${problemId}_${type}`;
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      return null;
+    } catch (err) {
+      console.error('Error getting diagram:', err);
+      return null;
+    }
+  }
+
   async saveDiagram(userId, problemId, data, type) {
     try {
-      // Save to local storage first
-      const key = `${this.baseStorageKey}_${userId}_${problemId}_${type}`;
+      // Update memory
+      if (!this.currentData) this.currentData = {};
+      if (!this.currentData.diagrams) this.currentData.diagrams = {};
+      this.currentData.diagrams[type] = data;
+
+      // Save to localStorage
+      const key = `diagram_${userId}_${problemId}_${type}`;
       localStorage.setItem(key, JSON.stringify(data));
 
-      // Try to sync with backend if online
-      if (navigator.onLine) {
-        try {
-          await this.syncWithBackend(type, userId, problemId, data);
-        } catch (error) {
-          // Store failed sync attempt for later retry
-          this.addToOfflineQueue(type, userId, problemId, data);
-          console.warn('Failed to sync with backend, saved to offline queue:', error);
+      // Queue server save
+      await this.queueSave({
+        type: 'diagram',
+        problemId,
+        userId,
+        data: {
+          type,
+          content: data
         }
-      } else {
-        // Store for later sync when back online
-        this.addToOfflineQueue(type, userId, problemId, data);
+      });
+    } catch (err) {
+      console.error('Error saving diagram:', err);
+    }
+  }
+
+  async getChat(userId, problemId) {
+    try {
+      const key = `chat_${userId}_${problemId}`;
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        return JSON.parse(cached);
       }
-      
-      return true;
+      return [];
+    } catch (err) {
+      console.error('Error getting chat:', err);
+      return [];
+    }
+  }
+
+  async saveChat(userId, problemId, messages) {
+    try {
+      // Save to localStorage
+      const key = `chat_${userId}_${problemId}`;
+      localStorage.setItem(key, JSON.stringify(messages));
+
+      // Try to sync with backend
+      if (navigator.onLine) {
+        await fetch('/api/workbook/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'chat',
+            userId,
+            problemId,
+            data: messages
+          })
+        });
+      }
+    } catch (err) {
+      console.error('Error saving chat:', err);
+    }
+  }
+
+  async getProgress(userId, problemId) {
+    try {
+      const key = `progress_${userId}_${problemId}`;
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      return {};
+    } catch (err) {
+      console.error('Error getting progress:', err);
+      return {};
+    }
+  }
+
+  async saveProgress(userId, problemId, data) {
+    try {
+      // Save to localStorage
+      const key = `progress_${userId}_${problemId}`;
+      localStorage.setItem(key, JSON.stringify(data));
+
+      // Try to sync with backend
+      if (navigator.onLine) {
+        await fetch('/api/workbook/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'progress',
+            userId,
+            problemId,
+            data
+          })
+        });
+      }
+    } catch (err) {
+      console.error('Error saving progress:', err);
+    }
+  }
+
+  async saveAllData(problemId, currentPage, pageData = {}) {
+    if (!problemId) {
+      console.warn('saveAllData called without problemId');
+      return;
+    }
+
+    const fullState = {
+      currentPage,
+      lastModified: new Date().toISOString(),
+      diagrams: pageData?.diagrams || {},
+      sections: {
+        requirements: pageData?.sections?.requirements || {},
+        architecture: pageData?.sections?.architecture || {},
+        api: pageData?.sections?.api || {},
+        data: pageData?.sections?.data || {},
+        scaling: pageData?.sections?.scaling || {},
+        reliability: pageData?.sections?.reliability || {}
+      },
+      chat: pageData?.chat || [],
+      progress: pageData?.progress || {}
+    };
+
+    // Save to local storage first
+    this.saveToLocal(problemId, fullState);
+    
+    // Queue server save
+    try {
+      await this.queueSave({
+        type: 'fullState',
+        problemId,
+        data: fullState
+      });
     } catch (error) {
-      console.error('Failed to save diagram:', error);
-      return false;
+      console.error('Error saving workbook data:', error);
+      // Continue even if server save fails
     }
+
+    return fullState;
   }
 
-  getAuthToken() {
-    return Cookies.get('auth_token') || localStorage.getItem('token');
+  saveToLocal(problemId, state) {
+    const key = `workbook_${problemId}_state`;
+    localStorage.setItem(key, JSON.stringify({
+      ...state,
+      lastSavedLocal: new Date().toISOString()
+    }));
   }
 
-  async syncWithBackend(type, userId, problemId, data, subType = null) {
-    const token = this.getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+  async queueSave(saveData) {
+    this.saveQueue.push(saveData);
+    await this.processSaveQueue();
+  }
+
+  async processSaveQueue() {
+    if (this.isSaving || this.saveQueue.length === 0) return;
+
+    this.isSaving = true;
+    const item = this.saveQueue[0];
 
     try {
-      const apiUrl = new URL('/api/workbook/sync', this.apiBase);
-      const response = await fetch(apiUrl.toString(), {
+      await this.saveToServer(item);
+      this.saveQueue.shift();
+    } catch (error) {
+      console.error('Save failed:', error);
+      // Keep in queue for retry if it's not a fatal error
+      if (this.saveQueue.length > 0 && this.saveQueue[0].retryCount < 3) {
+        this.saveQueue[0].retryCount = (this.saveQueue[0].retryCount || 0) + 1;
+      } else {
+        this.saveQueue.shift(); // Remove after max retries
+      }
+    } finally {
+      this.isSaving = false;
+      if (this.saveQueue.length > 0) {
+        await this.processSaveQueue();
+      }
+    }
+  }
+
+  async saveToServer(saveData) {
+    const { type, problemId, data } = saveData;
+    
+    return fetch('/api/workbook/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        problemId,
+        data,
+        timestamp: new Date().toISOString()
+      })
+    });
+  }
+
+  // Add method to load full state
+  async loadFullState(userId, problemId) {
+    const key = `workbook_${problemId}_state`;
+    const localState = localStorage.getItem(key);
+    
+    if (localState) {
+      return JSON.parse(localState);
+    }
+    
+    // If no local state, try server
+    if (navigator.onLine) {
+      try {
+        const response = await fetch(`/api/workbook/state/${problemId}`);
+        const serverState = await response.json();
+        this.saveToLocal(problemId, serverState); // Cache it locally
+        return serverState;
+      } catch (error) {
+        console.error('Failed to load state from server:', error);
+        return null;
+      }
+    }
+    
+    return null;
+  }
+
+  async savePage(sessionId, pageId, pageData) {
+    // Save to local storage first
+    this._saveToLocal(sessionId, pageId, pageData);
+
+    // Then save to server
+    try {
+      const response = await fetch(`/api/workbook/${sessionId}/pages/${pageId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          type,
-          userId,
-          problemId,
-          data: {
-            nodes: data.nodes || [],
-            edges: data.edges || [],
-            mermaidCode: data.mermaidCode || '',
-            type: subType
-          },
-          subType
-        }),
-        credentials: 'include'
+        body: JSON.stringify(pageData)
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
+        throw new Error(`Failed to save ${pageId}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Sync error:', {
-        url: `${this.apiBase}/api/workbook/sync`,
-        error: error.message,
-        type,
-        userId,
-        problemId
-      });
+      console.error(`Error saving ${pageId}:`, error);
       throw error;
     }
   }
 
-  addToOfflineQueue(type, userId, problemId, data) {
-    const queueData = {
-      type,
-      userId,
-      problemId,
-      data,
-      timestamp: Date.now()
-    };
-
-    let queue = JSON.parse(localStorage.getItem(this.offlineKey) || '[]');
-    queue.push(queueData);
-    localStorage.setItem(this.offlineKey, JSON.stringify(queue));
+  _saveToLocal(sessionId, pageId, pageData) {
+    const key = `workbook_${sessionId}_${pageId}`;
+    localStorage.setItem(key, JSON.stringify({
+      ...pageData,
+      lastSavedLocal: new Date().toISOString()
+    }));
   }
 
-  async processSyncQueue() {
-    if (!navigator.onLine) return;
-
-    const queue = JSON.parse(localStorage.getItem(this.offlineKey) || '[]');
-    if (queue.length === 0) return;
-
-    const newQueue = [];
-    for (const item of queue) {
+  async loadPage(sessionId, pageId) {
+    // Try local storage first
+    const localData = this._loadFromLocal(sessionId, pageId);
+    
+    // If online, fetch from server and update local
+    if (navigator.onLine) {
       try {
-        await this.syncWithBackend(
-          item.type,
-          item.userId,
-          item.problemId,
-          item.data
-        );
+        const response = await fetch(`/api/workbook/${sessionId}/pages/${pageId}`);
+        if (response.ok) {
+          const serverData = await response.json();
+          this._saveToLocal(sessionId, pageId, serverData);
+          return serverData;
+        }
       } catch (error) {
-        newQueue.push(item);
+        console.error(`Error loading ${pageId} from server:`, error);
       }
     }
+    
+    return localData;
+  }
 
-    localStorage.setItem(this.offlineKey, JSON.stringify(newQueue));
+  _loadFromLocal(sessionId, pageId) {
+    const key = `workbook_${sessionId}_${pageId}`;
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
   }
 }
 
-// Create singleton instance
-export const workbookService = new WorkbookService();
-
-// Add online/offline handlers
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    workbookService.processSyncQueue();
-  });
-}
+export default new WorkbookService();

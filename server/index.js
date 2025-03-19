@@ -1,37 +1,23 @@
-require('dotenv').config();
-const app = require('./app');
-const logger = require('./utils/logger');
+const express = require('express');
 const cors = require('cors');
+const logger = require('./utils/logger');
 
-// CORS configuration
+const app = express();
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'X-Requested-With']
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true
 }));
 
-// Add error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message
-  });
-});
+app.use(express.json());
 
-// Mount API routes under /api prefix
+// Register workbook routes
 app.use('/api/workbook', require('./routes/api/workbook'));
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  logger.info(`CORS enabled for origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
 });
-
-
-
-
-
 

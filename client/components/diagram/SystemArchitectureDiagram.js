@@ -14,6 +14,7 @@ import CustomNode from './NodeTypes/CustomNode';
 import BaseNode from './NodeTypes/BaseNode';
 import 'reactflow/dist/style.css';
 import { workbookService } from '../../services/workbookService';
+import { toast } from 'react-toastify';
 
 // Define nodeTypes outside the component
 const nodeTypes = {
@@ -23,28 +24,84 @@ const nodeTypes = {
   database: BaseNode
 };
 
-const SystemArchitectureDiagram = ({ problemId, userId }) => {
-  // Initialize state from workbookService
-  const [nodes, setNodes] = useState(() => {
-    const saved = workbookService.getDiagram(userId, problemId, 'system');
-    return saved?.nodes || [];
-  });
-
-  const [edges, setEdges] = useState(() => {
-    const saved = workbookService.getDiagram(userId, problemId, 'system');
-    return saved?.edges || [];
-  });
-
+const SystemArchitectureDiagram = ({ userId, problemId }) => {
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [nodeName, setNodeName] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [pendingNodeType, setPendingNodeType] = useState(null);
   const [newNodeName, setNewNodeName] = useState('');
   const [nodeData, setNodeData] = useState(null);
 
-  // Memoize nodeTypes
-  const memoizedNodeTypes = useMemo(() => nodeTypes, []);
+  // Create a memoized storage key
+  const storageKey = useMemo(() => 
+    `system_diagram_${userId}_${problemId}`,
+    [userId, problemId]
+  );
+
+  // Load diagram data on mount
+  useEffect(() => {
+    const loadDiagram = async () => {
+      try {
+        // Try loading from backend first
+        const saved = await workbookService.getDiagram(userId, problemId, 'system');
+        if (saved?.nodes) {
+          setNodes(saved.nodes);
+          setEdges(saved.edges || []);
+          return;
+        }
+
+        // Fall back to localStorage if backend fails
+        const localData = localStorage.getItem(storageKey);
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          setNodes(parsed.nodes || []);
+          setEdges(parsed.edges || []);
+        }
+      } catch (err) {
+        console.error('Failed to load diagram:', err);
+        // Try localStorage as fallback
+        const localData = localStorage.getItem(storageKey);
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          setNodes(parsed.nodes || []);
+          setEdges(parsed.edges || []);
+        }
+      }
+    };
+    
+    if (userId && problemId) {
+      loadDiagram();
+    }
+  }, [userId, problemId, storageKey]);
+
+  // Save whenever diagram changes
+  useEffect(() => {
+    const saveDiagram = async () => {
+      try {
+        if (!userId || !problemId) return;
+        
+        const diagramData = {
+          nodes,
+          edges
+        };
+        
+        // Save to localStorage first
+        localStorage.setItem(storageKey, JSON.stringify(diagramData));
+        
+        // Then save to backend
+        await workbookService.saveDiagram(userId, problemId, diagramData, 'system');
+      } catch (err) {
+        console.error('Failed to save diagram:', err);
+      }
+    };
+
+    // Debounce save to avoid too many saves
+    const timeoutId = setTimeout(saveDiagram, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, userId, problemId, storageKey]);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -146,25 +203,46 @@ const SystemArchitectureDiagram = ({ problemId, userId }) => {
         nodes,
         edges
       };
+      
+      // Save to localStorage
       localStorage.setItem(storageKey, JSON.stringify(diagramData));
-      console.log('Diagram saved successfully');
+      
+      // Save to backend
+      await workbookService.saveDiagram(userId, problemId, diagramData, 'system');
+      
+      toast({
+        title: "Success",
+        description: "Diagram saved successfully",
+        status: "success",
+        duration: 2000,
+      });
     } catch (error) {
       console.error('Error saving diagram:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save diagram",
+        status: "error",
+        duration: 3000,
+      });
     }
   };
 
   // Add persistence effect
   useEffect(() => {
+    // Add console log to debug props
+    console.log('Component props:', { userId, problemId });
     const state = {
       nodes,
       edges
     };
-    workbookService.saveDiagram(userId, problemId, state, 'system')
-      .catch(error => console.error('Failed to save diagram:', error));
+    if (userId && problemId) {  // Only save if we have both values
+      workbookService.saveDiagram(userId, problemId, state, 'system')
+        .catch(error => console.error('Failed to save diagram:', error));
+    }
   }, [nodes, edges, userId, problemId]);
 
   return (
-    <div style={{ width: '100%', height: '77vh' }} className="relative">  {/* Changed from 80vh to 75vh */}
+    <div className="flex flex-col h-full">
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}

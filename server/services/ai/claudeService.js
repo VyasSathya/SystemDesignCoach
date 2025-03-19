@@ -1,46 +1,64 @@
-const { default: Anthropic } = require('@anthropic-ai/sdk');
-const AIService = require('./base/AIService');
+const { Anthropic } = require('@anthropic-ai/sdk');
 const logger = require('../../utils/logger');
-const { CLAUDE_MODEL } = require('../../config/aiConfig');
 
-class ClaudeService extends AIService {
+class ClaudeService {
   constructor(config = {}) {
-    super();
+    this.config = config;
+    
     const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error("API key for Anthropic is required.");
+    
+    if (!apiKey && process.env.NODE_ENV !== 'development') {
+      logger.error('Missing API key for Claude service');
+      throw new Error('API key is required for AI service. Set ANTHROPIC_API_KEY in environment variables or provide in config.');
     }
-    this.anthropic = new Anthropic({ apiKey });
-    this.defaultModel = config.model || CLAUDE_MODEL;
-    this.maxRetries = config.maxRetries || 3;
-    this.maxTokens = config.maxTokens || 4096;
-    this.temperature = config.temperature || 0.7;
+
+    // Use mock client for development if no API key
+    if (process.env.NODE_ENV === 'development' && !apiKey) {
+      this.client = this._createMockClient();
+      logger.info('Using mock Claude client for development');
+    } else {
+      this.client = new Anthropic({
+        apiKey: apiKey,
+      });
+    }
+  }
+
+  _createMockClient() {
+    return {
+      messages: {
+        create: async ({ messages, system }) => ({
+          content: [{
+            text: `[DEV MODE] Mock response to: ${messages[messages.length - 1].content}\nSystem: ${system}`
+          }]
+        })
+      }
+    };
   }
 
   async sendMessage(messages, options = {}) {
-    const maxRetries = options.maxRetries || this.maxRetries;
-    let attempt = 0;
-    
-    while (attempt < maxRetries) {
-      try {
-        const response = await this.anthropic.messages.create({
-          model: this.defaultModel,
-          max_tokens: options.maxTokens || this.maxTokens,
-          messages: messages,
-          system: options.systemPrompt || "You are an expert system design coach helping developers improve their architecture and implementation decisions.",
-          temperature: options.temperature || this.temperature,
-        });
-
-        return response.content[0].text;
-      } catch (error) {
-        attempt++;
-        logger.error(`AI Service Error (attempt ${attempt}/${maxRetries}):`, error);
-        if (attempt === maxRetries) {
-          throw new Error('Failed to get AI response after multiple attempts');
-        }
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    try {
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        throw new Error('Invalid message format');
       }
+      
+      if (messages.some(m => !m.role || !m.content)) {
+        throw new Error('Invalid message format');
+      }
+
+      const systemPrompt = options.systemPrompt || this.config.defaultSystemPrompt;
+
+      const response = await this.client.messages.create({
+        model: this.config.model || 'claude-3-sonnet-20240229',
+        max_tokens: options.maxTokens || this.config.maxTokens || 4096,
+        messages: messages,
+        system: systemPrompt,
+        temperature: options.temperature || this.config.temperature || 0.7,
+      });
+
+      return response.content[0].text;
+    } catch (error) {
+      logger.error('AI Service Error:', error);
+      throw error;
     }
   }
 }
