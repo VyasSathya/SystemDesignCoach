@@ -11,7 +11,16 @@ import ReactFlow, {
 import { Trash2, Edit, MessageSquare, Save } from 'lucide-react';
 import NodePalette from './NodePalette';
 import CustomNode from './NodeTypes/CustomNode';
+import BaseNode from './NodeTypes/BaseNode';
 import 'reactflow/dist/style.css';
+
+// Define nodeTypes outside the component
+const nodeTypes = {
+  custom: CustomNode,
+  user: BaseNode,
+  system: BaseNode,
+  database: BaseNode
+};
 
 const SystemArchitectureDiagram = () => {
   const [nodes, setNodes] = useState([]);
@@ -25,9 +34,7 @@ const SystemArchitectureDiagram = () => {
   const [nodeData, setNodeData] = useState(null);
 
   // Memoize nodeTypes
-  const nodeTypes = useMemo(() => ({
-    custom: CustomNode
-  }), []);
+  const memoizedNodeTypes = useMemo(() => nodeTypes, []);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -147,7 +154,7 @@ const SystemArchitectureDiagram = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
-          nodeTypes={nodeTypes}
+          nodeTypes={memoizedNodeTypes}
           fitView
           snapToGrid={true}
           snapGrid={[15, 15]}

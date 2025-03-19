@@ -8,7 +8,9 @@ import {
   ArrowLeft, Save, Send, RefreshCw, MessageSquare, CheckCircle, XCircle, Eye, Edit, 
   ClipboardList, Database, Code, Layout, BarChart, Shield, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import { ReactFlow, Background, Controls, ReactFlowProvider, 
+  applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
+import 'reactflow/dist/style.css';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getCoachingSession, sendCoachingMessage, getCoachingMaterials,
@@ -81,11 +83,14 @@ const CoachingSessionPage = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   // Diagram state
+  const [diagramState, setDiagramState] = useState({
+    nodes: [],
+    edges: [],
+    mermaidCode: ''
+  });
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const [diagramCode, setDiagramCode] = useState(
-    'graph TD\n    Client[Client] --> API[API Gateway]\n    API --> Service[Service]\n    Service --> DB[(Database)]'
-  );
+  const [diagramCode, setDiagramCode] = useState(''); // Add this line
   const [viewMode, setViewMode] = useState('edit');
   const [currentDiagramState, setCurrentDiagramState] = useState(null);
   const [isSavingDiagram, setIsSavingDiagram] = useState(false);
@@ -107,16 +112,21 @@ const CoachingSessionPage = () => {
   // Add workbook state
   const [workbookState, setWorkbookState] = useState({
     diagrams: {
-      sequence: {
-        nodes: [],
-        edges: []
-      },
       system: {
         nodes: [],
-        edges: []
+        edges: [],
+        mermaidCode: ''
+      },
+      sequence: {
+        nodes: [],
+        edges: [],
+        mermaidCode: ''
       }
     }
   });
+  const [currentDiagramType, setCurrentDiagramType] = useState('system');
+  const [lastDiagramState, setLastDiagramState] = useState(null);
+  const [autoSave, setAutoSave] = useState(true);
 
   // Define workbook tabs
   const workbookTabs = [
@@ -390,20 +400,39 @@ const CoachingSessionPage = () => {
 
   const handleAcceptSuggestions = () => {
     if (!diagramSuggestions) return;
+    
     const updatedNodes = [...nodes, ...diagramSuggestions.nodes.filter(
       sugNode => !nodes.some(node => node.id === sugNode.id)
     )];
+    
     const updatedEdges = [...edges, ...diagramSuggestions.edges.filter(
       sugEdge => !edges.some(edge => edge.id === sugEdge.id)
     )];
+
+    // Update all state at once
     setNodes(updatedNodes);
     setEdges(updatedEdges);
     setDiagramCode(diagramSuggestions.mermaidCode);
-    setCurrentDiagramState({
+    
+    // Update the current diagram state
+    const newDiagramState = {
       nodes: updatedNodes,
       edges: updatedEdges,
       mermaidCode: diagramSuggestions.mermaidCode
-    });
+    };
+    
+    setCurrentDiagramState(newDiagramState);
+    
+    // Update workbook state with the new diagram
+    setWorkbookState(prev => ({
+      ...prev,
+      diagrams: {
+        ...prev.diagrams,
+        [currentDiagramType]: newDiagramState
+      }
+    }));
+
+    // Clear suggestions
     setDiagramSuggestions(null);
     setShowSuggestions(false);
   };
@@ -563,10 +592,34 @@ const CoachingSessionPage = () => {
     }
   };
 
+  useEffect(() => {
+    // When switching back to diagram mode, restore the last state
+    if (rightPanelMode === 'diagram' && lastDiagramState) {
+      setNodes(lastDiagramState.nodes);
+      setEdges(lastDiagramState.edges);
+      setDiagramCode(lastDiagramState.mermaidCode);
+    }
+  }, [rightPanelMode]);
+
+  useEffect(() => {
+    // Store the current diagram state when switching away
+    if (rightPanelMode !== 'diagram') {
+      setLastDiagramState({
+        nodes,
+        edges,
+        mermaidCode: diagramCode
+      });
+    }
+  }, [rightPanelMode, nodes, edges, diagramCode]);
+
   const renderDiagramEditor = () => {
-    // Get active diagram tab
     const activeDiagramTab = diagramTabs.find(tab => tab.active)?.id || 'systems';
     
+    // Use the correct edges from state
+    const currentEdges = activeDiagramTab === 'sequence' 
+      ? workbookState.diagrams.sequence.edges 
+      : workbookState.diagrams.system.edges;
+
     if (activeDiagramTab === 'sequence') {
       return (
         <div className="relative h-full">
@@ -578,12 +631,11 @@ const CoachingSessionPage = () => {
       );
     }
     
-    // Default systems diagram
     return (
       <div className="relative h-full">
         <SystemArchitectureDiagram
           initialNodes={nodes}
-          initialEdges={edges}
+          initialEdges={currentEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -904,73 +956,16 @@ const CoachingSessionPage = () => {
                   </button>
                 </div>
               </div>
-              {/* Diagram content */}
+              {/* Diagram content - Keep mounted but hidden */}
               <div className="flex-1 overflow-hidden">
                 {renderDiagramEditor()}
               </div>
             </>
           ) : (
-            <>
-              {/* Workbook tabs */}
-              <div className="bg-white border-b border-gray-200">
-                <div className="flex w-full overflow-hidden relative">
-                  <div className="flex flex-1 overflow-x-auto">
-                    {workbookTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveWorkbookTab(tab.id)}
-                        className={`flex items-center py-3 px-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                          activeWorkbookTab === tab.id
-                            ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
-                            : 'border-b-2 border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                        }`}
-                      >
-                        <span className="mr-2">{tab.icon}</span>
-                        <span className="truncate">{tab.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="absolute right-0 top-0 h-full bg-gradient-to-l from-white to-transparent w-12 flex items-center justify-end">
-                    <button 
-                      onClick={() => setShowWorkbookDropdown(!showWorkbookDropdown)}
-                      className="h-full px-2 text-gray-500 hover:text-indigo-600">
-                      <ChevronDown size={16} />
-                    </button>
-                  </div>
-                  {/* Workbook tab dropdown */}
-                  {showWorkbookDropdown && (
-                    <div 
-                      ref={workbookDropdownRef}
-                      className="absolute right-2 top-12 bg-white shadow-lg border border-gray-200 rounded-md z-10">
-                      <div className="py-1">
-                        {workbookTabs.map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => {
-                              setActiveWorkbookTab(tab.id);
-                              setShowWorkbookDropdown(false);
-                            }}
-                            className={`flex items-center w-full text-left px-4 py-2 text-sm ${
-                              activeWorkbookTab === tab.id
-                                ? 'bg-indigo-50 text-indigo-700'
-                                : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            <span className="mr-2">{tab.icon}</span>
-                            {tab.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Workbook content area */}
-              <div className="flex-1 overflow-auto">
-                {getActiveWorkbookComponent()}
-              </div>
-            </>
+            <div className="flex-1" style={{ display: rightPanelMode === 'diagram' ? 'none' : 'block' }}>
+              {/* Workbook content */}
+              {getActiveWorkbookComponent()}
+            </div>
           )}
         </div>
       </div>

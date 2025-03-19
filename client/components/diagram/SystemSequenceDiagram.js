@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, { 
   ReactFlowProvider,
   Background, 
@@ -278,9 +278,53 @@ const MenuPanel = ({
 };
 
 // Main Sequence Diagram Component
-const SystemSequenceDiagram = () => {
-  const [nodes, setNodes] = useState([]);
-  const [edges, setEdges] = useState([]);
+const SystemSequenceDiagram = ({ initialState = null, onSave }) => {
+  // Initialize state from props first, then localStorage as fallback
+  const [nodes, setNodes] = useState(() => {
+    if (initialState?.nodes) {
+      return initialState.nodes;
+    }
+    const savedState = localStorage.getItem('currentSequenceDiagramState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        return parsed.nodes;
+      } catch (e) {
+        console.error('Failed to parse saved state:', e);
+      }
+    }
+    return [
+      {
+        id: '1',
+        type: 'user',
+        position: { x: 150, y: 50 },
+        data: { label: 'User' }
+      },
+      {
+        id: '2',
+        type: 'system',
+        position: { x: 300, y: 50 },
+        data: { label: 'System' }
+      }
+    ];
+  });
+
+  const [edges, setEdges] = useState(() => {
+    if (initialState?.edges) {
+      return initialState.edges;
+    }
+    const savedState = localStorage.getItem('currentSequenceDiagramState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        return parsed.edges;
+      } catch (e) {
+        console.error('Failed to parse saved state:', e);
+      }
+    }
+    return [];
+  });
+
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingLabel, setEditingLabel] = useState('');
@@ -289,22 +333,19 @@ const SystemSequenceDiagram = () => {
   const [pendingNodeType, setPendingNodeType] = useState(null);
   const [newNodeName, setNewNodeName] = useState('');
 
-  // Handle node changes
+  // Single declaration of onNodesChange
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   );
 
-  // Handle edge changes
   const onEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
 
-  // Handle connections using ReactFlow's native connect mechanism
   const onConnect = useCallback(
     (params) => {
-      // Create edge with current message type
       const newEdge = {
         ...params,
         animated: messageType === 'async',
@@ -326,6 +367,23 @@ const SystemSequenceDiagram = () => {
     },
     [messageType]
   );
+
+  // Save state whenever nodes or edges change
+  useEffect(() => {
+    const state = {
+      nodes,
+      edges,
+      mermaidCode: initialState?.mermaidCode || ''
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('currentSequenceDiagramState', JSON.stringify(state));
+    
+    // Call onSave prop if provided
+    if (onSave) {
+      onSave(state);
+    }
+  }, [nodes, edges, initialState?.mermaidCode, onSave]);
 
   const handleSave = () => {
     // Implement your save logic here
@@ -404,23 +462,28 @@ const SystemSequenceDiagram = () => {
     // Implement fragment logic
   }, []);
 
-  const onSaveAndContinue = async () => {
+  const onSaveAndContinue = useCallback(async () => {
     try {
-      // Save the current diagram state
       const diagramData = {
         nodes,
-        edges
+        edges,
+        mermaidCode: initialState?.mermaidCode || ''
       };
       
-      console.log('Saving diagram:', diagramData);
-      // Here you would typically make an API call to save the data
+      // Save to localStorage
+      localStorage.setItem('currentSequenceDiagramState', JSON.stringify(diagramData));
       
-      // For now, just log it
+      // Call onSave prop
+      if (onSave) {
+        await onSave(diagramData);
+      }
+      
       console.log('Diagram saved successfully');
     } catch (error) {
       console.error('Error saving diagram:', error);
+      // Here you might want to show an error notification to the user
     }
-  };
+  }, [nodes, edges, initialState?.mermaidCode, onSave]);
 
   return (
     <div className="h-full flex flex-col">

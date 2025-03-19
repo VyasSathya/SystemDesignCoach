@@ -10,7 +10,7 @@ import SequenceDiagram from './SequenceDiagram';
  * This component addresses the problem of lifelines moving up and down
  * by ensuring they always remain fixed relative to their participants.
  */
-const SequenceDiagramManager = ({ initialDiagram, onDiagramUpdate }) => {
+const SequenceDiagramManager = ({ initialDiagram, onDiagramUpdate, sessionId }) => {
   const [participants, setParticipants] = useState([]);
   const [messages, setMessages] = useState([]);
   const [validationRules] = useState({
@@ -90,22 +90,39 @@ const SequenceDiagramManager = ({ initialDiagram, onDiagramUpdate }) => {
     return newPosition;
   }, []);
   
-  // Handle diagram updates
-  const handleDiagramUpdate = useCallback((updatedDiagram) => {
-    // Store updated diagram
-    setDiagramState(updatedDiagram);
-    
-    // Extract participants
-    const updatedParticipants = updatedDiagram.nodes.filter(
-      node => node.type === 'actor' || node.type === 'participant'
-    );
-    setParticipants(updatedParticipants);
-    
-    // Pass updates to parent component if needed
-    if (onDiagramUpdate) {
-      onDiagramUpdate(updatedDiagram);
+  // Add session-specific storage
+  const storageKey = `diagram_${sessionId}`;
+  
+  const loadPersistedState = () => {
+    const saved = localStorage.getItem(storageKey);
+    return saved ? JSON.parse(saved) : null;
+  };
+
+  const handleDiagramSave = async (diagramState) => {
+    try {
+      // Save to localStorage with session-specific key
+      const storageKey = `diagram_${sessionId}`;
+      localStorage.setItem(storageKey, JSON.stringify(diagramState));
+      
+      // Also sync with backend
+      await workbookDiagramService.saveDiagram(sessionId, 'sequence', diagramState);
+    } catch (error) {
+      console.error('Failed to save diagram:', error);
+      // Handle error appropriately
     }
-  }, [onDiagramUpdate]);
+  };
+
+  useEffect(() => {
+    const persistedState = loadPersistedState();
+    if (persistedState) {
+      setDiagramState(persistedState);
+    }
+  }, [sessionId]);
+
+  const handleDiagramUpdate = (newState) => {
+    setDiagramState(newState);
+    handleDiagramSave(newState);
+  };
   
   // Process the diagram to ensure lifelines maintain correct positions
   const processedDiagram = useCallback(() => {

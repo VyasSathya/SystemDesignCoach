@@ -14,3 +14,12 @@ body {
 .react-flow-container {
   z-index: 0;
 }
+
+.h-full {
+  height: 100%;
+}
+
+/* If needed, also ensure the root elements have full height */
+html, body, #__next {
+  height: 100%;
+}
