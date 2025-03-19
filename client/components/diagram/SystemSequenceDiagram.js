@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import ReactFlow, { 
   ReactFlowProvider,
-  Panel,
   Background, 
   Controls,
   addEdge,
@@ -12,9 +11,9 @@ import ReactFlow, {
   MarkerType
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Server, Database, Users, GitBranch, GitMerge, GitPullRequest, Trash2, Edit, MessageSquare, Save, Wand2 } from 'lucide-react';
+import { Server, Database, Users, GitMerge, GitPullRequest, MessageSquare, Save } from 'lucide-react';
 import MessageEdge from './components/MessageEdge';
-import ArrowMarkers from './components/ArrowMarkers';
+
 
 // Node styles definition
 const getNodeStyle = (type) => {
@@ -149,6 +148,11 @@ const MenuPanel = ({
   messageType = 'sync',
   onAddFragment = () => {},
 }) => {
+  const preventDrag = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   // Define menu items
   const menuItems = {
     participants: [
@@ -163,17 +167,35 @@ const MenuPanel = ({
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-      <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-3 gap-4 p-4">
+    <div 
+      className="w-full bg-white border-t border-gray-200"
+      onMouseDown={preventDrag}
+      onMouseMove={preventDrag}
+      onClick={preventDrag}
+      draggable={false}
+      style={{ touchAction: 'none' }}
+    >
+      <div 
+        className="max-w-[1200px] mx-auto"
+        onDragStart={preventDrag}
+        draggable={false}
+      >
+        <div 
+          className="grid grid-cols-3 gap-4 p-4"
+          draggable={false}
+        >
           {/* Left Section - Components */}
-          <div>
+          <div draggable={false}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">System Components</h3>
             <div className="grid grid-cols-3 gap-2">
               {menuItems.participants.map((item) => (
                 <button
                   key={item.type}
-                  onClick={() => onAddParticipant(item.type)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddParticipant(item.type);
+                  }}
+                  draggable={false}
                   className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
                 >
                   {item.icon}
@@ -184,11 +206,15 @@ const MenuPanel = ({
           </div>
 
           {/* Middle Section - Message Types */}
-          <div>
+          <div draggable={false}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Communication Types</h3>
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => onMessageTypeChange('sync')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMessageTypeChange('sync');
+                }}
+                draggable={false}
                 className={`p-3 flex flex-col items-center rounded-lg border transition-colors
                   ${messageType === 'sync' ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'}`}
               >
@@ -203,7 +229,11 @@ const MenuPanel = ({
                 </span>
               </button>
               <button
-                onClick={() => onMessageTypeChange('async')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMessageTypeChange('async');
+                }}
+                draggable={false}
                 className={`p-3 flex flex-col items-center rounded-lg border transition-colors
                   ${messageType === 'async' ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'}`}
               >
@@ -222,13 +252,17 @@ const MenuPanel = ({
           </div>
 
           {/* Right Section - Control Flow */}
-          <div>
+          <div draggable={false}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">Control Flow</h3>
             <div className="grid grid-cols-2 gap-2">
               {menuItems.fragments.map((item) => (
                 <button
                   key={item.type}
-                  onClick={() => onAddFragment(item.type)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddFragment(item.type);
+                  }}
+                  draggable={false}
                   className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
                 >
                   {item.icon}
@@ -390,43 +424,100 @@ const SystemSequenceDiagram = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <ReactFlowProvider>
-        <div className="flex-1">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={NODE_TYPES}
-            edgeTypes={EDGE_TYPES}
-            fitView
-          >
-            <Background />
-            <Controls />
-            <MenuPanel 
-              onAddParticipant={handleAddParticipant}
-              onMessageTypeChange={handleMessageTypeChange}
-              messageType={messageType}
-              onAddFragment={handleAddFragment}
-            />
-          </ReactFlow>
-        </div>
-      </ReactFlowProvider>
-      
-      <div className="sticky bottom-0 w-full bg-white border-t border-gray-200 p-4 flex justify-between items-center shadow-md">
-        <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors">
+      {/* ReactFlow container */}
+      <div className="flex-1 relative">
+        <ReactFlowProvider>
+          <div className="h-full relative">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={NODE_TYPES}
+              edgeTypes={EDGE_TYPES}
+              fitView
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background />
+              <Controls />
+            </ReactFlow>
+          </div>
+        </ReactFlowProvider>
+      </div>
+
+      {/* Menu Panel placed above the bottom control bar */}
+      <div className="w-full">
+        <MenuPanel 
+          onAddParticipant={handleAddParticipant}
+          onMessageTypeChange={handleMessageTypeChange}
+          messageType={messageType}
+          onAddFragment={handleAddFragment}
+        />
+      </div>
+
+      {/* Bottom control bar with Ask Coach and Save & Continue buttons */}
+      <div 
+        className="flex justify-between items-center bg-white border-t border-gray-200 p-4 shadow-md" 
+        style={{ position: 'relative', zIndex: 1000 }}
+      >
+        <button 
+          className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
+          style={{ position: 'relative', zIndex: 1001 }}
+        >
           <MessageSquare size={16} className="mr-2" />
           Ask Coach
         </button>
         <button 
           onClick={onSaveAndContinue}
           className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+          style={{ position: 'relative', zIndex: 1001 }}
         >
           <Save size={16} className="mr-2" />
           Save & Continue
         </button>
       </div>
+
+      {/* Add this dialog code right before the final closing div */}
+      {showNameDialog && (
+        <div className="absolute inset-0 flex items-center justify-center z-50" 
+          style={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'auto'
+          }}
+        >
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <input
+              type="text"
+              value={newNodeName}
+              onChange={(e) => setNewNodeName(e.target.value)}
+              className="border p-2 rounded"
+              placeholder="Enter name"
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowNameDialog(false);
+                  setPendingNodeType(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateNamedNode}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
