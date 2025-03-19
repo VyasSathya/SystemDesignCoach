@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { autoSaveWorkbook } from '../utils/workbookStorage';
 
 const ReliabilitySecurityPage = () => {
   const [previewMode, setPreviewMode] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
   
   // Toggle preview mode
   const togglePreview = () => {
@@ -10,7 +12,7 @@ const ReliabilitySecurityPage = () => {
   
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header with title and actions */}
+      {/* Header with title and preview toggle only */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-bold text-red-600">Reliability & Security</h1>
         <div className="flex space-x-3">
@@ -21,12 +23,6 @@ const ReliabilitySecurityPage = () => {
             }`}
           >
             {previewMode ? 'Hide Preview' : 'Show Preview'}
-          </button>
-          <button className="px-3 py-1.5 text-sm border rounded bg-white">
-            Save Changes
-          </button>
-          <button className="px-3 py-1.5 text-sm bg-purple-50 text-purple-700 rounded">
-            Ask Coach
           </button>
         </div>
       </div>

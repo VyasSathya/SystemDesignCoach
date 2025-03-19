@@ -22,12 +22,6 @@ const ScalingStrategyPage = () => {
           >
             {previewMode ? 'Hide Preview' : 'Show Preview'}
           </button>
-          <button className="px-3 py-1.5 text-sm border rounded bg-white">
-            Save Changes
-          </button>
-          <button className="px-3 py-1.5 text-sm bg-purple-50 text-purple-700 rounded">
-            Ask Coach
-          </button>
         </div>
       </div>
       
