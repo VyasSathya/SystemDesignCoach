@@ -6,12 +6,13 @@ import ProgressBar from '../components/ProgressBar';
 const SystemArchitecturePage = () => {
   const { state, dispatch, workbookService } = useWorkbook();
   const { currentProblem, problems } = state;
-  
+
+  // Get data from context with default values
   const architectureData = problems[currentProblem]?.sections?.architecture || {
-    components: [],
-    connections: [],
     selectedPattern: '',
     patternDescription: '',
+    components: [],
+    connections: [],
     deploymentModel: {
       cloud: '',
       containerization: '',
@@ -21,13 +22,13 @@ const SystemArchitecturePage = () => {
     previewMode: false
   };
 
-  // State hooks
-  const [components, setComponents] = useState(architectureData.components);
-  const [connections, setConnections] = useState(architectureData.connections);
+  // State management
   const [selectedPattern, setSelectedPattern] = useState(architectureData.selectedPattern);
   const [patternDescription, setPatternDescription] = useState(architectureData.patternDescription);
-  const [deploymentModel, setDeploymentModel] = useState(architectureData.deploymentModel);
+  const [connections, setConnections] = useState(architectureData.connections || []);
+  const [components, setComponents] = useState(architectureData.components || []);
   const [previewMode, setPreviewMode] = useState(architectureData.previewMode);
+  const [deploymentModel, setDeploymentModel] = useState(architectureData.deploymentModel);
 
   // Centralized save function
   const saveData = async (updatedData) => {
@@ -101,49 +102,48 @@ const SystemArchitecturePage = () => {
 
   // Connection management functions
   const addConnection = () => {
-    if (components.length < 2) {
-      // Show an error or return if there aren't enough components
-      return;
-    }
-    
-    const newId = connections.length > 0 
-      ? Math.max(...connections.map(c => c.id)) + 1 
-      : 1;
-
+    const newId = Math.max(...connections.map(c => c.id || 0), 0) + 1;
     const newConnection = {
       id: newId,
-      from: components[0].id,
-      to: components[1].id,
+      from: components[0]?.id || '', // Default to first component if exists
+      to: components[0]?.id || '',
       type: 'REST API',
       description: ''
     };
 
+    const updatedConnections = [...connections, newConnection];
     const updatedData = {
       ...architectureData,
-      connections: [...connections, newConnection]
+      connections: updatedConnections
     };
 
-    setConnections(updatedData.connections);
+    setConnections(updatedConnections);
     saveData(updatedData);
   };
 
   const updateConnection = (id, field, value) => {
+    const updatedConnections = connections.map(connection =>
+      connection.id === id ? { ...connection, [field]: value } : connection
+    );
+
     const updatedData = {
       ...architectureData,
-      connections: connections.map(connection =>
-        connection.id === id ? { ...connection, [field]: value } : connection
-      )
+      connections: updatedConnections
     };
-    setConnections(updatedData.connections);
+
+    setConnections(updatedConnections);
     saveData(updatedData);
   };
 
   const deleteConnection = (id) => {
+    const updatedConnections = connections.filter(connection => connection.id !== id);
+    
     const updatedData = {
       ...architectureData,
-      connections: connections.filter(connection => connection.id !== id)
+      connections: updatedConnections
     };
-    setConnections(updatedData.connections);
+
+    setConnections(updatedConnections);
     saveData(updatedData);
   };
 
@@ -195,7 +195,7 @@ const SystemArchitecturePage = () => {
   };
 
   // Toggle preview mode
-  const togglePreview = () => {
+  const togglePreviewMode = () => {
     const updatedData = {
       ...architectureData,
       previewMode: !previewMode
@@ -204,19 +204,23 @@ const SystemArchitecturePage = () => {
     saveData(updatedData);
   };
 
-  // Update the selectedPattern and patternDescription handling
-  const updatePattern = (field, value) => {
+  // Update pattern
+  const updatePattern = (value) => {
     const updatedData = {
       ...architectureData,
-      [field]: value
+      selectedPattern: value
     };
-    
-    if (field === 'selectedPattern') {
-      setSelectedPattern(value);
-    } else if (field === 'patternDescription') {
-      setPatternDescription(value);
-    }
-    
+    setSelectedPattern(value);
+    saveData(updatedData);
+  };
+
+  // Update pattern description
+  const updatePatternDescription = (value) => {
+    const updatedData = {
+      ...architectureData,
+      patternDescription: value
+    };
+    setPatternDescription(value);
     saveData(updatedData);
   };
 
@@ -237,12 +241,12 @@ const SystemArchitecturePage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header with title and actions */}
+      {/* Header with title and preview toggle */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold text-blue-600">System Architecture</h1>
+        <h1 className="text-xl font-bold text-gray-800">System Architecture</h1>
         <div className="flex space-x-3">
           <button 
-            onClick={togglePreview}
+            onClick={togglePreviewMode}
             className={`px-3 py-1.5 text-sm border rounded ${
               previewMode ? 'bg-gray-100' : 'bg-white'
             }`}
@@ -286,14 +290,14 @@ const SystemArchitecturePage = () => {
                 <select 
                   className="w-full p-2 border rounded-md"
                   value={selectedPattern}
-                  onChange={(e) => updatePattern('selectedPattern', e.target.value)}
+                  onChange={(e) => updatePattern(e.target.value)}
                 >
+                  <option value="">Select a pattern...</option>
                   <option value="microservices">Microservices</option>
-                  <option value="monolith">Monolithic</option>
-                  <option value="serverless">Serverless</option>
-                  <option value="event-driven">Event-Driven</option>
                   <option value="layered">Layered Architecture</option>
-                  <option value="cqrs">CQRS</option>
+                  <option value="event-driven">Event-Driven</option>
+                  <option value="serverless">Serverless</option>
+                  <option value="monolithic">Monolithic</option>
                 </select>
               </div>
               
@@ -301,10 +305,10 @@ const SystemArchitecturePage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Pattern Description</label>
                 <textarea
                   className="w-full p-2 border rounded-md"
+                  rows="4"
                   value={patternDescription}
-                  onChange={(e) => updatePattern('patternDescription', e.target.value)}
-                  rows={3}
-                  placeholder="Describe the chosen architecture pattern and its benefits..."
+                  onChange={(e) => updatePatternDescription(e.target.value)}
+                  placeholder="Describe why you chose this architecture pattern..."
                 />
               </div>
             </div>
@@ -403,91 +407,88 @@ const SystemArchitecturePage = () => {
           
           {/* Connections */}
           <div className="bg-white border rounded-md overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
+            <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
               <h2 className="font-medium text-gray-800">Component Connections</h2>
               <button 
-                className="text-blue-600 text-sm font-medium"
                 onClick={addConnection}
+                className="text-red-600 text-sm font-medium flex items-center"
+                disabled={components.length < 1}
               >
-                + Add Connection
+                <Plus className="w-4 h-4 mr-1" />
+                Add Connection
               </button>
             </div>
             <div className="p-4">
-              <div className="space-y-3">
-                {connections.map(connection => (
-                  <div 
-                    key={connection.id} 
-                    className="border border-gray-200 rounded-md p-3 bg-gray-50"
-                  >
-                    <div className="grid grid-cols-9 gap-2 mb-2">
-                      <div className="col-span-4">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">From</label>
-                        <select
-                          className="w-full p-2 border rounded-md text-sm"
-                          value={connection.from}
-                          onChange={(e) => updateConnection(connection.id, 'from', Number(e.target.value))}
-                        >
-                          {components.map(comp => (
-                            <option key={`from-${comp.id}`} value={comp.id}>{comp.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex items-end justify-center col-span-1">
-                        <span className="text-gray-500">→</span>
-                      </div>
-                      <div className="col-span-4">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">To</label>
-                        <select
-                          className="w-full p-2 border rounded-md text-sm"
-                          value={connection.to}
-                          onChange={(e) => updateConnection(connection.id, 'to', Number(e.target.value))}
-                        >
-                          {components.map(comp => (
-                            <option key={`to-${comp.id}`} value={comp.id}>{comp.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                        <select
-                          className="w-full p-2 border rounded-md text-sm"
-                          value={connection.type}
-                          onChange={(e) => updateConnection(connection.id, 'type', e.target.value)}
-                        >
-                          <option value="REST API">REST API</option>
-                          <option value="GraphQL">GraphQL</option>
-                          <option value="gRPC">gRPC</option>
-                          <option value="Message Queue">Message Queue</option>
-                          <option value="Database">Database Connection</option>
-                          <option value="File">File/Storage</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                        <input
-                          type="text"
-                          className="w-full p-2 border rounded-md text-sm"
-                          value={connection.description}
-                          onChange={(e) => updateConnection(connection.id, 'description', e.target.value)}
-                          placeholder="e.g., HTTP/JSON, Binary, etc."
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-2">
-                      <button 
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => deleteConnection(connection.id)}
+              {connections.map(connection => (
+                <div key={connection.id} className="border p-3 rounded-md mb-3">
+                  <div className="grid grid-cols-9 gap-2 mb-2">
+                    <div className="col-span-4">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">From</label>
+                      <select
+                        className="w-full p-2 border rounded-md text-sm"
+                        value={connection.from}
+                        onChange={(e) => updateConnection(connection.id, 'from', Number(e.target.value))}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        {components.map(comp => (
+                          <option key={`from-${comp.id}`} value={comp.id}>{comp.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-end justify-center col-span-1">
+                      <span className="text-gray-500">→</span>
+                    </div>
+                    <div className="col-span-4">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">To</label>
+                      <select
+                        className="w-full p-2 border rounded-md text-sm"
+                        value={connection.to}
+                        onChange={(e) => updateConnection(connection.id, 'to', Number(e.target.value))}
+                      >
+                        {components.map(comp => (
+                          <option key={`to-${comp.id}`} value={comp.id}>{comp.name}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                ))}
-              </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                      <select
+                        className="w-full p-2 border rounded-md text-sm"
+                        value={connection.type}
+                        onChange={(e) => updateConnection(connection.id, 'type', e.target.value)}
+                      >
+                        <option value="REST API">REST API</option>
+                        <option value="GraphQL">GraphQL</option>
+                        <option value="gRPC">gRPC</option>
+                        <option value="Message Queue">Message Queue</option>
+                        <option value="Database">Database Connection</option>
+                        <option value="File">File/Storage</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                      <input
+                        type="text"
+                        className="w-full p-2 border rounded-md text-sm"
+                        value={connection.description}
+                        onChange={(e) => updateConnection(connection.id, 'description', e.target.value)}
+                        placeholder="e.g., HTTP/JSON, Binary, etc."
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-2">
+                    <button 
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => deleteConnection(connection.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           
