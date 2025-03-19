@@ -1,204 +1,63 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, Check, Save, AlertCircle } from 'lucide-react';
-import { toast } from 'react-toastify';
 import { debounce } from 'lodash';
+import { toast } from 'react-toastify';
+import { CheckCircle, AlertCircle, Save } from 'react-feather';
+import RequirementSection from '../components/RequirementSection';
 
-// Reusable Section Component
-const RequirementSection = ({ 
-  title, 
-  items, 
-  onUpdate, 
-  onAdd, 
-  onDelete, 
-  onToggle, 
-  onUpdateCategory,
-  categories,
-  progress,
-  type 
-}) => {
-  return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <div className="text-sm text-gray-500">
-            Progress: {progress}%
-          </div>
-          <div className="h-2 w-24 bg-gray-200 rounded-full">
-            <div 
-              className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-        <button
-          onClick={onAdd}
-          className="flex items-center px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
-        >
-          <Plus size={16} className="mr-1" /> Add {type}
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-start space-x-3 bg-gray-50 p-3 rounded-lg">
-            <button
-              onClick={() => onToggle(item.id)}
-              className={`mt-1 p-1 rounded ${
-                item.completed ? 'bg-green-500 text-white' : 'bg-gray-200'
-              }`}
-            >
-              <Check size={16} />
-            </button>
-
-            <div className="flex-grow">
-              <textarea
-                value={item.text}
-                onChange={(e) => onUpdate(item.id, e.target.value)}
-                placeholder={`Enter ${type} description...`}
-                className="w-full min-h-[60px] p-2 border rounded-md"
-              />
-              
-              {categories && (
-                <select
-                  value={item.category}
-                  onChange={(e) => onUpdateCategory(item.id, e.target.value)}
-                  className="mt-2 p-1 text-sm border rounded-md bg-white"
-                >
-                  {categories.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <button
-              onClick={() => onDelete(item.id)}
-              className="mt-1 p-1 text-red-500 hover:bg-red-50 rounded"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const RequirementsPage = ({ data = {}, updateData, onSubmit }) => {
-  // Functional Requirements State
-  const [functionalReqs, setFunctionalReqs] = useState(() => {
-    const savedReqs = localStorage.getItem('functionalReqs');
-    if (savedReqs) {
-      try {
-        return JSON.parse(savedReqs);
-      } catch (e) {
-        console.error('Error parsing saved functional requirements:', e);
-      }
-    }
-    return [{ id: 1, text: '', completed: false }];
-  });
-
-  // Non-Functional Requirements State
-  const [nonFunctionalReqs, setNonFunctionalReqs] = useState(() => {
-    const savedReqs = localStorage.getItem('nonFunctionalReqs');
-    if (savedReqs) {
-      try {
-        return JSON.parse(savedReqs);
-      } catch (e) {
-        console.error('Error parsing saved non-functional requirements:', e);
-      }
-    }
-    return [{ id: 1, text: '', category: 'performance', completed: false }];
-  });
-
-  // Add Constraints and Assumptions State
-  const [constraints, setConstraints] = useState(() => {
-    const saved = localStorage.getItem('constraints');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing saved constraints:', e);
-      }
-    }
-    return [{ id: 1, text: '', type: 'constraint', completed: false }];
-  });
-
-  // Add new states for page management
-  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
-  const [isValid, setIsValid] = useState(false);
+const RequirementsPage = ({ updateData, onSubmit }) => {
+  // State management
+  const [functionalReqs, setFunctionalReqs] = useState([]);
+  const [nonFunctionalReqs, setNonFunctionalReqs] = useState([]);
+  const [constraints, setConstraints] = useState([]);
+  const [saveStatus, setSaveStatus] = useState('idle');
   const [validationErrors, setValidationErrors] = useState([]);
   const [progress, setProgress] = useState({
-    functional: 0,
-    nonFunctional: 0,
-    constraints: 0,
-    overall: 0
+    overall: 0,
+    sections: {
+      functional: 0,
+      nonFunctional: 0,
+      constraints: 0
+    }
   });
 
-  const nonFunctionalCategories = [
-    { value: 'performance', label: 'Performance' },
-    { value: 'security', label: 'Security' },
-    { value: 'scalability', label: 'Scalability' },
-    { value: 'reliability', label: 'Reliability' },
-    { value: 'usability', label: 'Usability' }
-  ];
-
-  const constraintTypes = [
-    { value: 'constraint', label: 'Constraint' },
-    { value: 'assumption', label: 'Assumption' }
-  ];
-
-  // Validation rules
-  const validateRequirements = useCallback(() => {
-    const errors = [];
-    
-    // Validate functional requirements
-    if (functionalReqs.some(req => !req.text.trim())) {
-      errors.push('All functional requirements must be filled');
-    }
-    
-    // Validate non-functional requirements
-    if (nonFunctionalReqs.some(req => !req.text.trim())) {
-      errors.push('All non-functional requirements must be filled');
-    }
-    
-    // Validate constraints
-    if (constraints.some(item => !item.text.trim())) {
-      errors.push('All constraints and assumptions must be filled');
+  const handleSubmit = async () => {
+    if (validationErrors.length > 0) {
+      toast.error('Please fix all validation errors before submitting');
+      return;
     }
 
-    // Minimum requirements
-    if (!functionalReqs.some(req => req.completed)) {
-      errors.push('At least one functional requirement must be completed');
-    }
-    if (!nonFunctionalReqs.some(req => req.completed)) {
-      errors.push('At least one non-functional requirement must be completed');
-    }
+    try {
+      const requirementsData = {
+        functionalReqs: JSON.stringify(functionalReqs),
+        nonFunctionalReqs: JSON.stringify(nonFunctionalReqs),
+        constraints: JSON.stringify(constraints)
+      };
 
-    setValidationErrors(errors);
-    setIsValid(errors.length === 0);
-    
-    return errors.length === 0;
-  }, [functionalReqs, nonFunctionalReqs, constraints]);
+      if (onSubmit) {
+        await onSubmit(requirementsData);
+        toast.success('Requirements submitted successfully');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast.error('Failed to submit requirements');
+    }
+  };
 
-  // Calculate progress
-  const calculateProgress = useCallback(() => {
-    const functionalProgress = functionalReqs.filter(req => req.completed).length / functionalReqs.length;
-    const nonFunctionalProgress = nonFunctionalReqs.filter(req => req.completed).length / nonFunctionalReqs.length;
-    const constraintsProgress = constraints.filter(item => item.completed).length / constraints.length;
-    
-    const overall = (functionalProgress + nonFunctionalProgress + constraintsProgress) / 3;
-    
-    setProgress({
-      functional: Math.round(functionalProgress * 100),
-      nonFunctional: Math.round(nonFunctionalProgress * 100),
-      constraints: Math.round(constraintsProgress * 100),
-      overall: Math.round(overall * 100)
-    });
-  }, [functionalReqs, nonFunctionalReqs, constraints]);
+  // Load saved data
+  useEffect(() => {
+    try {
+      const loadedFunctional = JSON.parse(localStorage.getItem('functionalReqs')) || [];
+      const loadedNonFunctional = JSON.parse(localStorage.getItem('nonFunctionalReqs')) || [];
+      const loadedConstraints = JSON.parse(localStorage.getItem('constraints')) || [];
+      
+      setFunctionalReqs(loadedFunctional);
+      setNonFunctionalReqs(loadedNonFunctional);
+      setConstraints(loadedConstraints);
+    } catch (error) {
+      console.error('Error loading saved data:', error);
+      toast.error('Failed to load saved requirements');
+    }
+  }, []);
 
   // Auto-save handler
   const handleAutoSave = useCallback(
@@ -206,12 +65,10 @@ const RequirementsPage = ({ data = {}, updateData, onSubmit }) => {
       try {
         setSaveStatus('saving');
         
-        // Save to localStorage
         localStorage.setItem('functionalReqs', JSON.stringify(functionalReqs));
         localStorage.setItem('nonFunctionalReqs', JSON.stringify(nonFunctionalReqs));
         localStorage.setItem('constraints', JSON.stringify(constraints));
         
-        // Update parent component
         if (updateData) {
           await updateData({
             functionalReqs: JSON.stringify(functionalReqs),
@@ -231,6 +88,56 @@ const RequirementsPage = ({ data = {}, updateData, onSubmit }) => {
     [functionalReqs, nonFunctionalReqs, constraints, updateData]
   );
 
+  // Validation logic
+  const validateRequirements = useCallback(() => {
+    const errors = [];
+    
+    if (functionalReqs.length < 3) {
+      errors.push('Add at least 3 functional requirements');
+    }
+    
+    if (nonFunctionalReqs.length < 2) {
+      errors.push('Add at least 2 non-functional requirements');
+    }
+    
+    if (constraints.length < 1) {
+      errors.push('Add at least 1 constraint');
+    }
+    
+    const invalidItems = [...functionalReqs, ...nonFunctionalReqs, ...constraints]
+      .filter(item => !item.description || item.description.length < 10);
+    
+    if (invalidItems.length > 0) {
+      errors.push('All requirements must have descriptions (min 10 characters)');
+    }
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  }, [functionalReqs, nonFunctionalReqs, constraints]);
+
+  // Progress calculation
+  const calculateProgress = useCallback(() => {
+    const calculateSectionProgress = (items) => {
+      if (items.length === 0) return 0;
+      const validItems = items.filter(item => 
+        item.description && 
+        item.description.length >= 10 &&
+        item.status === 'complete'
+      );
+      return (validItems.length / items.length) * 100;
+    };
+
+    const sections = {
+      functional: calculateSectionProgress(functionalReqs),
+      nonFunctional: calculateSectionProgress(nonFunctionalReqs),
+      constraints: calculateSectionProgress(constraints)
+    };
+
+    const overall = Object.values(sections).reduce((sum, val) => sum + val, 0) / 3;
+
+    setProgress({ overall, sections });
+  }, [functionalReqs, nonFunctionalReqs, constraints]);
+
   // Effect for auto-save and validation
   useEffect(() => {
     handleAutoSave();
@@ -238,263 +145,175 @@ const RequirementsPage = ({ data = {}, updateData, onSubmit }) => {
     calculateProgress();
   }, [functionalReqs, nonFunctionalReqs, constraints]);
 
-  // Handle final submission
-  const handleSubmit = async () => {
-    if (!validateRequirements()) {
-      toast.error('Please fix validation errors before submitting');
-      return;
-    }
-
-    try {
-      if (onSubmit) {
-        await onSubmit({
-          functionalReqs,
-          nonFunctionalReqs,
-          constraints,
-          progress
-        });
-      }
-      toast.success('Requirements submitted successfully');
-    } catch (error) {
-      console.error('Submit error:', error);
-      toast.error('Failed to submit requirements');
+  // Render save status indicator
+  const renderSaveStatus = () => {
+    switch (saveStatus) {
+      case 'saving':
+        return <Save className="animate-spin text-blue-500" size={20} />;
+      case 'saved':
+        return <CheckCircle className="text-green-500" size={20} />;
+      case 'error':
+        return <AlertCircle className="text-red-500" size={20} />;
+      default:
+        return null;
     }
   };
 
-  // Load data from props when available
-  useEffect(() => {
-    if (data?.functionalReqs) {
-      try {
-        const parsedReqs = JSON.parse(data.functionalReqs);
-        setFunctionalReqs(parsedReqs);
-      } catch (e) {
-        console.error('Error parsing functional requirements from props:', e);
-      }
-    }
-    if (data?.nonFunctionalReqs) {
-      try {
-        const parsedReqs = JSON.parse(data.nonFunctionalReqs);
-        setNonFunctionalReqs(parsedReqs);
-      } catch (e) {
-        console.error('Error parsing non-functional requirements from props:', e);
-      }
-    }
-    if (data?.constraints) {
-      try {
-        const parsed = JSON.parse(data.constraints);
-        setConstraints(parsed);
-      } catch (e) {
-        console.error('Error parsing constraints from props:', e);
-      }
-    }
-  }, [data]);
+  const handleUpdate = (type, id, value) => {
+    const updateState = {
+      functional: setFunctionalReqs,
+      nonFunctional: setNonFunctionalReqs,
+      constraints: setConstraints
+    }[type];
 
-  // Functional Requirements Handlers
-  const updateFunctionalReq = (id, text) => {
-    setFunctionalReqs(prev => prev.map(req =>
-      req.id === id ? { ...req, text } : req
-    ));
+    const items = {
+      functional: functionalReqs,
+      nonFunctional: nonFunctionalReqs,
+      constraints: constraints
+    }[type];
+
+    const updatedItems = items.map(item =>
+      item.id === id ? { ...item, ...value } : item
+    );
+    
+    updateState(updatedItems);
   };
 
-  const toggleFunctionalReq = (id) => {
-    setFunctionalReqs(prev => prev.map(req =>
-      req.id === id ? { ...req, completed: !req.completed } : req
-    ));
+  const handleAdd = (type) => {
+    const newItem = {
+      id: Date.now(),
+      description: '',
+      status: 'pending'
+    };
+
+    const updateState = {
+      functional: setFunctionalReqs,
+      nonFunctional: setNonFunctionalReqs,
+      constraints: setConstraints
+    }[type];
+
+    const items = {
+      functional: functionalReqs,
+      nonFunctional: nonFunctionalReqs,
+      constraints: constraints
+    }[type];
+
+    updateState([...items, newItem]);
   };
 
-  const handleAddFunctionalReq = () => {
-    const newId = Math.max(...functionalReqs.map(req => req.id), 0) + 1;
-    setFunctionalReqs(prev => [...prev, { id: newId, text: '', completed: false }]);
+  const handleDelete = (type, id) => {
+    const updateState = {
+      functional: setFunctionalReqs,
+      nonFunctional: setNonFunctionalReqs,
+      constraints: setConstraints
+    }[type];
+
+    const items = {
+      functional: functionalReqs,
+      nonFunctional: nonFunctionalReqs,
+      constraints: constraints
+    }[type];
+
+    const updatedItems = items.filter(item => item.id !== id);
+    updateState(updatedItems);
   };
 
-  const handleDeleteFunctionalReq = (id) => {
-    if (functionalReqs.length === 1) {
-      toast.warning("You must keep at least one functional requirement");
-      return;
-    }
-    setFunctionalReqs(prev => prev.filter(req => req.id !== id));
-  };
+  const handleToggle = (type, id) => {
+    const items = {
+      functional: functionalReqs,
+      nonFunctional: nonFunctionalReqs,
+      constraints: constraints
+    }[type];
 
-  // Non-Functional Requirements Handlers
-  const updateNonFunctionalReq = (id, text) => {
-    setNonFunctionalReqs(prev => prev.map(req =>
-      req.id === id ? { ...req, text } : req
-    ));
-  };
-
-  const updateNonFunctionalCategory = (id, category) => {
-    setNonFunctionalReqs(prev => prev.map(req =>
-      req.id === id ? { ...req, category } : req
-    ));
-  };
-
-  const toggleNonFunctionalReq = (id) => {
-    setNonFunctionalReqs(prev => prev.map(req =>
-      req.id === id ? { ...req, completed: !req.completed } : req
-    ));
-  };
-
-  const handleAddNonFunctionalReq = () => {
-    const newId = Math.max(...nonFunctionalReqs.map(req => req.id), 0) + 1;
-    setNonFunctionalReqs(prev => [...prev, { 
-      id: newId, 
-      text: '', 
-      category: 'performance', 
-      completed: false 
-    }]);
-  };
-
-  const handleDeleteNonFunctionalReq = (id) => {
-    if (nonFunctionalReqs.length === 1) {
-      toast.warning("You must keep at least one non-functional requirement");
-      return;
-    }
-    setNonFunctionalReqs(prev => prev.filter(req => req.id !== id));
-  };
-
-  // Add Constraints Handlers
-  const updateConstraint = (id, text) => {
-    setConstraints(prev => prev.map(item =>
-      item.id === id ? { ...item, text } : item
-    ));
-  };
-
-  const updateConstraintType = (id, type) => {
-    setConstraints(prev => prev.map(item =>
-      item.id === id ? { ...item, type } : item
-    ));
-  };
-
-  const toggleConstraint = (id) => {
-    setConstraints(prev => prev.map(item =>
-      item.id === id ? { ...item, completed: !item.completed } : item
-    ));
-  };
-
-  const handleAddConstraint = () => {
-    const newId = Math.max(...constraints.map(item => item.id), 0) + 1;
-    setConstraints(prev => [...prev, { 
-      id: newId, 
-      text: '', 
-      type: 'constraint', 
-      completed: false 
-    }]);
-  };
-
-  const handleDeleteConstraint = (id) => {
-    if (constraints.length === 1) {
-      toast.warning("You must keep at least one constraint or assumption");
-      return;
-    }
-    setConstraints(prev => prev.filter(item => item.id !== id));
+    const item = items.find(item => item.id === id);
+    handleUpdate(type, id, {
+      status: item.status === 'complete' ? 'pending' : 'complete'
+    });
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Status Bar */}
-      <div className="bg-gray-100 px-6 py-2 flex items-center justify-between border-b">
-        <div className="flex items-center space-x-4">
-          <div className="text-sm">
-            Progress: {progress.overall}%
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        <div className="bg-white rounded-lg shadow">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Requirements Definition</h1>
+              <div className="flex items-center space-x-4">
+                {renderSaveStatus()}
+                <button
+                  onClick={handleSubmit}
+                  disabled={validationErrors.length > 0}
+                  className={`px-4 py-2 rounded-md text-white ${
+                    validationErrors.length > 0
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
+                >
+                  Submit Requirements
+                </button>
+              </div>
+            </div>
+            
+            {/* Progress bar */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Overall Progress</span>
+                <span>{Math.round(progress.overall)}%</span>
+              </div>
+              <div className="mt-1 h-2 bg-gray-200 rounded-full">
+                <div
+                  className="h-full bg-green-500 rounded-full transition-all duration-300"
+                  style={{ width: `${progress.overall}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Validation errors */}
+            {validationErrors.length > 0 && (
+              <div className="mt-4 p-4 bg-red-50 rounded-md">
+                <h3 className="text-sm font-medium text-red-800">Please fix the following issues:</h3>
+                <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-          <div className="h-2 w-32 bg-gray-200 rounded-full">
-            <div 
-              className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-              style={{ width: `${progress.overall}%` }}
+
+          {/* Requirements sections */}
+          <div className="p-6 space-y-8">
+            <RequirementSection
+              title="Functional Requirements"
+              items={functionalReqs}
+              progress={progress.sections.functional}
+              onUpdate={(id, value) => handleUpdate('functional', id, value)}
+              onAdd={() => handleAdd('functional')}
+              onDelete={(id) => handleDelete('functional', id)}
+              onToggle={(id) => handleToggle('functional', id)}
+            />
+            
+            <RequirementSection
+              title="Non-Functional Requirements"
+              items={nonFunctionalReqs}
+              progress={progress.sections.nonFunctional}
+              onUpdate={(id, value) => handleUpdate('nonFunctional', id, value)}
+              onAdd={() => handleAdd('nonFunctional')}
+              onDelete={(id) => handleDelete('nonFunctional', id)}
+              onToggle={(id) => handleToggle('nonFunctional', id)}
+            />
+            
+            <RequirementSection
+              title="Constraints"
+              items={constraints}
+              progress={progress.sections.constraints}
+              onUpdate={(id, value) => handleUpdate('constraints', id, value)}
+              onAdd={() => handleAdd('constraints')}
+              onDelete={(id) => handleDelete('constraints', id)}
+              onToggle={(id) => handleToggle('constraints', id)}
             />
           </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          {saveStatus === 'saving' && (
-            <span className="text-gray-500 text-sm">Saving...</span>
-          )}
-          {saveStatus === 'saved' && (
-            <span className="text-green-500 text-sm flex items-center">
-              <Save size={14} className="mr-1" /> Saved
-            </span>
-          )}
-          {saveStatus === 'error' && (
-            <span className="text-red-500 text-sm flex items-center">
-              <AlertCircle size={14} className="mr-1" /> Save failed
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto p-6">
-        {/* Coach tip box */}
-        <div className="bg-indigo-50 border border-indigo-100 rounded-md p-4 mb-6 text-sm text-indigo-700">
-          <strong className="font-medium">Coach tip:</strong> Start with clear, specific functional requirements that describe what the system should do.
-        </div>
-        
-        {/* Functional Requirements */}
-        <RequirementSection
-          title="Functional Requirements"
-          items={functionalReqs}
-          onUpdate={updateFunctionalReq}
-          onAdd={handleAddFunctionalReq}
-          onDelete={handleDeleteFunctionalReq}
-          onToggle={toggleFunctionalReq}
-          progress={progress.functional}
-          type="requirement"
-        />
-
-        {/* Non-Functional Requirements */}
-        <RequirementSection
-          title="Non-Functional Requirements"
-          items={nonFunctionalReqs}
-          onUpdate={updateNonFunctionalReq}
-          onAdd={handleAddNonFunctionalReq}
-          onDelete={handleDeleteNonFunctionalReq}
-          onToggle={toggleNonFunctionalReq}
-          onUpdateCategory={updateNonFunctionalCategory}
-          categories={nonFunctionalCategories}
-          progress={progress.nonFunctional}
-          type="requirement"
-        />
-
-        {/* Constraints and Assumptions */}
-        <RequirementSection
-          title="Constraints & Assumptions"
-          items={constraints}
-          onUpdate={updateConstraint}
-          onAdd={handleAddConstraint}
-          onDelete={handleDeleteConstraint}
-          onToggle={toggleConstraint}
-          onUpdateCategory={updateConstraintType}
-          categories={constraintTypes}
-          progress={progress.constraints}
-          type="item"
-        />
-
-        {/* Validation Errors */}
-        {validationErrors.length > 0 && (
-          <div className="mt-6 bg-red-50 border border-red-100 rounded-lg p-4">
-            <h3 className="text-red-800 font-medium mb-2">Please fix the following issues:</h3>
-            <ul className="list-disc list-inside text-sm text-red-700">
-              {validationErrors.map((error, index) => (
-                <li key={index}>{error}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Submit Section */}
-        <div className="mt-6 border-t pt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Overall Progress: {progress.overall}%
-          </div>
-          <button
-            onClick={handleSubmit}
-            disabled={!isValid}
-            className={`px-4 py-2 rounded-md text-white font-medium ${
-              isValid 
-                ? 'bg-indigo-600 hover:bg-indigo-700' 
-                : 'bg-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Submit Requirements
-          </button>
         </div>
       </div>
     </div>
