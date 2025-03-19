@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const RequirementsPage = () => {
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(false);
   
   // Initial requirement data
   const [functionalRequirements, setFunctionalRequirements] = useState([

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const APIDesignPage = () => {
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(false);
   
   // API type state
   const [apiType, setApiType] = useState('REST');

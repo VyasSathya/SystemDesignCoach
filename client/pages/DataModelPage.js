@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const DataModelPage = () => {
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     entities: true,
     relationships: true,

@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { autoSaveWorkbook } from '../utils/workbookStorage';
 
 const ReliabilitySecurityPage = () => {
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(false);
   const [reliabilityMetrics, setReliabilityMetrics] = useState([
     {
       id: 1,
