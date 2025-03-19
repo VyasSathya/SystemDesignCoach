@@ -261,6 +261,30 @@ export const WorkbookProvider = ({ children }) => {
     return () => clearTimeout(timeoutId);
   }, [state, user?.id]);
 
+  // Add auto-save effect
+  useEffect(() => {
+    if (!user?.id || !state.currentProblem) return;
+
+    const saveTimeout = setTimeout(() => {
+      const problemData = state.problems[state.currentProblem];
+      if (problemData) {
+        workbookService.saveAllData(
+          state.currentProblem,
+          state.activePage,
+          {
+            sections: problemData.sections,
+            diagrams: problemData.diagrams,
+            progress: problemData.progress
+          }
+        ).catch(error => {
+          console.error('Error auto-saving workbook data:', error);
+        });
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(saveTimeout);
+  }, [state.problems, state.currentProblem, state.activePage, user?.id]);
+
   const contextValue = {
     state,
     dispatch,

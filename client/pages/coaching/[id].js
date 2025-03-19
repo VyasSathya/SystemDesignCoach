@@ -19,6 +19,8 @@ import {
 import { mermaidToReactFlow, reactFlowToMermaid } from '../../components/diagram/utils/conversion';
 import TopicGuidedCoaching from '../../components/coaching/TopicGuidedCoaching';
 import debounce from 'lodash/debounce';
+import { useWorkbook } from '../../context/WorkbookContext';
+import { workbookService } from '../../services/workbookService';
 
 // Import workbook components directly
 import RequirementsPage from '../RequirementsPage';

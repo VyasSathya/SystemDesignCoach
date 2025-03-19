@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   AlertCircle 
 } from 'lucide-react';
+import { workbookService } from '../services/workbookService';
 
 // Import page components
 import RequirementsPage from './RequirementsPage';
@@ -46,22 +47,57 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
 
   // Load saved data when component mounts
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    const savedData = localStorage.getItem(`workbook_${sessionId}`);
-    if (savedData) {
+    const loadData = async () => {
       try {
-        const parsed = JSON.parse(savedData);
-        setFormData(parsed);
-        
-        // Calculate progress based on loaded data
-        calculateProgress(parsed);
+        const savedData = await workbookService.saveAllData(sessionId);
+        if (savedData) {
+          setFormData(savedData.sections || {});
+          calculateProgress(savedData.sections);
+        }
       } catch (error) {
         console.error('Failed to load saved data:', error);
       }
-    }
+    };
+    
+    loadData();
   }, [sessionId]);
 
-  // Auto-save data when it changes
+  // Update form data for a specific section
+  const updateFormData = (section, data) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: data
+    }));
+    setIsDirty(true);
+  };
+
+  // Handle save
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    
+    try {
+      await workbookService.saveAllData(
+        sessionId,
+        activeTab,
+        {
+          sections: formData
+        }
+      );
+      
+      calculateProgress(formData);
+      setSaveStatus('saved');
+      setIsDirty(false);
+      
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to save data:', error);
+      setSaveStatus('error');
+    }
+  };
+
+  // Auto-save when data changes
   useEffect(() => {
     if (isDirty) {
       const timer = setTimeout(() => {
@@ -74,9 +110,6 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
 
   // Calculate progress based on data
   const calculateProgress = (data = formData) => {
-    // This is a simplified progress calculation
-    // In a real app, you would implement more complex logic based on fields filled
-    
     const progressByTab = {
       requirements: calculateTabProgress(data.requirements),
       api: calculateTabProgress(data.api),
@@ -86,7 +119,7 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
       reliability: calculateTabProgress(data.reliability)
     };
     
-    const overall = Object.values(progressByTab).reduce((sum, val) => sum + val, 0) / 6;
+    const overall = Object.values(progressByTab).reduce((sum, val) => sum + val, 0) / Object.keys(progressByTab).length;
     
     setTabProgress(progressByTab);
     setOverallProgress(Math.round(overall));
@@ -106,45 +139,6 @@ const WorkbookLayout = ({ onBack, sessionId }) => {
     });
     
     return Math.round((filledFields.length / fields.length) * 100);
-  };
-
-  // Update form data
-  const updateFormData = (section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        ...data
-      }
-    }));
-    
-    setIsDirty(true);
-  };
-
-  // Save form data
-  const handleSave = async () => {
-    setSaveStatus('saving');
-    
-    try {
-      // In a real app, this would be an API call
-      localStorage.setItem(`workbook_${sessionId}`, JSON.stringify(formData));
-      
-      // Update progress after saving
-      calculateProgress();
-      
-      setSaveStatus('saved');
-      setIsDirty(false);
-      
-      // Reset status after a delay
-      setTimeout(() => {
-        if (setSaveStatus) { // Check if component is still mounted
-          setSaveStatus('idle');
-        }
-      }, 2000);
-    } catch (error) {
-      console.error('Failed to save data:', error);
-      setSaveStatus('error');
-    }
   };
 
   // Handle tab change

@@ -3,7 +3,11 @@ import { Trash2, Plus } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
-const RequirementsPage = () => {
+const RequirementsPage = ({ data, updateData }) => {
+  const handleChange = (newData) => {
+    updateData(newData);
+  };
+
   const { state, dispatch } = useWorkbook();
   const { currentProblem, problems } = state;
   const [previewMode, setPreviewMode] = useState(false);

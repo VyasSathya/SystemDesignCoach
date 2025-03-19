@@ -1,150 +1,182 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
 const DataModelPage = () => {
-  const { state, dispatch } = useWorkbook();
+  const { state, dispatch, workbookService } = useWorkbook();  // Get workbookService from context
   const { currentProblem, problems } = state;
+  const [previewMode, setPreviewMode] = useState(false);
   
-  // Get data from context with default values
   const dataModelData = problems[currentProblem]?.sections?.dataModel || {
     entities: [],
     relationships: [],
     databaseChoice: '',
-    databaseJustification: '',
-    previewMode: false
+    databaseJustification: ''
   };
 
-  // Initialize state from context data
-  const [entities, setEntities] = useState(dataModelData.entities);
-  const [relationships, setRelationships] = useState(dataModelData.relationships);
-  const [databaseChoice, setDatabaseChoice] = useState(dataModelData.databaseChoice);
-  const [databaseJustification, setDatabaseJustification] = useState(dataModelData.databaseJustification);
-  const [previewMode, setPreviewMode] = useState(dataModelData.previewMode);
+  const saveData = async (updatedData) => {
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblem,
+      section: 'dataModel',
+      data: updatedData
+    });
 
-  // Save state when data changes
-  useEffect(() => {
-    if (currentProblem) {
-      dispatch({
-        type: 'UPDATE_SECTION_DATA',
-        problemId: currentProblem,
-        section: 'dataModel',
-        data: {
-          entities,
-          relationships,
-          databaseChoice,
-          databaseJustification,
-          previewMode
-        }
-      });
+    if (workbookService) {
+      try {
+        await workbookService.saveAllData(
+          currentProblem,
+          'dataModel',
+          {
+            sections: {
+              dataModel: updatedData
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save:', error);
+      }
     }
-  }, [currentProblem, entities, relationships, databaseChoice, databaseJustification, previewMode, dispatch]);
+  };
 
-  // Re-initialize state when currentProblem changes
-  useEffect(() => {
-    const data = problems[currentProblem]?.sections?.dataModel || {
-      entities: [],
-      relationships: [],
-      databaseChoice: '',
-      databaseJustification: '',
-      previewMode: false
+  const setDatabaseChoice = (value) => {
+    const updatedData = {
+      ...dataModelData,
+      databaseChoice: value
     };
-    
-    setEntities(data.entities);
-    setRelationships(data.relationships);
-    setDatabaseChoice(data.databaseChoice);
-    setDatabaseJustification(data.databaseJustification);
-    setPreviewMode(data.previewMode);
-  }, [currentProblem, problems]);
+    saveData(updatedData);
+  };
 
-  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-  const addEntity = () => {
-    const newEntity = {
-      id: generateId(),
-      name: 'New Entity',
-      text: '',
-      attributes: []
+  const setDatabaseJustification = (value) => {
+    const updatedData = {
+      ...dataModelData,
+      databaseJustification: value
     };
-    setEntities([...entities, newEntity]);
-  };
-
-  const updateEntity = (id, field, value) => {
-    setEntities(entities.map(entity =>
-      entity.id === id ? { ...entity, [field]: value } : entity
-    ));
-  };
-
-  const deleteEntity = (id) => {
-    setEntities(entities.filter(entity => entity.id !== id));
-    setRelationships(relationships.filter(rel => 
-      rel.from !== id && rel.to !== id
-    ));
-  };
-
-  const addRelationship = () => {
-    const newRelationship = {
-      id: generateId(),
-      from: '',
-      to: '',
-      type: '',
-      description: ''
-    };
-    setRelationships([...relationships, newRelationship]);
-  };
-
-  const updateRelationship = (id, field, value) => {
-    setRelationships(relationships.map(rel =>
-      rel.id === id ? { ...rel, [field]: value } : rel
-    ));
-  };
-
-  const deleteRelationship = (id) => {
-    setRelationships(relationships.filter(rel => rel.id !== id));
+    saveData(updatedData);
   };
 
   const togglePreview = () => {
     setPreviewMode(!previewMode);
   };
 
-  // Calculate progress
-  const calculateProgress = () => {
-    if (!entities.length) return 0;
-    
-    const totalItems = entities.length + relationships.length + (databaseChoice ? 1 : 0);
-    const completedEntities = entities.filter(e => e.name && e.text).length;
-    const completedRelationships = relationships.filter(r => r.from && r.to && r.type).length;
-    const completedDatabase = databaseChoice && databaseJustification ? 1 : 0;
-    
-    return Math.round(((completedEntities + completedRelationships + completedDatabase) / totalItems) * 100);
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  // Relationship management functions
+  const addRelationship = () => {
+    const newRelationship = {
+      id: generateId(),
+      from: '',
+      to: '',
+      type: '',
+      description: '',
+      completed: false
+    };
+
+    const updatedData = {
+      ...dataModelData,
+      relationships: [...dataModelData.relationships, newRelationship]
+    };
+
+    saveData(updatedData);
   };
 
-  // Update progress when data changes
-  useEffect(() => {
-    if (currentProblem) {
-      const progress = calculateProgress();
-      dispatch({
-        type: 'UPDATE_PROGRESS',
-        problemId: currentProblem,
-        section: 'dataModel',
-        progress
-      });
-    }
-  }, [entities, relationships, databaseChoice, databaseJustification]);
+  const updateRelationship = (id, field, value) => {
+    const updatedData = {
+      ...dataModelData,
+      relationships: dataModelData.relationships.map(rel =>
+        rel.id === id ? { ...rel, [field]: value } : rel
+      )
+    };
+
+    saveData(updatedData);
+  };
+
+  const deleteRelationship = (id) => {
+    const updatedData = {
+      ...dataModelData,
+      relationships: dataModelData.relationships.filter(rel => rel.id !== id)
+    };
+
+    saveData(updatedData);
+  };
+
+  const addEntity = () => {
+    const newEntity = {
+      id: generateId(),
+      text: '',
+      name: 'New Entity'
+    };
+
+    const updatedData = {
+      ...dataModelData,
+      entities: [...dataModelData.entities, newEntity]
+    };
+
+    saveData(updatedData);
+  };
+
+  const updateEntity = (id, field, value) => {
+    const updatedData = {
+      ...dataModelData,
+      entities: dataModelData.entities.map(entity =>
+        entity.id === id ? { ...entity, [field]: value } : entity
+      )
+    };
+
+    saveData(updatedData);
+  };
+
+  const deleteEntity = (id) => {
+    const updatedData = {
+      ...dataModelData,
+      entities: dataModelData.entities.filter(entity => entity.id !== id)
+    };
+
+    saveData(updatedData);
+  };
+
+  const calculateProgress = () => {
+    // Add your progress calculation logic here
+    return 0;
+  };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <ProgressBar progress={calculateProgress()} />
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header with title and actions */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl font-bold text-purple-600">Data Model</h1>
+        <div className="flex space-x-3">
+          <button 
+            onClick={togglePreview}
+            className={`px-3 py-1.5 text-sm border rounded ${
+              previewMode ? 'bg-gray-100' : 'bg-white'
+            }`}
+          >
+            {previewMode ? 'Hide Preview' : 'Show Preview'}
+          </button>
+        </div>
+      </div>
+      
+      {/* Coach tip */}
+      <div className="bg-purple-50 border border-purple-100 p-4 rounded-md text-purple-700 text-sm mb-6">
+        <strong className="font-medium">Coach tip:</strong> Start by identifying the core entities in your system and their attributes. Then, establish clear relationships between these entities. Choose a database type that best suits your data structure and access patterns.
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <ProgressBar 
+        progress={calculateProgress()}
+        completed={0}
+        total={3}
+      />
+      
+      {/* Main content area */}
+      <div className={previewMode ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"}>
+        {/* Left column: Content forms */}
         <div className="space-y-6">
-          {/* Entities Section */}
+          {/* Entity Definition Section */}
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between">
-              <h2 className="font-medium text-gray-800">Entities</h2>
+              <h2 className="font-medium text-gray-800">Entity Definition</h2>
               <button 
                 onClick={addEntity}
                 className="text-indigo-600 text-sm font-medium"
@@ -154,28 +186,23 @@ const DataModelPage = () => {
             </div>
             <div className="p-4">
               <div className="space-y-4">
-                {entities.map(entity => (
-                  <div key={entity.id} className="border rounded-md p-3">
+                {dataModelData.entities.map(entity => (
+                  <div key={entity.id} className="border rounded-md p-3 bg-white">
                     <div className="flex justify-between mb-2">
-                      <input
-                        type="text"
-                        className="w-full p-2 border rounded-md mr-2"
-                        value={entity.name}
-                        onChange={(e) => updateEntity(entity.id, 'name', e.target.value)}
-                        placeholder="Entity name..."
-                      />
-                      <button 
-                        onClick={() => deleteEntity(entity.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <h3 className="text-sm font-medium">Entity Definition</h3>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => deleteEntity(entity.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       className="w-full h-32 p-2 border rounded-md text-sm font-mono"
                       value={entity.text}
                       onChange={(e) => updateEntity(entity.id, 'text', e.target.value)}
-                      placeholder="Define your entity attributes here..."
                     />
                   </div>
                 ))}
@@ -196,7 +223,7 @@ const DataModelPage = () => {
             </div>
             <div className="p-4">
               <div className="space-y-4">
-                {relationships.map(rel => (
+                {dataModelData.relationships.map(rel => (
                   <div key={rel.id} className="border rounded-md p-3 bg-white">
                     <div className="flex justify-between mb-2">
                       <select 
@@ -205,7 +232,7 @@ const DataModelPage = () => {
                         onChange={(e) => updateRelationship(rel.id, 'from', e.target.value)}
                       >
                         <option value="">Select entity...</option>
-                        {entities.map(entity => (
+                        {dataModelData.entities.map(entity => (
                           <option key={entity.id} value={entity.id}>{entity.name}</option>
                         ))}
                       </select>
@@ -216,7 +243,7 @@ const DataModelPage = () => {
                         onChange={(e) => updateRelationship(rel.id, 'to', e.target.value)}
                       >
                         <option value="">Select entity...</option>
-                        {entities.map(entity => (
+                        {dataModelData.entities.map(entity => (
                           <option key={entity.id} value={entity.id}>{entity.name}</option>
                         ))}
                       </select>
@@ -264,7 +291,7 @@ const DataModelPage = () => {
             <div className="p-4">
               <select
                 className="w-full p-2 border rounded-md mb-4"
-                value={databaseChoice}
+                value={dataModelData.databaseChoice}
                 onChange={(e) => setDatabaseChoice(e.target.value)}
               >
                 <option value="">Select a database type...</option>
@@ -277,7 +304,7 @@ const DataModelPage = () => {
               
               <textarea
                 className="w-full h-24 p-2 border rounded-md"
-                value={databaseJustification}
+                value={dataModelData.databaseJustification}
                 onChange={(e) => setDatabaseJustification(e.target.value)}
                 placeholder="Explain why this database type is the best fit for your data model. Consider factors like data structure, relationships, query patterns, and scalability requirements..."
               />
@@ -296,7 +323,7 @@ const DataModelPage = () => {
                 <div className="mb-6">
                   <h4 className="text-sm font-semibold mb-2">Entities</h4>
                   <div className="space-y-4">
-                    {entities.map(entity => (
+                    {dataModelData.entities.map(entity => (
                       <div key={entity.id} className="border-2 border-purple-500 rounded-md p-3">
                         <h5 className="font-bold">{entity.name}</h5>
                         <ul className="list-disc list-inside text-sm">
@@ -316,7 +343,7 @@ const DataModelPage = () => {
                 <div className="mb-6">
                   <h4 className="text-sm font-semibold mb-2">Relationships</h4>
                   <div className="space-y-2">
-                    {relationships.map(rel => (
+                    {dataModelData.relationships.map(rel => (
                       <div key={rel.id} className="p-2 border rounded-md">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{rel.from} → {rel.to}</span>
@@ -332,10 +359,10 @@ const DataModelPage = () => {
                 
                 <div>
                   <h4 className="text-sm font-semibold mb-2">Database Selection</h4>
-                  {databaseChoice && (
+                  {dataModelData.databaseChoice && (
                     <div className="p-3 bg-purple-50 rounded-md">
-                      <h5 className="font-medium text-purple-800">{databaseChoice}</h5>
-                      <p className="text-sm text-gray-600 mt-1">{databaseJustification}</p>
+                      <h5 className="font-medium text-purple-800">{dataModelData.databaseChoice}</h5>
+                      <p className="text-sm text-gray-600 mt-1">{dataModelData.databaseJustification}</p>
                     </div>
                   )}
                 </div>
