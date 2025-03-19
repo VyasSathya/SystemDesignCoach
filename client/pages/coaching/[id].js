@@ -18,6 +18,7 @@ import {
 } from '../../utils/api';
 import { mermaidToReactFlow, reactFlowToMermaid } from '../../components/diagram/utils/conversion';
 import TopicGuidedCoaching from '../../components/coaching/TopicGuidedCoaching';
+import debounce from 'lodash/debounce';
 
 // Import workbook components directly
 import RequirementsPage from '../RequirementsPage';
@@ -50,7 +51,7 @@ const SystemSequenceDiagram = dynamic(() => import('../../components/diagram/Sys
   )
 });
 
-const CoachingSessionPage = () => {
+const CoachingSessionPage = ({ userId, problemId }) => {
   const router = useRouter();
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
@@ -99,14 +100,6 @@ const CoachingSessionPage = () => {
 
   // Workbook state
   const [workbookState, setWorkbookState] = useState({
-    // Section data
-    requirements: {},
-    api: {},
-    data: {},
-    architecture: {},
-    scaling: {},
-    reliability: {},
-    // Diagram data
     diagrams: {
       system: {
         nodes: [],
@@ -118,14 +111,89 @@ const CoachingSessionPage = () => {
         edges: [],
         mermaidCode: ''
       }
+    },
+    sections: {
+      requirements: {},
+      api: {},
+      data: {},
+      architecture: {},
+      scaling: {},
+      reliability: {}
     }
   });
+
+  // Load saved data on component mount
+  useEffect(() => {
+    const loadSavedData = async () => {
+      if (!userId || !problemId) return;
+      
+      // Load chat history
+      const savedChat = workbookService.getChat(userId, problemId);
+      if (savedChat) {
+        setMessages(savedChat);
+      }
+
+      // Load diagrams
+      const savedSystemDiagram = workbookService.getDiagram(userId, problemId, 'system');
+      const savedSequenceDiagram = workbookService.getDiagram(userId, problemId, 'sequence');
+      
+      setWorkbookState(prev => ({
+        ...prev,
+        diagrams: {
+          system: savedSystemDiagram || prev.diagrams.system,
+          sequence: savedSequenceDiagram || prev.diagrams.sequence
+        }
+      }));
+
+      // Load progress
+      const savedProgress = workbookService.getProgress(userId, problemId);
+      if (savedProgress) {
+        setWorkbookState(prev => ({
+          ...prev,
+          sections: savedProgress
+        }));
+      }
+    };
+
+    loadSavedData();
+  }, [userId, problemId]);
+
+  // Auto-save handler
+  const handleAutoSave = useCallback(
+    debounce(async () => {
+      if (!userId || !problemId) return;
+
+      // Save chat
+      workbookService.saveChat(userId, problemId, messages);
+
+      // Save current diagram
+      const currentDiagramType = activeDiagramTab;
+      workbookService.saveDiagram(
+        userId,
+        problemId,
+        workbookState.diagrams[currentDiagramType],
+        currentDiagramType
+      );
+
+      // Save progress
+      workbookService.saveProgress(userId, problemId, workbookState.sections);
+    }, 2000),
+    [userId, problemId, messages, workbookState]
+  );
+
+  // Add auto-save effect
+  useEffect(() => {
+    handleAutoSave();
+  }, [messages, workbookState]);
 
   // Update function for workbook sections
   const updateWorkbookState = (section, data) => {
     setWorkbookState(prev => ({
       ...prev,
-      [section]: data
+      sections: {
+        ...prev.sections,
+        [section]: data
+      }
     }));
   };
 

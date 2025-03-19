@@ -1,105 +1,101 @@
+const WorkbookData = require('../../models/WorkbookData');
+const logger = require('../../utils/logger');
+
 class WorkbookService {
-  constructor() {
-    this.workbooks = new Map();
-    this.versions = new Map();
-  }
-
-  async saveWorkbook(sessionId, data, userId) {
-    if (!sessionId) throw new Error('Session ID is required');
-    
-    this.workbooks.set(sessionId, {
-      ...data,
-      userId,
-      lastModified: new Date()
-    });
-
-    if (!this.versions.has(sessionId)) {
-      this.versions.set(sessionId, []);
-    }
-    
-    const versions = this.versions.get(sessionId);
-    versions.push({
-      timestamp: new Date(),
-      data: { ...data },
-      userId
-    });
-
-    return { status: 'success' };
-  }
-
-  async saveWithRetry(sessionId, data, userId) {
-    let attempts = 0;
-    const maxAttempts = 3;
-    
-    while (attempts < maxAttempts) {
-      try {
-        const response = await fetch('/api/workbook/save', {
-          method: 'POST',
-          body: JSON.stringify({ sessionId, data, userId })
-        });
-        if (response.ok) {
-          return await response.json();
-        }
-      } catch (error) {
-        attempts++;
-        if (attempts === maxAttempts) throw error;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  }
-
-  async getWorkbook(sessionId) {
-    if (!sessionId) throw new Error('Session ID is required');
-    return this.workbooks.get(sessionId) || null;
-  }
-
-  async getVersionHistory(sessionId) {
-    if (!sessionId) throw new Error('Session ID is required');
-    
-    const versions = this.versions.get(sessionId) || [];
-    return versions.map((version, index) => {
-      if (index === 0) {
-        return {
-          ...version,
-          changes: {
-            added: Object.keys(version.data),
-            modified: [],
-            deleted: []
+  async getWorkbook(userId, problemId) {
+    try {
+      let workbook = await WorkbookData.findOne({ userId, problemId });
+      
+      if (!workbook) {
+        // Initialize new workbook if none exists
+        workbook = await WorkbookData.create({
+          userId,
+          problemId,
+          diagrams: {
+            system: { nodes: [], edges: [], mermaidCode: '' },
+            sequence: { nodes: [], edges: [], mermaidCode: '' }
+          },
+          chat: [],
+          sections: {
+            requirements: {},
+            api: {},
+            data: {},
+            architecture: {},
+            scaling: {},
+            reliability: {}
           }
-        };
+        });
       }
 
-      const previousVersion = versions[index - 1];
-      return {
-        ...version,
-        changes: this.calculateChanges(previousVersion.data, version.data)
-      };
-    });
+      return workbook;
+    } catch (error) {
+      logger.error('Error getting workbook:', error);
+      throw error;
+    }
   }
 
-  calculateChanges(oldData, newData) {
-    const changes = {
-      added: [],
-      modified: [],
-      deleted: []
-    };
+  async saveDiagram(userId, problemId, type, diagramData) {
+    try {
+      const update = {
+        [`diagrams.${type}`]: {
+          ...diagramData,
+          lastUpdated: new Date()
+        },
+        lastSynced: new Date()
+      };
 
-    Object.keys(newData).forEach(key => {
-      if (!(key in oldData)) {
-        changes.added.push(key);
-      } else if (oldData[key] !== newData[key]) {
-        changes.modified.push(key);
-      }
-    });
+      const workbook = await WorkbookData.findOneAndUpdate(
+        { userId, problemId },
+        { $set: update },
+        { new: true, upsert: true }
+      );
 
-    Object.keys(oldData).forEach(key => {
-      if (!(key in newData)) {
-        changes.deleted.push(key);
-      }
-    });
+      return workbook.diagrams[type];
+    } catch (error) {
+      logger.error('Error saving diagram:', error);
+      throw error;
+    }
+  }
 
-    return changes;
+  async saveChat(userId, problemId, messages) {
+    try {
+      const workbook = await WorkbookData.findOneAndUpdate(
+        { userId, problemId },
+        {
+          $set: {
+            chat: messages,
+            lastSynced: new Date()
+          }
+        },
+        { new: true, upsert: true }
+      );
+
+      return workbook.chat;
+    } catch (error) {
+      logger.error('Error saving chat:', error);
+      throw error;
+    }
+  }
+
+  async saveProgress(userId, problemId, sectionData) {
+    try {
+      const workbook = await WorkbookData.findOneAndUpdate(
+        { userId, problemId },
+        {
+          $set: {
+            sections: sectionData,
+            lastSynced: new Date()
+          }
+        },
+        { new: true, upsert: true }
+      );
+
+      return workbook.sections;
+    } catch (error) {
+      logger.error('Error saving progress:', error);
+      throw error;
+    }
   }
 }
 
-module.exports = { WorkbookService };
+module.exports = new WorkbookService();

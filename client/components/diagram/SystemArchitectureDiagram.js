@@ -159,7 +159,8 @@ const SystemArchitectureDiagram = ({ problemId, userId }) => {
       nodes,
       edges
     };
-    workbookService.saveDiagram(userId, problemId, state, 'system');
+    workbookService.saveDiagram(userId, problemId, state, 'system')
+      .catch(error => console.error('Failed to save diagram:', error));
   }, [nodes, edges, userId, problemId]);
 
   return (
