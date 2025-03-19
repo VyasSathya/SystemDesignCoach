@@ -106,20 +106,12 @@ const ReliabilitySecurityPage = () => {
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
               <h2 className="font-medium text-gray-800">Reliability Targets</h2>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center">
-                  <div className="w-16 h-1.5 bg-gray-200 rounded-full">
-                    <div className="h-full bg-red-400" style={{ width: '100%' }}></div>
-                  </div>
-                  <span className="ml-2 text-xs text-gray-500">100%</span>
-                </div>
-                <button 
-                  onClick={addReliabilityMetric}
-                  className="text-red-600 text-sm font-medium"
-                >
-                  + Add Metric
-                </button>
-              </div>
+              <button 
+                onClick={addReliabilityMetric}
+                className="text-red-600 text-sm font-medium"
+              >
+                + Add Metric
+              </button>
             </div>
             <div className="p-4">
               <div className="space-y-3">
@@ -170,20 +162,12 @@ const ReliabilitySecurityPage = () => {
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
               <h2 className="font-medium text-gray-800">Failure Scenarios</h2>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center">
-                  <div className="w-16 h-1.5 bg-gray-200 rounded-full">
-                    <div className="h-full bg-red-400" style={{ width: '75%' }}></div>
-                  </div>
-                  <span className="ml-2 text-xs text-gray-500">75%</span>
-                </div>
-                <button 
-                  onClick={addFailureScenario}
-                  className="text-red-600 text-sm font-medium"
-                >
-                  + Add Scenario
-                </button>
-              </div>
+              <button 
+                onClick={addFailureScenario}
+                className="text-red-600 text-sm font-medium"
+              >
+                + Add Scenario
+              </button>
             </div>
             <div className="p-4">
               {failureScenarios.map(scenario => (
@@ -231,20 +215,12 @@ const ReliabilitySecurityPage = () => {
           <div className="bg-white border rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
               <h2 className="font-medium text-gray-800">Security Measures</h2>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center">
-                  <div className="w-16 h-1.5 bg-gray-200 rounded-full">
-                    <div className="h-full bg-red-400" style={{ width: '50%' }}></div>
-                  </div>
-                  <span className="ml-2 text-xs text-gray-500">50%</span>
-                </div>
-                <button 
-                  onClick={addSecurityMeasure}
-                  className="text-red-600 text-sm font-medium"
-                >
-                  + Add Measure
-                </button>
-              </div>
+              <button 
+                onClick={addSecurityMeasure}
+                className="text-red-600 text-sm font-medium"
+              >
+                + Add Measure
+              </button>
             </div>
             <div className="p-4">
               {securityMeasures.map(measure => (
