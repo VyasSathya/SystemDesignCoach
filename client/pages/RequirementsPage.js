@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
+import { WorkbookProvider } from '../context/WorkbookContext';
+import { withWorkbook } from '../components/withWorkbook';
 
-const RequirementsPage = () => {
+const RequirementsPageContent = () => {
   const { state, dispatch, workbookService } = useWorkbook();
   const { currentProblem, problems } = state;
   
@@ -708,4 +710,13 @@ const RequirementsPage = () => {
   );
 };
 
-export default RequirementsPage;
+const RequirementsPage = () => {
+  const { state, dispatch, workbookService } = useWorkbook();
+  return (
+    <WorkbookProvider>
+      <RequirementsPageContent />
+    </WorkbookProvider>
+  );
+};
+
+export default withWorkbook(RequirementsPage);

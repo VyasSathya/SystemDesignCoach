@@ -1,26 +1,19 @@
-import React, { useState, useCallback, useEffect } from 'react';
+'use client';
+
+import React, { useState, useCallback } from 'react';
 import ReactFlow, { 
-  ReactFlowProvider,
   Background, 
-  Controls,
-  addEdge,
-  applyEdgeChanges, 
-  applyNodeChanges,
-  Handle,
-  Position,
-  MarkerType
+  Controls, 
+  MiniMap,
+  ReactFlowProvider 
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Server, Database, Users, GitMerge, GitPullRequest, MessageSquare, Save } from 'lucide-react';
-import MessageEdge from './components/MessageEdge';
-import { workbookService } from '../../services/workbookService';
-import { useAuth } from '../../contexts/AuthContext';
 
 // Node styles definition
 const getNodeStyle = (type) => {
   const styles = {
     user: {
-      icon: <Users className="w-6 h-6" />,
+      icon: Users,
       background: 'bg-blue-50',
       border: 'border-blue-300',
       hoverBg: 'hover:bg-blue-50',
@@ -28,7 +21,7 @@ const getNodeStyle = (type) => {
       iconColor: 'text-blue-500'
     },
     system: {
-      icon: <Server className="w-6 h-6" />,
+      icon: Server,
       background: 'bg-green-50',
       border: 'border-green-300',
       hoverBg: 'hover:bg-green-50',
@@ -36,7 +29,7 @@ const getNodeStyle = (type) => {
       iconColor: 'text-green-500'
     },
     database: {
-      icon: <Database className="w-6 h-6" />,
+      icon: Database,
       background: 'bg-purple-50',
       border: 'border-purple-300',
       hoverBg: 'hover:bg-purple-50',
@@ -50,6 +43,7 @@ const getNodeStyle = (type) => {
 // Simplified BaseNode with ReactFlow native connection handles
 const BaseNode = ({ data, selected, id }) => {
   const style = getNodeStyle(data.type);
+  const IconComponent = style.icon;
   
   return (
     <div className="group relative" style={{ minWidth: '120px' }}>
@@ -63,7 +57,7 @@ const BaseNode = ({ data, selected, id }) => {
       `}>
         <div className="flex items-center gap-2 justify-center">
           <div className={`${style.iconColor}`}>
-            {style.icon}
+            <IconComponent className="w-6 h-6" />
           </div>
           <div className="text-sm font-medium text-gray-700">
             {data.label}
@@ -130,6 +124,45 @@ const BaseNode = ({ data, selected, id }) => {
 };
 
 // Edge types definition
+const MessageEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  data,
+  markerEnd
+}) => {
+  const edgePath = `M ${sourceX},${sourceY} L ${targetX},${targetY}`;
+
+  return (
+    <>
+      <path
+        id={id}
+        style={style}
+        className="react-flow__edge-path"
+        d={edgePath}
+        markerEnd={markerEnd}
+      />
+      {data?.label && (
+        <text>
+          <textPath
+            href={`#${id}`}
+            style={{ fontSize: '12px' }}
+            startOffset="50%"
+            textAnchor="middle"
+          >
+            {data.label}
+          </textPath>
+        </text>
+      )}
+    </>
+  );
+};
+
 const EDGE_TYPES = {
   default: MessageEdge
 };
@@ -154,16 +187,16 @@ const MenuPanel = ({
     e.preventDefault();
   };
 
-  // Define menu items
+  // Define menu items with components instead of rendered elements
   const menuItems = {
     participants: [
-      { type: 'user', label: 'User', icon: <Users className="w-6 h-6 text-blue-500" /> },
-      { type: 'system', label: 'System', icon: <Server className="w-6 h-6 text-green-500" /> },
-      { type: 'database', label: 'Database', icon: <Database className="w-6 h-6 text-purple-500" /> }
+      { type: 'user', label: 'User', Icon: Users },
+      { type: 'system', label: 'System', Icon: Server },
+      { type: 'database', label: 'Database', Icon: Database }
     ],
     fragments: [
-      { type: 'loop', label: 'Loop', icon: <GitMerge className="w-6 h-6 text-purple-500" /> },
-      { type: 'alt', label: 'Alternative', icon: <GitPullRequest className="w-6 h-6 text-orange-500" /> }
+      { type: 'loop', label: 'Loop', Icon: GitMerge },
+      { type: 'alt', label: 'Alternative', Icon: GitPullRequest }
     ]
   };
 
@@ -185,89 +218,38 @@ const MenuPanel = ({
           className="grid grid-cols-3 gap-4 p-4"
           draggable={false}
         >
-          {/* Left Section - Components */}
           <div draggable={false}>
             <h3 className="text-sm font-medium text-gray-700 mb-3">System Components</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {menuItems.participants.map((item) => (
+            <div className="space-y-2">
+              {menuItems.participants.map(({ type, label, Icon }) => (
                 <button
-                  key={item.type}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAddParticipant(item.type);
-                  }}
-                  draggable={false}
-                  className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
+                  key={type}
+                  className="flex items-center gap-2 p-2 w-full rounded hover:bg-gray-50"
+                  onClick={() => onAddParticipant(type)}
                 >
-                  {item.icon}
-                  <span className="text-xs text-center text-gray-600 mt-2">{item.label}</span>
+                  <Icon className="w-6 h-6" />
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Middle Section - Message Types */}
-          <div draggable={false}>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Communication Types</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMessageTypeChange('sync');
-                }}
-                draggable={false}
-                className={`p-3 flex flex-col items-center rounded-lg border transition-colors
-                  ${messageType === 'sync' ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'}`}
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 16 16">
-                    <path d="M1 8H12" stroke="currentColor" strokeWidth="2" />
-                    <path d="M8 4L12 8L8 12" stroke="currentColor" strokeWidth="2" fill="none" />
-                  </svg>
-                </div>
-                <span className={`text-xs text-center font-medium mt-2 ${messageType === 'sync' ? 'text-blue-500' : 'text-gray-400'}`}>
-                  Synchronous
-                </span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMessageTypeChange('async');
-                }}
-                draggable={false}
-                className={`p-3 flex flex-col items-center rounded-lg border transition-colors
-                  ${messageType === 'async' ? 'bg-blue-50 border-blue-300' : 'border-gray-200 hover:bg-gray-50'}`}
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 16 16">
-                    <path d="M1 8H4" stroke="currentColor" strokeWidth="2" />
-                    <path d="M6 8H10" stroke="currentColor" strokeWidth="2" strokeDasharray="2 2" />
-                    <path d="M8 4L12 8L8 12" stroke="currentColor" strokeWidth="2" fill="none" />
-                  </svg>
-                </div>
-                <span className={`text-xs text-center font-medium mt-2 ${messageType === 'async' ? 'text-blue-500' : 'text-gray-400'}`}>
-                  Asynchronous
-                </span>
-              </button>
-            </div>
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Message Type</h3>
+            {/* Message type controls here */}
           </div>
 
-          {/* Right Section - Control Flow */}
-          <div draggable={false}>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Control Flow</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {menuItems.fragments.map((item) => (
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Fragments</h3>
+            <div className="space-y-2">
+              {menuItems.fragments.map(({ type, label, Icon }) => (
                 <button
-                  key={item.type}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAddFragment(item.type);
-                  }}
-                  draggable={false}
-                  className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
+                  key={type}
+                  className="flex items-center gap-2 p-2 w-full rounded hover:bg-gray-50"
+                  onClick={() => onAddFragment(type)}
                 >
-                  {item.icon}
-                  <span className="text-xs text-center text-gray-600 mt-2">{item.label}</span>
+                  <Icon className="w-6 h-6" />
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
@@ -279,9 +261,15 @@ const MenuPanel = ({
 };
 
 // Main Sequence Diagram Component
-const SystemSequenceDiagram = ({ onSave, initialData, sessionId }) => {
-  const { user } = useAuth(); // Get user from auth context
+const SystemSequenceDiagram = ({ problemId, userId, sessionId, initialData, onSave }) => {
+  const [mounted, setMounted] = useState(false);
   
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   // Initialize state using initialData or defaults
   const [nodes, setNodes] = useState(() => {
     const savedState = localStorage.getItem('currentSequenceDiagramState');
@@ -303,14 +291,14 @@ const SystemSequenceDiagram = ({ onSave, initialData, sessionId }) => {
 
   // Persistence effect
   useEffect(() => {
-    if (!user?.id || !sessionId) return; // Add guard clause
+    if (!userId || !sessionId) return; // Add guard clause
     
     const state = {
       nodes,
       edges
     };
-    workbookService.saveDiagram(user.id, sessionId, state, 'sequence');
-  }, [nodes, edges, user?.id, sessionId]);
+    workbookService.saveDiagram(userId, sessionId, state, 'sequence');
+  }, [nodes, edges, userId, sessionId]);
 
   const [selectedNode, setSelectedNode] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -476,24 +464,22 @@ const SystemSequenceDiagram = ({ onSave, initialData, sessionId }) => {
     <div className="h-full flex flex-col">
       {/* ReactFlow container */}
       <div className="flex-1 relative">
-        <ReactFlowProvider>
-          <div className="h-full relative">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={NODE_TYPES}
-              edgeTypes={EDGE_TYPES}
-              fitView
-              proOptions={{ hideAttribution: true }}
-            >
-              <Background />
-              <Controls />
-            </ReactFlow>
-          </div>
-        </ReactFlowProvider>
+        <div className="h-full relative">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={NODE_TYPES}
+            edgeTypes={EDGE_TYPES}
+            fitView
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </div>
       </div>
 
       {/* Menu Panel placed above the bottom control bar */}
@@ -572,13 +558,11 @@ const SystemSequenceDiagram = ({ onSave, initialData, sessionId }) => {
   );
 };
 
-// Wrapper with Provider
-const SystemSequenceDiagramWrapper = () => {
+// Export a wrapped version of the component
+export default function WrappedSystemSequenceDiagram(props) {
   return (
     <ReactFlowProvider>
-      <SystemSequenceDiagram />
+      <SystemSequenceDiagram {...props} />
     </ReactFlowProvider>
   );
-};
-
-export default SystemSequenceDiagramWrapper;
+}

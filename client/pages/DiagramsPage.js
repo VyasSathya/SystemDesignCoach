@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import WorkbookPageWrapper from './WorkbookPageWrapper';
-import SystemDesignDiagram from '../components/SystemDesignDiagram';
+import dynamic from 'next/dynamic';
+
+// Dynamically import SystemSequenceDiagram with SSR disabled
+const SystemSequenceDiagram = dynamic(
+  () => import('../components/diagram/SystemSequenceDiagram'),
+  { ssr: false } // This is crucial - it prevents SSR for this component
+);
+
 import { useSession } from '../hooks/useSession';
 
 const DiagramsPage = () => {
@@ -27,7 +34,7 @@ const DiagramsPage = () => {
           </div>
           
           <div className="h-[calc(100vh-200px)]"> {/* Adjust height to account for header and footer */}
-            <SystemDesignDiagram
+            <SystemSequenceDiagram
               sessionId={sessionId}
               onChange={setCurrentDiagram}
             />
@@ -39,3 +46,4 @@ const DiagramsPage = () => {
 };
 
 export default DiagramsPage;
+

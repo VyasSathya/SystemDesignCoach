@@ -1,21 +1,7 @@
 module.exports = {
-  transform: {
-    '^.+\\.jsx?$': 'babel-jest',
-  },
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-  },
   testEnvironment: 'node',
-  setupFiles: ['<rootDir>/tests/setup.js'],
-  testMatch: [
-    "**/tests/**/*.test.js",
-    "**/tests/**/*.spec.js"
-  ],
-  transformIgnorePatterns: [
-    'node_modules/(?!(your-es-module-dependency)/)',
-  ],
-  fakeTimers: {
-    enableGlobally: true,
-    legacyFakeTimers: true
-  }
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.js'],
+  testPathIgnorePatterns: ['/node_modules/'],
+  globalSetup: '<rootDir>/tests/globalSetup.js',
+  globalTeardown: '<rootDir>/tests/globalTeardown.js'
 };

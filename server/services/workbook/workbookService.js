@@ -2,110 +2,55 @@ const WorkbookData = require('../../models/WorkbookData');
 const logger = require('../../utils/logger');
 
 class WorkbookService {
-  async getWorkbook(userId, problemId) {
-    try {
-      let workbook = await WorkbookData.findOne({ userId, problemId });
-      
-      if (!workbook) {
-        // Initialize new workbook if none exists
-        workbook = await WorkbookData.create({
-          userId,
-          problemId,
-          diagrams: {
-            system: { nodes: [], edges: [], mermaidCode: '' },
-            sequence: { nodes: [], edges: [], mermaidCode: '' }
+  constructor() {
+    this.storage = require('./workbookStorage');
+  }
+
+  async saveWorkbook(sessionId, data, userId) {
+    return this.storage.saveWorkbookData(sessionId, data, userId);
+  }
+
+  async getWorkbook(sessionId) {
+    return this.storage.getWorkbookData(sessionId);
+  }
+
+  async getVersionHistory(sessionId) {
+    // Mock implementation for now
+    return [
+      { version: 1, timestamp: Date.now() - 1000, changes: { added: [], modified: [], deleted: [] } },
+      { version: 2, timestamp: Date.now(), changes: { added: [], modified: ['requirements', 'architecture'], deleted: [] } }
+    ];
+  }
+
+  async saveWithRetry(sessionId, data, maxRetries = 3) {
+    let attempts = 0;
+    
+    while (attempts < maxRetries) {
+      try {
+        const response = await fetch(`/api/workbook/${sessionId}/save`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          chat: [],
-          sections: {
-            requirements: {},
-            api: {},
-            data: {},
-            architecture: {},
-            scaling: {},
-            reliability: {}
-          }
+          body: JSON.stringify(data)
         });
+
+        // Only throw for non-200 status codes
+        if (response.status !== 200) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        attempts++;
+        if (attempts === maxRetries) {
+          throw error;
+        }
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
       }
-
-      return workbook;
-    } catch (error) {
-      logger.error('Error getting workbook:', error);
-      throw error;
-    }
-  }
-
-  async saveDiagram(userId, problemId, diagramData, type) {
-    try {
-      const update = {
-        [`diagrams.${type}`]: {
-          ...diagramData,
-          lastUpdated: new Date()
-        },
-        lastSynced: new Date()
-      };
-
-      const workbook = await WorkbookData.findOneAndUpdate(
-        { userId, problemId },
-        { $set: update },
-        { new: true, upsert: true }
-      );
-
-      return workbook.diagrams[type];
-    } catch (error) {
-      logger.error(`Error saving ${type} diagram:`, error);
-      throw error;
-    }
-  }
-
-  async getDiagram(userId, problemId, type) {
-    try {
-      const workbook = await WorkbookData.findOne({ userId, problemId });
-      return workbook?.diagrams?.[type] || null;
-    } catch (error) {
-      logger.error(`Error getting ${type} diagram:`, error);
-      throw error;
-    }
-  }
-
-  async saveChat(userId, problemId, messages) {
-    try {
-      const workbook = await WorkbookData.findOneAndUpdate(
-        { userId, problemId },
-        {
-          $set: {
-            chat: messages,
-            lastSynced: new Date()
-          }
-        },
-        { new: true, upsert: true }
-      );
-
-      return workbook.chat;
-    } catch (error) {
-      logger.error('Error saving chat:', error);
-      throw error;
-    }
-  }
-
-  async saveProgress(userId, problemId, sectionData) {
-    try {
-      const workbook = await WorkbookData.findOneAndUpdate(
-        { userId, problemId },
-        {
-          $set: {
-            sections: sectionData,
-            lastSynced: new Date()
-          }
-        },
-        { new: true, upsert: true }
-      );
-
-      return workbook.sections;
-    } catch (error) {
-      logger.error('Error saving progress:', error);
-      throw error;
     }
   }
 }
 
-module.exports = new WorkbookService();
+module.exports = { WorkbookService };

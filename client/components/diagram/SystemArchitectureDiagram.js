@@ -13,7 +13,7 @@ import NodePalette from './NodePalette';
 import CustomNode from './NodeTypes/CustomNode';
 import BaseNode from './NodeTypes/BaseNode';
 import 'reactflow/dist/style.css';
-import { useWorkbook } from '../../context/WorkbookContext';
+import { useWorkbook } from '../../contexts/WorkbookContext';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 

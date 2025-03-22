@@ -1,7 +1,61 @@
 import { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';  // Updated path
 import workbookService from '../services/workbookService';
+
+// Add save queue utility
+class SaveQueue {
+  constructor() {
+    this.queue = [];
+    this.processing = false;
+  }
+
+  async add(saveOperation, retries = 3) {
+    console.log('Adding to save queue, current length:', this.queue.length + 1);
+    return new Promise((resolve, reject) => {
+      this.queue.push({
+        operation: saveOperation,
+        retries,
+        resolve,
+        reject,
+        timestamp: new Date()
+      });
+      this.process();
+    });
+  }
+
+  async process() {
+    if (this.processing || this.queue.length === 0) return;
+    
+    console.log('Processing save queue, items remaining:', this.queue.length);
+    this.processing = true;
+
+    const { operation, retries, resolve, reject, timestamp } = this.queue[0];
+    
+    try {
+      const result = await operation();
+      this.queue.shift();
+      console.log('Save successful, queue length:', this.queue.length);
+      resolve(result);
+    } catch (error) {
+      console.error('Save failed, retries left:', retries - 1, error);
+      if (retries > 0) {
+        this.queue[0].retries--;
+        setTimeout(() => this.process(), 1000 * (3 - retries));
+      } else {
+        this.queue.shift();
+        reject(error);
+      }
+    } finally {
+      this.processing = false;
+      if (this.queue.length > 0) {
+        this.process();
+      }
+    }
+  }
+}
+
+const saveQueue = new SaveQueue();
 
 const WorkbookContext = createContext();
 
@@ -156,21 +210,23 @@ export const WorkbookProvider = ({ children }) => {
           progress: {}
         };
 
+        dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
+
         try {
-          await workbookService.saveAllData(
-            state.currentProblem,
-            state.activePage,
-            problemData
-          );
+          await saveQueue.add(async () => {
+            return await workbookService.saveAllData(
+              state.currentProblem,
+              state.activePage,
+              problemData
+            );
+          });
+          
+          dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
           dispatch({ type: 'SET_ACTIVE_PAGE', page });
         } catch (error) {
-          console.error('Error saving workbook data during route change:', error);
-          // Still update the page even if save fails
-          dispatch({ type: 'SET_ACTIVE_PAGE', page });
-        }
-      } else {
-        // If we don't have necessary data, just update the page
-        if (page && page !== state.activePage) {
+          console.error('Error saving workbook data:', error);
+          dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
+          // Still update page to not block navigation
           dispatch({ type: 'SET_ACTIVE_PAGE', page });
         }
       }
@@ -277,16 +333,25 @@ export const WorkbookProvider = ({ children }) => {
     const saveTimeout = setTimeout(() => {
       const problemData = state.problems[state.currentProblem];
       if (problemData) {
-        workbookService.saveAllData(
-          state.currentProblem,
-          state.activePage,
-          {
-            sections: problemData.sections,
-            diagrams: problemData.diagrams,
-            progress: problemData.progress
-          }
-        ).catch(error => {
+        dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
+        
+        saveQueue.add(async () => {
+          return await workbookService.saveAllData(
+            state.currentProblem,
+            state.activePage,
+            {
+              sections: problemData.sections,
+              diagrams: problemData.diagrams,
+              progress: problemData.progress
+            }
+          );
+        })
+        .then(() => {
+          dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
+        })
+        .catch(error => {
           console.error('Error auto-saving workbook data:', error);
+          dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
         });
       }
     }, 2000); // 2 second debounce

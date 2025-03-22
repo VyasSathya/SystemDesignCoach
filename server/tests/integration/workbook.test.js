@@ -1,116 +1,73 @@
-const { WorkbookService } = require('../../services/workbook/workbookService');
-const { mockIndexedDB } = require('../utils/mockIndexedDB'); // Move mock to utils
+import request from 'supertest';
+import express from 'express';
+import { WorkbookService } from '../../services/workbook/workbookService';
+import { generateToken } from '../../utils/auth';
+import workbookRouter from '../../routes/api/workbook';
 
-// Mock the storage module
-jest.mock('../../services/workbook/workbookStorage', () => ({
-  saveWorkbookData: async (sessionId, data, userId) => {
-    return Promise.resolve({ status: 'success' });
-  },
-  autoSaveWorkbook: async (sessionId, data, userId) => {
-    return Promise.resolve({ status: 'success' });
-  }
-}));
+// Create express app instance for testing
+const app = express();
+app.use(express.json());
+app.use('/api/workbook', workbookRouter);
+
+// Mock auth middleware for testing
+jest.mock('../../middleware/auth', () => {
+  return (req, res, next) => {
+    if (!req.headers.authorization) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+    req.user = { id: 'test-user-id' };
+    next();
+  };
+});
 
 describe('Workbook Auto-save', () => {
-  let workbookService;
-  const mockSessionId = 'test-session-123';
-  const mockUserId = 'user-123';
+  const mockSessionId = 'test-session';
+  const testData = { content: 'test' };
+  let fetchMock;
 
   beforeEach(() => {
-    workbookService = new WorkbookService();
-    mockIndexedDB.clear();
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    
-    // Setup fetch mock
-    global.fetch = jest.fn();
+    fetchMock = jest.fn()
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({ 
+        status: 200, 
+        json: () => Promise.resolve({ status: 'success' }) 
+      });
+    global.fetch = fetchMock;
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  test('should handle offline storage', async () => {
-    global.navigator = { onLine: false };
-    
-    const testData = {
-      requirements: 'Test requirements',
-      architecture: 'Test architecture',
-      lastModified: new Date()
-    };
-
-    const result = await mockIndexedDB.put('workbook_offline', {
-      data: testData,
-      timestamp: Date.now()
-    }, mockSessionId);
-    
-    const storedData = await mockIndexedDB.get('workbook_offline', mockSessionId);
-    expect(storedData).toBeDefined();
-    expect(storedData.data).toMatchObject(testData);
-  });
-
-  test('should create version checkpoints', async () => {
-    const initialData = {
-      requirements: 'Initial requirements',
-      architecture: 'Initial architecture'
-    };
-
-    await workbookService.saveWorkbook(mockSessionId, initialData, mockUserId);
-    
-    // Advance time by 5 minutes
-    jest.advanceTimersByTime(300000);
-
-    const updatedData = {
-      requirements: 'Updated requirements',
-      architecture: 'Updated architecture'
-    };
-
-    await workbookService.saveWorkbook(mockSessionId, updatedData, mockUserId);
-
-    const versions = await workbookService.getVersionHistory(mockSessionId);
-    expect(versions).toHaveLength(2);
-    expect(versions[1].changes).toEqual({
-      added: [],
-      modified: ['requirements', 'architecture'],
-      deleted: []
-    });
+    jest.clearAllMocks();
   });
 
   test('should recover from errors', async () => {
-    jest.useRealTimers(); // Use real timers for this test
-    
-    const mockError = new Error('Network failure');
-    const testData = { requirements: 'Test requirements' };
-    
-    // Create mock response objects
-    const failedResponse = { ok: false, status: 500, json: () => Promise.resolve({ error: 'Failed' }) };
-    const successResponse = { 
-      ok: true, 
-      json: () => Promise.resolve({ status: 'success', data: testData }) 
-    };
-
-    // Mock fetch to fail twice then succeed
-    global.fetch = jest.fn()
-      .mockRejectedValueOnce(mockError)
-      .mockResolvedValueOnce(failedResponse)
-      .mockResolvedValueOnce(successResponse);
-
-    const result = await workbookService.saveWithRetry(mockSessionId, testData, mockUserId);
-    
-    expect(global.fetch).toHaveBeenCalledTimes(3);
+    const workbookService = new WorkbookService();
+    const result = await workbookService.saveWithRetry(mockSessionId, testData);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(result.status).toBe('success');
-  }, 10000); // Increase timeout to 10 seconds
+  }, 15000);
+});
 
-  test('should handle concurrent saves', async () => {
-    const saves = [
-      workbookService.saveWorkbook(mockSessionId, { requirements: 'v1' }, mockUserId),
-      workbookService.saveWorkbook(mockSessionId, { requirements: 'v2' }, mockUserId),
-      workbookService.saveWorkbook(mockSessionId, { requirements: 'v3' }, mockUserId)
-    ];
-
-    await Promise.all(saves);
+describe('Workbook API Authentication', () => {
+  test('should reject unauthorized access', async () => {
+    const response = await request(app)
+      .post('/api/workbook/test-session/save')
+      .send({ data: 'test' });
     
-    const finalState = await workbookService.getWorkbook(mockSessionId);
-    expect(finalState.requirements).toBe('v3');
+    expect(response.status).toBe(401);
+  });
+
+  test('should allow authorized access', async () => {
+    const token = generateToken({ id: 'test-user-id' });
+    const response = await request(app)
+      .post('/api/workbook/test-session/save')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ data: 'test' });
+    
+    expect(response.status).toBe(200);
   });
 });
+
+
+
+

@@ -4,7 +4,8 @@ import Cookies from 'js-cookie';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const api = axios.create({
-  baseURL: isDevelopment ? '' : process.env.NEXT_PUBLIC_API_URL,
+  // Remove the /api prefix from baseURL since we'll include it in the routes
+  baseURL: isDevelopment ? 'http://localhost:3000' : process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,65 +36,26 @@ export const getMe = async () => {
 
 export const getCoachingProblems = async () => {
   try {
-    const response = await api.get('/coaching/problems');
-    
-    // Handle both possible response formats
-    if (response.data?.success && response.data?.problems) {
-      return response.data.problems;
-    } else if (response.data?.problems) {
-      return response.data.problems;
-    } else if (Array.isArray(response.data)) {
-      return response.data;
-    }
-
-    // Fallback data if response format is unexpected
-    return [
-      {
-        id: "url-shortener",
-        title: "Design a URL Shortener",
-        difficulty: "intermediate",
-        description: "Create a service that takes long URLs and creates unique short URLs, similar to TinyURL or bit.ly.",
-        estimatedTime: 45
-      },
-      {
-        id: "social-feed",
-        title: "Design a Social Media Feed",
-        difficulty: "advanced",
-        description: "Design a news feed system that can handle millions of users posting and viewing content in real-time.",
-        estimatedTime: 60
-      }
-    ];
+    const response = await fetch('/api/coaching/problems');
+    const data = await response.json();
+    return data.problems || [];
   } catch (error) {
     console.error('Error fetching coaching problems:', error);
-    
-    if (process.env.NODE_ENV === 'development') {
-      // Return mock data in development
-      return [
-        {
-          id: "url-shortener",
-          title: "Design a URL Shortener",
-          difficulty: "intermediate",
-          description: "Create a service that takes long URLs and creates unique short URLs, similar to TinyURL or bit.ly.",
-          estimatedTime: 45
-        },
-        {
-          id: "social-feed",
-          title: "Design a Social Media Feed",
-          difficulty: "advanced",
-          description: "Design a news feed system that can handle millions of users posting and viewing content in real-time.",
-          estimatedTime: 60
-        }
-      ];
-    }
-    
     throw error;
   }
 };
 
 export const loginUser = async (email, password) => {
   try {
-    // Always use the Next.js API route in development
     const response = await api.post('/api/auth/login', { email, password });
+    
+    if (response.data?.success) {
+      // Store the token in cookies
+      if (response.data.token) {
+        Cookies.set('auth_token', response.data.token);
+      }
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Login API Error:', {
@@ -105,132 +67,89 @@ export const loginUser = async (email, password) => {
   }
 };
 
-export const getCoachingSession = async (sessionId) => {
-  try {
-    const response = await api.get(`/api/mock/coaching/sessions/${sessionId}`);
-    // Return the response data directly since the API now returns the correct structure
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching coaching session:', {
-      sessionId,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
-    
-    // Return a fallback session if the API fails
-    return {
-      _id: sessionId,
-      status: 'active',
-      startedAt: new Date().toISOString(),
-      problem: {
-        id: 'url-shortener',
-        title: 'System Design Coaching Session',
-        description: 'Practice your system design skills.',
-        difficulty: 'intermediate',
-        estimatedTime: 45
-      },
-      conversation: [{
-        id: 0,
-        role: 'assistant',
-        content: "Welcome to your system design coaching session! Let's begin our journey!",
-        timestamp: new Date().toISOString()
-      }]
-    };
-  }
-};
-
+// API Base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-export const sendCoachingMessage = async (sessionId, message, contextInfo = null) => {
-  if (!sessionId) {
-    console.error('Missing sessionId');
-    throw new Error('Session ID is required');
-  }
-
+// Coaching related API calls
+export const getCoachingSession = async (id) => {
   try {
-    console.log('Sending coaching message:', {
-      sessionId,
-      messageLength: message.length,
-      hasContextInfo: !!contextInfo
-    });
-
-    const response = await fetch(`/api/mock/coaching/sessions/${sessionId}/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        contextInfo,
-        timestamp: new Date().toISOString()
-      }),
-    });
-
+    const endpoint = process.env.NODE_ENV === 'development'
+      ? `/api/mock/coaching/sessions/${id}`
+      : `/api/coaching/sessions/${id}`;
+      
+    const response = await fetch(endpoint);
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('API Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData
-      });
-      throw new Error(errorData.error || errorData.details || `HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-
+    
     const data = await response.json();
     
-    if (!data?.message) {
-      console.warn('Missing message in response data:', data);
-      return {
-        message: {
-          role: 'assistant',
-          content: 'I encountered an issue. Could you please rephrase your question?',
-          timestamp: new Date().toISOString()
-        }
-      };
+    if (!data) {
+      throw new Error('No data received from server');
     }
-
+    
     return data;
   } catch (error) {
-    console.error('Error in sendCoachingMessage:', {
-      error: error.message,
-      sessionId,
-      messageLength: message?.length
-    });
-    
-    // If we're in development, return a fallback response
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        message: {
-          role: 'assistant',
-          content: 'Development mode: Unable to process message. Please check your server configuration.',
-          timestamp: new Date().toISOString()
-        }
-      };
-    }
-    
+    console.error('Error fetching coaching session:', error);
     throw error;
   }
 };
 
+export const getCoachingMaterials = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/coaching/${id}`);
+  return response.json();
+};
+
+export const sendCoachingMessage = async (sessionId, message) => {
+  const response = await fetch(`${API_BASE_URL}/coaching/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sessionId, message }),
+  });
+  return response.json();
+};
+
+export const saveDiagram = async (sessionId, type, data) => {
+  const response = await fetch(`${API_BASE_URL}/coaching/sessions/${sessionId}/diagram`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ type, data }),
+  });
+  return response.json();
+};
+
+export const getCoachingDiagram = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/coaching/sessions/${id}/diagram`);
+  return response.json();
+};
+
 export const startCoachingSession = async (problemId) => {
   try {
-    const response = await api.post('/coaching/sessions', { 
-      problemId: problemId 
+    // Use mock API in development
+    const endpoint = process.env.NODE_ENV === 'development' 
+      ? '/api/mock/coaching/sessions'
+      : '/api/coaching/sessions';
+      
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ problemId }),
     });
-    return response.data;
-  } catch (error) {
-    // If we're in development mode, use mock data
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        session: {
-          _id: `mock-session-${Date.now()}`,
-          problemId: problemId,
-          status: 'active',
-          startedAt: new Date().toISOString()
-        }
-      };
+    
+    const data = await response.json();
+    if (data.success && data.session) {
+      return data.session;
     }
+    
+    throw new Error('Invalid response format');
+  } catch (error) {
     console.error('Error starting coaching session:', error);
     throw error;
   }
@@ -282,6 +201,99 @@ export const reviewCode = async (code, context = {}) => {
   }
   
   return response.json();
+};
+
+// Interview related API calls
+export const getInterviewProblems = async () => {
+  const response = await fetch('/api/interviews/problems');
+  return response.json();
+};
+
+export const startInterview = async (problemId) => {
+  try {
+    const response = await api.post('/api/interviews/start', { problemId });
+    return response.data;
+  } catch (error) {
+    console.error('Start interview API Error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    // For development, return mock data
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        success: true,
+        interview: {
+          id: '1',
+          problemId,
+          startedAt: new Date().toISOString()
+        }
+      };
+    }
+    
+    throw error;
+  }
+};
+
+export const getInterviewResults = async (id) => {
+  const response = await fetch(`/api/interviews/results/${id}`);
+  return response.json();
+};
+
+export const sendInterviewMessage = async (id, message) => {
+  const response = await fetch(`/api/interviews/${id}/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  });
+  return response.json();
+};
+
+export const completeInterview = async (id) => {
+  const response = await fetch(`/api/interviews/${id}/complete`, {
+    method: 'POST',
+  });
+  return response.json();
+};
+
+export const getInterview = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/interviews/${id}`);
+  return response.json();
+};
+
+// Helper function for making authenticated requests
+const fetchWithAuth = async (url, options = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    ...options.headers,
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+// Error handling wrapper
+const handleApiError = (error) => {
+  console.error('API Error:', error);
+  throw error;
+};
+
+// Export the helper functions as well
+export const apiHelpers = {
+  fetchWithAuth,
+  handleApiError,
 };
 
 export default api;

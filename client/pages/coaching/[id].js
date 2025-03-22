@@ -1,17 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+'use client';
+
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '../../contexts/AuthContext';
+import { autoSave } from '../../utils/workbookStorage';
 import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import ErrorBoundary from '../../components/ErrorBoundary';
+import Cookies from 'js-cookie';
 import {
-  ArrowLeft, Save, Send, RefreshCw, MessageSquare, CheckCircle, XCircle, Eye, Edit, 
-  ClipboardList, Database, Code, Layout, BarChart, Shield, ChevronDown, ChevronUp
+  ArrowLeft, Save, Send, RefreshCw, MessageSquare, CheckCircle, XCircle, 
+  Eye, Edit, ClipboardList, Database, Code, Layout, TrendingUp, Shield, 
+  ChevronDown, ChevronUp, FileText, Network
 } from 'lucide-react';
 import { ReactFlow, Background, Controls, ReactFlowProvider, 
   applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useAuth } from '../../contexts/AuthContext';
 import {
   getCoachingSession, sendCoachingMessage, getCoachingMaterials,
   getCoachingDiagram, saveDiagram
@@ -19,8 +25,9 @@ import {
 import { mermaidToReactFlow, reactFlowToMermaid } from '../../components/diagram/utils/conversion';
 import TopicGuidedCoaching from '../../components/coaching/TopicGuidedCoaching';
 import debounce from 'lodash/debounce';
-import { useWorkbook } from '../../context/WorkbookContext';
 import { workbookService } from '../../services/workbookService';
+import { WorkbookProvider, useWorkbook } from '../../contexts/WorkbookContext';
+import { AuthProvider } from '../../contexts/AuthContext';
 
 // Import workbook components directly
 import RequirementsPage from '../RequirementsPage';
@@ -35,169 +42,266 @@ const MermaidRenderer = dynamic(() => import('../../components/diagram/MermaidRe
   loading: () => <div className="animate-pulse bg-gray-100 h-full w-full"></div>
 });
 
-const SystemArchitectureDiagram = dynamic(() => import('../../components/diagram/SystemArchitectureDiagram'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-    </div>
-  )
+const SystemArchitectureDiagram = dynamic(
+  () => import('../../components/diagram/SystemArchitectureDiagram'),
+  { ssr: false }
+);
+
+const SystemSequenceDiagram = dynamic(
+  () => import('../../components/diagram/SystemSequenceDiagram'),
+  { ssr: false }
+);
+
+const DiagramEditor = dynamic(
+  () => import('../../components/diagram/DiagramEditor'),
+  { ssr: false }
+);
+
+// Disable SSR for the entire page
+const CoachingSessionWithNoSSR = dynamic(() => Promise.resolve(CoachingSessionContent), {
+  ssr: false
 });
 
-const SystemSequenceDiagram = dynamic(() => import('../../components/diagram/SystemSequenceDiagram'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-    </div>
-  )
-});
-
-const CoachingSessionPage = ({ userId, problemId }) => {
+// Main content component
+function CoachingSessionContent({ id }) {
+  // 1. Context hooks first
   const router = useRouter();
-  const { user } = useAuth();
-  const messagesEndRef = useRef(null);
-  
-  // Safely extract session ID from router query
-  const sessionId = router.query?.id;
+  const { user, loading: authLoading } = useAuth();
+  const { workbookState, setWorkbookState } = useWorkbook();
 
-  // All state declarations grouped together at the top
+  // 2. State hooks
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [autoSave, setAutoSave] = useState(true);
+  const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [activeMaterial, setActiveMaterial] = useState(null);
-  const [currentTopic, setCurrentTopic] = useState('REQUIREMENTS');
-  const [includeDiagram, setIncludeDiagram] = useState(false);
-  const [requestDiagramSuggestions, setRequestDiagramSuggestions] = useState(false);
   const [activeWorkbookTab, setActiveWorkbookTab] = useState('requirements');
   const [rightPanelMode, setRightPanelMode] = useState('workbook');
-
-  // Add state for TopicGuidedCoaching collapsible section
-  const [topicGuidedOpen, setTopicGuidedOpen] = useState(false);
-  
-  // Add dropdown reference
-  const workbookDropdownRef = useRef(null);
-  const [showWorkbookDropdown, setShowWorkbookDropdown] = useState(false);
-
-  // Chat state
-  const [messages, setMessages] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-
-  // Diagram state
-  const [diagramState, setDiagramState] = useState({
-    nodes: [],
-    edges: [],
-    mermaidCode: ''
-  });
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const [diagramCode, setDiagramCode] = useState(''); // Add this line
-  const [viewMode, setViewMode] = useState('edit');
-  const [currentDiagramState, setCurrentDiagramState] = useState(null);
-  const [isSavingDiagram, setIsSavingDiagram] = useState(false);
+  const [diagramCode, setDiagramCode] = useState('');
   const [diagramSuggestions, setDiagramSuggestions] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Workbook state
-  const [workbookState, setWorkbookState] = useState({
-    diagrams: {
-      system: {
-        nodes: [],
-        edges: [],
-        mermaidCode: ''
-      },
-      sequence: {
-        nodes: [],
-        edges: [],
-        mermaidCode: ''
-      }
-    },
-    sections: {
-      requirements: {},
-      api: {},
-      data: {},
-      architecture: {},
-      scaling: {},
-      reliability: {}
-    }
-  });
-
-  // Load saved data on component mount
-  useEffect(() => {
-    const loadSavedData = async () => {
-      if (!userId || !problemId) return;
-      
-      // Load chat history
-      const savedChat = workbookService.getChat(userId, problemId);
-      if (savedChat) {
-        setMessages(savedChat);
-      }
-
-      // Load diagrams
-      const savedSystemDiagram = workbookService.getDiagram(userId, problemId, 'system');
-      const savedSequenceDiagram = workbookService.getDiagram(userId, problemId, 'sequence');
-      
-      setWorkbookState(prev => ({
-        ...prev,
-        diagrams: {
-          system: savedSystemDiagram || prev.diagrams.system,
-          sequence: savedSequenceDiagram || prev.diagrams.sequence
-        }
-      }));
-
-      // Load progress
-      const savedProgress = workbookService.getProgress(userId, problemId);
-      if (savedProgress) {
-        setWorkbookState(prev => ({
-          ...prev,
-          sections: savedProgress
-        }));
-      }
-    };
-
-    loadSavedData();
-  }, [userId, problemId]);
-
-  // Auto-save handler
-  const handleAutoSave = useCallback(
-    debounce(async () => {
-      if (!userId || !problemId) return;
-
-      // Save chat
-      workbookService.saveChat(userId, problemId, messages);
-
-      // Save current diagram
-      const currentDiagramType = activeDiagramTab;
-      workbookService.saveDiagram(
-        userId,
-        problemId,
-        workbookState.diagrams[currentDiagramType],
-        currentDiagramType
-      );
-
-      // Save progress
-      workbookService.saveProgress(userId, problemId, workbookState.sections);
-    }, 2000),
-    [userId, problemId, messages, workbookState]
+  // 3. Memoized values
+  const currentWorkbookState = useMemo(() => 
+    workbookState || {
+      requirements: { content: null, isDirty: false },
+      api: { content: null, isDirty: false },
+      data: { content: null, isDirty: false },
+      architecture: { content: null, isDirty: false },
+      scaling: { content: null, isDirty: false },
+      reliability: { content: null, isDirty: false }
+    }, 
+    [workbookState]
   );
 
-  // Add auto-save effect
+  // 4. Effects
   useEffect(() => {
-    handleAutoSave();
-  }, [messages, workbookState]);
+    const authToken = Cookies.get('auth_token');
+    if (!authLoading && !user && !authToken) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
 
-  // Update function for workbook sections
-  const updateWorkbookState = (section, data) => {
+  useEffect(() => {
+    if (!id) return;
+    
+    async function fetchSession() {
+      try {
+        setIsLoading(true);
+        const data = await getCoachingSession(id);
+        setSession(data);
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching session:`, err);
+        setError("Failed to load session");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchSession();
+  }, [id]);
+
+  // 5. Callbacks
+  const handleWorkbookUpdate = useCallback((section, data) => {
     setWorkbookState(prev => ({
       ...prev,
-      sections: {
-        ...prev.sections,
-        [section]: data
+      [section]: {
+        ...prev[section],
+        ...data,
+        isDirty: true
       }
     }));
-  };
+  }, [setWorkbookState]);
+
+  // Loading states
+  if (authLoading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+    </div>;
+  }
+
+  // Don't render while redirecting
+  if (!user && !Cookies.get('auth_token')) {
+    return null;
+  }
+
+  // 2. Ref hooks
+  const workbookDropdownRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // 3. State hooks
+  const [mounted, setMounted] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [includeDiagram, setIncludeDiagram] = useState(false);
+  const [requestDiagramSuggestions, setRequestDiagramSuggestions] = useState(false);
+  const [activeDiagramTab, setActiveDiagramTab] = useState('system');
+  const [diagramState, setDiagramState] = useState({
+    current: {
+      nodes: [],
+      edges: [],
+      mermaidCode: ''
+    },
+    previous: null
+  });
+  const [topicGuidedOpen, setTopicGuidedOpen] = useState(true);
+  const [currentTopic, setCurrentTopic] = useState('REQUIREMENTS');
+  const [activeMaterial, setActiveMaterial] = useState(null);
+  const [workbookProgress, setWorkbookProgress] = useState(0);
+
+  // Get sessionId from either the id prop or session state
+  const sessionId = id || session?._id;
+
+  // 4. Callback hooks
+  const onNodesChange = useCallback((changes) => {
+    setNodes(nds => {
+      const updatedNodes = applyNodeChanges(changes, nds);
+      try {
+        const newDiagramCode = reactFlowToMermaid({ nodes: updatedNodes, edges });
+        setDiagramCode(newDiagramCode);
+        setDiagramState(prev => ({
+          ...prev,
+          current: { nodes: updatedNodes, edges, mermaidCode: newDiagramCode }
+        }));
+      } catch (err) {
+        console.error("Error updating Mermaid code:", err);
+      }
+      return updatedNodes;
+    });
+  }, [edges]);
+
+  const onEdgesChange = useCallback((changes) => {
+    setEdges(eds => {
+      const updatedEdges = applyEdgeChanges(changes, eds);
+      try {
+        const newDiagramCode = reactFlowToMermaid({ nodes, edges: updatedEdges });
+        setDiagramCode(newDiagramCode);
+        setDiagramState(prev => ({
+          ...prev,
+          current: { nodes, edges: updatedEdges, mermaidCode: newDiagramCode }
+        }));
+      } catch (err) {
+        console.error("Error updating Mermaid code:", err);
+      }
+      return updatedEdges;
+    });
+  }, [nodes]);
+
+  // 5. Effect hooks
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Handle diagram mode changes
+  useEffect(() => {
+    if (rightPanelMode === 'diagram' && diagramState.previous) {
+      // Restore previous state when switching to diagram mode
+      setNodes(diagramState.previous.nodes);
+      setEdges(diagramState.previous.edges);
+      setDiagramCode(diagramState.previous.mermaidCode);
+    } else if (rightPanelMode !== 'diagram') {
+      // Store current state when switching away from diagram mode
+      setDiagramState(prev => ({
+        ...prev,
+        previous: {
+          nodes,
+          edges,
+          mermaidCode: diagramCode
+        }
+      }));
+    }
+  }, [rightPanelMode, diagramState.previous, nodes, edges, diagramCode]);
+
+  // Session loading effect
+  useEffect(() => {
+    if (!router.query.id) return;
+    
+    async function fetchSession() {
+      try {
+        setIsLoading(true);
+        const data = await getCoachingSession(router.query.id);
+        setSession(data);
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching session:`, err);
+        setError("Failed to load session");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchSession();
+  }, [router.query.id]); // Add dependency array
+
+  // Click outside handler
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (workbookDropdownRef.current && !workbookDropdownRef.current.contains(event.target)) {
+        setShowWorkbookDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  // Loading state
+  if (!mounted || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+        <div className="ml-3">Loading session...</div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-red-500 mb-4">{error}</div>
+        <button 
+          onClick={() => router.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   // Update function for diagrams
   const updateDiagramState = (diagramType, diagramData) => {
@@ -217,101 +321,69 @@ const CoachingSessionPage = ({ userId, problemId }) => {
     }));
   };
 
-  // Define workbook tabs
-  const workbookTabs = [
-    { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
-    { id: 'api', label: 'API', icon: <Code size={18} /> },
-    { id: 'data', label: 'Data', icon: <Database size={18} /> },
-    { id: 'architecture', label: 'Architecture', icon: <Layout size={18} /> },
-    { id: 'scaling', label: 'Scaling', icon: <BarChart size={18} /> },
-    { id: 'reliability', label: 'Reliability', icon: <Shield size={18} /> }
-  ];
-  
-  // Define diagram tabs
-  const [diagramTabs, setDiagramTabs] = useState([
-    { id: 'systems', label: 'Systems Diagram', active: true },
-    { id: 'sequence', label: 'Sequence Diagram', active: false }
-  ]);
-  
-  const setActiveDiagramTab = (tabId) => {
-    setDiagramTabs(diagramTabs.map(tab => ({
-      ...tab,
-      active: tab.id === tabId
-    })));
+  // Helper function for tab styles
+  const getTabStyle = (tabId) => {
+    if (tabId === activeWorkbookTab) {
+      switch (tabId) {
+        case 'requirements':
+          return 'bg-indigo-100 text-indigo-700';
+        case 'api':
+          return 'bg-green-100 text-green-700';
+        case 'data':
+          return 'bg-purple-100 text-purple-700';
+        case 'architecture':
+          return 'bg-blue-100 text-blue-700';
+        case 'scaling':
+          return 'bg-orange-100 text-orange-700';
+        case 'reliability':
+          return 'bg-red-100 text-red-700';
+        default:
+          return 'bg-gray-100 text-gray-700';
+      }
+    }
+    return 'text-gray-600 hover:bg-gray-50';
   };
 
-  // Update form data
+  // Define workbook tabs with proper icon rendering
+  const workbookTabs = [
+    {
+      id: 'requirements',
+      label: 'Requirements',
+      icon: <FileText className="h-5 w-5" />
+    },
+    {
+      id: 'api',
+      label: 'API Design',
+      icon: <Code className="h-5 w-5" />
+    },
+    {
+      id: 'data',
+      label: 'Data Model',
+      icon: <Database className="h-5 w-5" />
+    },
+    {
+      id: 'architecture',
+      label: 'Architecture',
+      icon: <Network className="h-5 w-5" />
+    },
+    {
+      id: 'scaling',
+      label: 'Scaling',
+      icon: <TrendingUp className="h-5 w-5" />
+    },
+    {
+      id: 'reliability',
+      label: 'Reliability',
+      icon: <Shield className="h-5 w-5" />
+    }
+  ];
+
   const updateFormData = (section, data) => {
     setFormData(prev => ({
       ...prev,
       [section]: data
     }));
   };
-  
-  // Add click outside handler for workbook dropdown
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (workbookDropdownRef.current && !workbookDropdownRef.current.contains(event.target)) {
-        setShowWorkbookDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [workbookDropdownRef]);
-
-  // Load session data
-  useEffect(() => {
-    if (!sessionId) return;
-    
-    const fetchSession = async () => {
-      try {
-        const data = await getCoachingSession(sessionId);
-        console.log('SESSION DATA:', JSON.stringify(data, null, 2));
-
-        const initialMessages = data.conversation 
-          ? data.conversation.map((msg, index) => ({
-              id: index,
-              role: msg.role === 'system' ? 'system' : 
-                    msg.role === 'assistant' ? 'assistant' : 'user',
-              content: msg.content || "No content available",
-              timestamp: msg.timestamp || new Date().toISOString()
-            }))
-          : [{
-              id: 0,
-              role: 'assistant',
-              content: `Welcome to your ${data.problem?.title || 'system design'} coaching session. Let's begin our system design journey!`,
-              timestamp: new Date().toISOString()
-            }];
-
-        console.log('INITIAL MESSAGES:', JSON.stringify(initialMessages, null, 2));
-        setMessages(initialMessages);
-        setSession(data);
-        setError(null);
-      } catch (err) {
-        console.error(`Error fetching coaching session ${sessionId}:`, err);
-        setError("Failed to load coaching session");
-        setMessages([{
-          id: 0,
-          role: 'assistant',
-          content: "Welcome to your system design coaching session. Let's get started!",
-          timestamp: new Date().toISOString()
-        }]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSession();
-  }, [sessionId]);
-  
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
 
   const detectCurrentTopic = (conversation) => {
     const topicKeywords = {
@@ -397,14 +469,14 @@ const CoachingSessionPage = ({ userId, problemId }) => {
   const handleGetMaterials = async (topic) => {
     if (!topic || !sessionId) return;
     try {
-      setLoading(true);
+      setIsLoading(true);
       const materials = await getCoachingMaterials(sessionId, topic);
       setActiveMaterial(materials);
     } catch (err) {
       console.error("Error fetching materials:", err);
       setError("Failed to load learning materials");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -534,7 +606,7 @@ const CoachingSessionPage = ({ userId, problemId }) => {
   const handleSaveDiagram = async () => {
     if (!sessionId) return;
     try {
-      setIsSavingDiagram(true);
+      setIsSaving(true);
       const diagramData = {
         mermaidCode: diagramCode,
         reactFlowData: { nodes, edges }
@@ -548,14 +620,14 @@ const CoachingSessionPage = ({ userId, problemId }) => {
       console.error("Error saving diagram:", err);
       setError("Failed to save diagram");
     } finally {
-      setIsSavingDiagram(false);
+      setIsSaving(false);
     }
   };
 
   const handleGetDiagramSuggestion = async () => {
     if (!sessionId) return;
     try {
-      setLoading(true);
+      setIsLoading(true);
       const suggestion = await getCoachingDiagram(sessionId);
       if (suggestion?.mermaidCode) {
         try {
@@ -584,61 +656,9 @@ const CoachingSessionPage = ({ userId, problemId }) => {
       console.error("Error getting diagram suggestion:", err);
       setError("Failed to get diagram suggestion");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
-  const onNodesChange = useCallback(
-    (changes) => {
-      setNodes(nds => {
-        const updatedNodes = applyNodeChanges(changes, nds);
-        try {
-          const newDiagramCode = reactFlowToMermaid({ nodes: updatedNodes, edges });
-          setDiagramCode(newDiagramCode);
-          setCurrentDiagramState({ nodes: updatedNodes, edges, mermaidCode: newDiagramCode });
-        } catch (err) {
-          console.error("Error updating Mermaid code:", err);
-        }
-        return updatedNodes;
-      });
-    },
-    [edges]
-  );
-
-  const onEdgesChange = useCallback(
-    (changes) => {
-      setEdges(eds => {
-        const updatedEdges = applyEdgeChanges(changes, eds);
-        try {
-          const newDiagramCode = reactFlowToMermaid({ nodes, edges: updatedEdges });
-          setDiagramCode(newDiagramCode);
-          setCurrentDiagramState({ nodes, edges: updatedEdges, mermaidCode: newDiagramCode });
-        } catch (err) {
-          console.error("Error updating Mermaid code:", err);
-        }
-        return updatedEdges;
-      });
-    },
-    [nodes]
-  );
-
-  const onConnect = useCallback(
-    (params) => {
-      const newEdge = { ...params, id: `e${params.source}-${params.target}` };
-      setEdges(eds => {
-        const updatedEdges = addEdge(newEdge, eds);
-        try {
-          const newDiagramCode = reactFlowToMermaid({ nodes, edges: updatedEdges });
-          setDiagramCode(newDiagramCode);
-          setCurrentDiagramState({ nodes, edges: updatedEdges, mermaidCode: newDiagramCode });
-        } catch (err) {
-          console.error("Error updating Mermaid code:", err);
-        }
-        return updatedEdges;
-      });
-    },
-    [nodes]
-  );
 
   const handleDiagramUpdate = (diagramData) => {
     const { type, nodes, edges, mermaidCode } = diagramData;
@@ -681,36 +701,7 @@ const CoachingSessionPage = ({ userId, problemId }) => {
     }
   };
 
-  const [lastDiagramState, setLastDiagramState] = useState(null);
-
-  useEffect(() => {
-    // When switching back to diagram mode, restore the last state
-    if (rightPanelMode === 'diagram' && lastDiagramState) {
-      setNodes(lastDiagramState.nodes);
-      setEdges(lastDiagramState.edges);
-      setDiagramCode(lastDiagramState.mermaidCode);
-    }
-  }, [rightPanelMode]);
-
-  useEffect(() => {
-    // Store the current diagram state when switching away
-    if (rightPanelMode !== 'diagram') {
-      setLastDiagramState({
-        nodes,
-        edges,
-        mermaidCode: diagramCode
-      });
-    }
-  }, [rightPanelMode, nodes, edges, diagramCode]);
-
   const renderDiagramEditor = () => {
-    const activeDiagramTab = diagramTabs.find(tab => tab.active)?.id || 'systems';
-    
-    // Use the correct edges from state
-    const currentEdges = activeDiagramTab === 'sequence' 
-      ? workbookState.diagrams.sequence.edges 
-      : workbookState.diagrams.system.edges;
-
     if (activeDiagramTab === 'sequence') {
       return (
         <div className="relative h-full">
@@ -773,281 +764,114 @@ const CoachingSessionPage = ({ userId, problemId }) => {
     );
   };
 
-  // Render active workbook component
-  const getActiveWorkbookComponent = () => {
-    const commonProps = {
-      sessionId,
-      onSaveAndContinue: () => {
-        const currentIndex = workbookTabs.findIndex(tab => tab.id === activeWorkbookTab);
-        const nextTab = workbookTabs[currentIndex + 1];
-        if (nextTab) {
-          setActiveWorkbookTab(nextTab.id);
-        }
-      }
-    };
-
-    return (
-      <div className="flex flex-col h-full">
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow">
-            {(() => {
-              switch (activeWorkbookTab) {
-                case 'requirements':
-                  return <RequirementsPage {...commonProps} data={workbookState.requirements} updateData={(data) => updateWorkbookState('requirements', data)} />;
-                case 'api':
-                  return <APIDesignPage {...commonProps} data={workbookState.api} updateData={(data) => updateWorkbookState('api', data)} />;
-                case 'data':
-                  return <DataModelPage {...commonProps} data={workbookState.data} updateData={(data) => updateWorkbookState('data', data)} />;
-                case 'architecture':
-                  return <SystemArchitecturePage {...commonProps} data={workbookState.architecture} updateData={(data) => updateWorkbookState('architecture', data)} />;
-                case 'scaling':
-                  return <ScalingStrategyPage {...commonProps} data={workbookState.scaling} updateData={(data) => updateWorkbookState('scaling', data)} />;
-                case 'reliability':
-                  return <ReliabilitySecurityPage {...commonProps} data={workbookState.reliability} updateData={(data) => updateWorkbookState('reliability', data)} />;
-                default:
-                  return <RequirementsPage {...commonProps} data={workbookState.requirements} updateData={(data) => updateWorkbookState('requirements', data)} />;
-              }
-            })()}
-          </div>
-        </div>
-
-        {/* Fixed bottom buttons */}
-        <div className="border-t border-gray-200 p-4 bg-white flex justify-between items-center">
-          <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors">
-            <MessageSquare size={16} className="mr-2" />
-            Ask Coach
-          </button>
-          <button 
-            onClick={commonProps.onSaveAndContinue}
-            className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            <Save size={16} className="mr-2" />
-            Save & Continue
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  if (loading && !session) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <div className="ml-3 text-gray-600">Loading session data...</div>
-      </div>
-    );
-  }
-
-  if (error && !session && messages.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="text-red-500 mb-4">{error}</div>
-        <button
-          onClick={() => router.back()}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
   const calculateProgress = () => {
     const sections = Object.values(workbookState.sections);
     const completedSections = sections.filter(s => s.completed).length;
     return sections.length ? Math.round((completedSections / sections.length) * 100) : 0;
   };
 
+  const getActiveWorkbookComponent = () => {
+    switch (activeWorkbookTab) {
+      case 'requirements':
+        return <RequirementsPage 
+          workbookState={currentWorkbookState} 
+          onUpdate={handleDiagramUpdate}
+        />;
+      case 'api':
+        return <APIDesignPage 
+          workbookState={currentWorkbookState} 
+          onUpdate={handleDiagramUpdate}
+        />;
+      case 'data':
+        return <DataModelPage 
+          workbookState={currentWorkbookState} 
+          onUpdate={handleDiagramUpdate}
+        />;
+      case 'architecture':
+        return <SystemArchitecturePage 
+          workbookState={currentWorkbookState} 
+          onUpdate={handleDiagramUpdate}
+        />;
+      case 'scaling':
+        return <ScalingStrategyPage 
+          workbookState={currentWorkbookState} 
+          onUpdate={handleDiagramUpdate}
+        />;
+      case 'reliability':
+        return <ReliabilitySecurityPage 
+          workbookState={currentWorkbookState} 
+          onUpdate={handleDiagramUpdate}
+        />;
+      default:
+        return <div>Select a workbook section</div>;
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 p-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <button
-              onClick={() => router.push('/coaching')}
-              className="p-1 rounded-full hover:bg-gray-100 mr-2"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </button>
-            <h1 className="text-lg font-semibold">
-              {session?.problem?.title || 'System Design Coaching'}
-            </h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="mr-2">
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setRightPanelMode('workbook')}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    rightPanelMode === 'workbook'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Workbook
-                </button>
-                <button
-                  onClick={() => setRightPanelMode('diagram')}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    rightPanelMode === 'diagram'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Diagram
-                </button>
-              </div>
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.back()}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">System Design Coaching</h1>
+            </div>
+            <div className="flex space-x-3">
+              <button className="btn btn-primary">
+                Save Progress
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left panel - Chat */}
-        <div className="w-1/2 flex flex-col border-r border-gray-200">
-          {/* Messages area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div className="bg-white border border-gray-200 rounded-lg mb-4 overflow-hidden">
-              <div className="flex justify-between items-center cursor-pointer p-3 bg-indigo-50 border-b border-gray-200" 
-                   onClick={() => setTopicGuidedOpen(!topicGuidedOpen)}>
-                <h3 className="font-medium text-indigo-700">Topic Guided Coaching</h3>
-                {topicGuidedOpen ? (
-                  <ChevronUp className="h-5 w-5 text-indigo-600" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-indigo-600" />
-                )}
-              </div>
-              {topicGuidedOpen && (
-                <div className="p-3">
-                  <TopicGuidedCoaching 
-                    currentTopic={currentTopic}
-                    onSendMessage={(question) => handleSendMessage(question)}
-                    onGetMaterials={handleGetMaterials}
-                  />
-                </div>
-              )}
-            </div>
-            
-            {messages.length > 0 ? (
-              messages.map((msg, index) => (
+      <main className="flex-1 flex overflow-hidden">
+        {/* Chat section */}
+        <section className="w-1/2 flex flex-col border-r border-gray-200 bg-white">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              {messages.map((message, index) => (
                 <div
-                  key={msg.id || index}
-                  className={`p-3 rounded-lg ${
-                    msg.role === 'user'
-                      ? 'bg-blue-100 ml-auto max-w-md'
-                      : msg.role === 'system'
-                        ? 'bg-gray-100 text-gray-700'
-                        : 'bg-white border border-gray-200 max-w-lg'
-                  } ${msg.error ? 'border-red-300 text-red-600' : ''}`}
+                  key={index}
+                  className={`chat-message ${message.role === 'user' ? 'user-message ml-auto' : 'assistant-message'}`}
                 >
                   <ReactMarkdown
+                    className="prose prose-sm max-w-none"
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
-                    components={{
-                      code({ node, inline, className, children, ...props }) {
-                        const match = /language-(\w+)/.exec(className || '');
-                        return !inline && match ? (
-                          <div className="rounded border border-gray-200 overflow-hidden my-2">
-                            <div className="bg-gray-50 border-b border-gray-200 px-4 py-1 text-xs text-gray-500 font-mono">
-                              {match[1]}
-                            </div>
-                            <pre className="bg-white p-4 overflow-auto text-sm">
-                              <code className={className} {...props}>
-                                {children}
-                              </code>
-                            </pre>
-                          </div>
-                        ) : (
-                          <code className="font-mono text-sm bg-gray-50 px-1 py-0.5 rounded text-pink-600" {...props}>
-                            {children}
-                          </code>
-                        );
-                      }
-                    }}
                   >
-                    {msg.content}
+                    {message.content}
                   </ReactMarkdown>
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                No messages yet. Start by asking a question about system design.
-              </div>
-            )}
-            {isTyping && (
-              <div className="bg-white border border-gray-200 rounded-lg p-3 max-w-lg">
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+              ))}
+            </div>
           </div>
 
           {/* Message input */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="p-3 mb-3 bg-blue-50 border border-blue-100 rounded-lg">
-              <div className="flex items-center space-x-6">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    checked={includeDiagram}
-                    onChange={() => setIncludeDiagram(!includeDiagram)}
-                  />
-                  <span className="text-blue-700 font-medium">Include current design</span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    checked={requestDiagramSuggestions}
-                    onChange={() => setRequestDiagramSuggestions(!requestDiagramSuggestions)}
-                  />
-                  <span className="text-blue-700 font-medium">Request diagram suggestions</span>
-                </label>
-              </div>
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (messageInput.trim()) {
-                  handleSendMessage(messageInput);
-                  setMessageInput('');
-                }
-              }}
-              className="flex"
-            >
+          <div className="border-t border-gray-200 p-4 bg-white">
+            <form onSubmit={handleSendMessage} className="flex space-x-2">
               <textarea
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (messageInput.trim()) {
-                      handleSendMessage(messageInput);
-                      setMessageInput('');
-                    }
-                  }
-                }}
-                placeholder="Type your message... (Shift+Enter for new line)"
-                className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px] overflow-y-auto"
-                disabled={isSending}
+                className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Type your message..."
                 rows={1}
               />
               <button
                 type="submit"
-                className={`px-4 py-2 rounded-r-md flex items-center justify-center ${
-                  isSending
-                    ? 'bg-gray-300 text-gray-700'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
                 disabled={isSending}
+                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                  isSending
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
                 {isSending ? (
                   <RefreshCw className="h-5 w-5 animate-spin" />
@@ -1057,136 +881,60 @@ const CoachingSessionPage = ({ userId, problemId }) => {
               </button>
             </form>
           </div>
-        </div>
+        </section>
 
-        {/* Right panel - Diagram or Workbook */}
-        <div className="w-1/2 flex flex-col h-full">
-          {rightPanelMode === 'diagram' ? (
-            <>
-              {/* Diagram mode controls */}
-              <div className="bg-white border-b border-gray-200 p-3">
-                <div className="flex justify-between items-center">
-                  {/* Diagram type tabs */}
-                  <div className="flex space-x-4">
-                    {diagramTabs.map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveDiagramTab(tab.id)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                          tab.active
-                            ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <button
-                    onClick={handleSendDiagramToCoach}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Get Feedback
-                  </button>
-                </div>
-              </div>
-              {/* Diagram content - Keep mounted but hidden */}
-              <div className="flex-1 overflow-hidden">
-                {renderDiagramEditor()}
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col h-full">
-              {/* Add Workbook Navigation Tabs */}
-              <div className="bg-white border-b border-gray-200">
-                <div className="flex space-x-1 p-2">
-                  {workbookTabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveWorkbookTab(tab.id)}
-                      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                        (() => {
-                          switch(tab.id) {
-                            case 'requirements':
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-indigo-100 text-indigo-700' 
-                                : 'text-gray-600 hover:bg-indigo-50';
-                            case 'api':
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'text-gray-600 hover:bg-green-50';
-                            case 'data':
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-purple-100 text-purple-700' 
-                                : 'text-gray-600 hover:bg-purple-50';
-                            case 'architecture':
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-blue-100 text-blue-700' 
-                                : 'text-gray-600 hover:bg-blue-50';
-                            case 'scaling':
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-orange-100 text-orange-700' 
-                                : 'text-gray-600 hover:bg-orange-50';
-                            case 'reliability':
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-red-100 text-red-700' 
-                                : 'text-gray-600 hover:bg-red-50';
-                            default:
-                              return activeWorkbookTab === tab.id 
-                                ? 'bg-gray-100 text-gray-700' 
-                                : 'text-gray-600 hover:bg-gray-50';
-                          }
-                        })()
-                      }`}
-                    >
-                      {tab.icon}
-                      <span className="ml-2">{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Workbook Content */}
-              <div className="flex-1 overflow-hidden">
-                {getActiveWorkbookComponent()}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Learning materials modal */}
-      {activeMaterial && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg max-w-3xl max-h-[80vh] w-full overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-medium text-lg">{activeMaterial.title}</h3>
-              <button
-                onClick={() => setActiveMaterial(null)}
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[calc(80vh-8rem)]">
-              <ReactMarkdown>{activeMaterial.content}</ReactMarkdown>
-            </div>
-            <div className="p-4 border-t border-gray-200 flex justify-end">
-              <button
-                onClick={() => setActiveMaterial(null)}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
-              >
-                Close
-              </button>
-            </div>
+        {/* Workbook section */}
+        <section className="w-1/2 flex flex-col bg-white">
+          <div className="border-b border-gray-200 p-4">
+            <nav className="flex space-x-4">
+              {workbookTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveWorkbookTab(tab.id)}
+                  className={`btn ${activeWorkbookTab === tab.id ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  {tab.icon}
+                  <span className="ml-2">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
           </div>
-        </div>
-      )}
+          <div className="flex-1 overflow-y-auto p-4">
+            {rightPanelMode === 'diagram' ? (
+              renderDiagramEditor()
+            ) : (
+              getActiveWorkbookComponent()
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
-};
+}
 
-export default CoachingSessionPage;
+// Static props (will only be used when SSR is enabled)
+export async function getStaticProps({ params }) {
+  return {
+    props: {
+      id: params?.id || null
+    }
+  };
+}
+
+// Generate static paths (will only be used when SSR is enabled)
+export async function getStaticPaths() {
+  return {
+    paths: [],
+    fallback: 'blocking'
+  };
+}
+
+export default function CoachingSessionPage({ id }) {
+  return (
+    <ErrorBoundary>
+      <WorkbookProvider>
+        <CoachingSessionContent id={id} />
+      </WorkbookProvider>
+    </ErrorBoundary>
+  );
+}

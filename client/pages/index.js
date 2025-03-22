@@ -1,31 +1,15 @@
-import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
-import Dashboard from './dashboard';
-
-// Dynamically import WorkbookLayout with no SSR to avoid hydration issues
-const WorkbookLayout = dynamic(() => import('./WorkbookLayout'), {
-  ssr: false
-});
+import React from 'react'
+import { useRouter } from 'next/router'
+import Dashboard from './dashboard'
 
 export default function Home() {
-  const [view, setView] = useState('dashboard');
-  const [sessionId, setSessionId] = useState(null);
+  const router = useRouter()
   
-  if (view === 'workbook') {
-    return (
-      <WorkbookLayout 
-        onBack={() => setView('dashboard')} 
-        sessionId={sessionId}
-      />
-    );
-  }
-  
-  return (
-    <Dashboard 
-      onSelectWorkbook={(id) => {
-        setSessionId(id);
-        setView('workbook');
-      }} 
-    />
-  );
+  // Redirect to dashboard
+  React.useEffect(() => {
+    router.push('/dashboard')
+  }, [router])
+
+  // Return null or loading state while redirecting
+  return null
 }

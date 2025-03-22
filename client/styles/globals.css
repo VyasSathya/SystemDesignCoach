@@ -2,24 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #f9fafb;
+@layer base {
+  html, 
+  body, 
+  #__next {
+    @apply h-full bg-gray-50;
+  }
 }
 
-/* Override ReactFlow control styles */
-.react-flow__controls {
-  z-index: 1 !important;
+@layer components {
+  .chat-message {
+    @apply mb-4 p-3 rounded-lg;
+  }
+
+  .user-message {
+    @apply bg-blue-50 text-blue-900;
+  }
+
+  .assistant-message {
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:bg-gray-100;
+  }
+
+  .input-primary {
+    @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
 }
 
-.react-flow-container {
-  z-index: 0;
+/* ReactFlow specific styles */
+.react-flow__node {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm;
 }
 
-.h-full {
-  height: 100%;
+.react-flow__handle {
+  @apply bg-blue-500;
 }
 
-/* If needed, also ensure the root elements have full height */
-html, body, #__next {
-  height: 100%;
+.react-flow__edge-path {
+  @apply stroke-2 stroke-gray-400;
+}
+
+/* Markdown content styles */
+.prose pre {
+  @apply bg-gray-50 rounded-lg p-4 overflow-x-auto;
+}
+
+.prose code {
+  @apply bg-gray-50 px-1.5 py-0.5 rounded text-sm font-normal text-gray-800;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full hover:bg-gray-400;
+}
+
+/* Fix Material UI and Tailwind conflicts */
+.MuiButton-root {
+  text-transform: none !important;
+}
+
+.MuiInputBase-root {
+  background-color: white !important;
 }

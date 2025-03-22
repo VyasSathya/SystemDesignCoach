@@ -1,7 +1,10 @@
+'use client';
+
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { sendCoachingMessage } from '../utils/api';
 
-export default function CoachAgentInterface() {
+const CoachAgentInterface = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,4 +96,6 @@ export default function CoachAgentInterface() {
       </div>
     </div>
   );
+};
+
 export default CoachAgentInterface;

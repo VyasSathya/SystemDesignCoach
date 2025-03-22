@@ -6,30 +6,27 @@
         "server": "cd server && npm run dev",
         "client": "cd client && npm run dev",
         "dev": "concurrently \"npm run server\" \"npm run client\"",
-        "test": "jest --detectOpenHandles"
+        "test": "concurrently \"cd server && npm test\" \"cd client && npm test\"",
+        "test:server": "cd server && npm test",
+        "test:client": "cd client && npm test",
+        "build": "cd client && npm run build",
+        "build:client": "cd client && npm run build",
+        "build:server": "cd server && npm run build"
     },
     "devDependencies": {
         "@babel/core": "^7.26.10",
         "@babel/preset-env": "^7.26.9",
         "babel-jest": "^29.7.0",
-        "concurrently": "^9.1.2"
-    },
-    "jest": {
-        "testEnvironment": "node",
-        "moduleDirectories": [
-            "node_modules"
-        ],
-        "roots": [
-            "<rootDir>/server"
-        ],
-        "modulePaths": [
-            "<rootDir>/server"
-        ],
-        "setupFilesAfterEnv": [
-            "<rootDir>/server/tests/jest.setup.js"
-        ]
+        "concurrently": "^9.1.2",
+        "jest": "^29.7.0"
     },
     "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/server": "^11.11.0",
+        "@emotion/styled": "^11.14.0",
+        "@mui/material": "^6.4.8",
+        "idb": "^8.0.2",
+        "lucide-react": "^0.483.0",
         "react-feather": "^2.0.10"
     }
 }

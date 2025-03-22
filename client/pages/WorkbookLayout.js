@@ -1,5 +1,6 @@
 // WorkbookLayout.js
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { 
   ClipboardList, 
   Code, 
@@ -14,13 +15,13 @@ import {
 } from 'lucide-react';
 import { workbookService } from '../services/workbookService';
 
-// Import page components
-import RequirementsPage from './RequirementsPage';
-import APIDesignPage from './APIDesignPage';
-import DataModelPage from './DataModelPage';
-import SystemArchitecturePage from './SystemArchitecturePage';
-import ScalingStrategyPage from './ScalingStrategyPage';
-import ReliabilitySecurityPage from './ReliabilitySecurityPage';
+// Dynamically import page components
+const RequirementsPage = dynamic(() => import('./RequirementsPage'));
+const APIDesignPage = dynamic(() => import('./APIDesignPage'));
+const DataModelPage = dynamic(() => import('./DataModelPage'));
+const SystemArchitecturePage = dynamic(() => import('./SystemArchitecturePage'));
+const ScalingStrategyPage = dynamic(() => import('./ScalingStrategyPage'));
+const ReliabilitySecurityPage = dynamic(() => import('./ReliabilitySecurityPage'));
 
 const WorkbookLayout = ({ onBack, sessionId }) => {
   // State for active tab and data

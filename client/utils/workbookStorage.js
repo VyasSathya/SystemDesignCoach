@@ -1,5 +1,12 @@
 import { saveDiagram } from './api';
-import { openDB } from 'idb';
+
+let idb;
+// Dynamic import for idb to handle SSR
+if (typeof window !== 'undefined') {
+  import('idb').then(module => {
+    idb = module;
+  });
+}
 
 const VERSION_INTERVAL = 300000; // Create version every 5 minutes
 let lastVersionTime = Date.now();
@@ -106,7 +113,9 @@ const saveWithOfflineSupport = async (sessionId, payload) => {
 
 // IndexedDB storage for offline support
 const storeOffline = async (sessionId, data) => {
-  const db = await openDB('workbook_offline', 1, {
+  if (!idb) return; // Skip if idb is not available
+  
+  const db = await idb.openDB('workbook_offline', 1, {
     upgrade(db) {
       db.createObjectStore('pending_saves');
     }
@@ -130,3 +139,47 @@ const computeChanges = (currentData) => {
     deleted: []
   };
 };
+
+class AutoSave {
+  constructor() {
+    this.timeoutId = null;
+    this.debounceTime = 1000;
+  }
+
+  async save(sessionId, data) {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+
+    return new Promise((resolve) => {
+      this.timeoutId = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/workbook/${sessionId}/save`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to save: ${response.statusText}`);
+          }
+
+          resolve(response);
+        } catch (error) {
+          console.error('Auto-save failed:', error);
+          // Try to store offline if online save fails
+          if (typeof window !== 'undefined') {
+            await storeOffline(sessionId, data);
+          }
+          throw error;
+        }
+      }, this.debounceTime);
+    });
+  }
+}
+
+export const autoSave = new AutoSave();
+
+

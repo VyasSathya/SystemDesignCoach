@@ -1,21 +1,29 @@
-require('dotenv').config({ path: '.env.test' });
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
-// Global test setup
+let mongod;
+
+// Set test environment variables
+process.env.JWT_SECRET = 'test-secret-key';
+process.env.NODE_ENV = 'test';
+
 beforeAll(async () => {
-  // Database connection for all tests
-  await require('../config/db')();
+  mongod = await MongoMemoryServer.create();
+  const uri = mongod.getUri();
+  global.__MONGO_URI__ = uri;
+  
+  // Set strictQuery to suppress deprecation warning
+  mongoose.set('strictQuery', false);
 });
 
-// Mock AI configurations
-jest.mock('../config/aiConfig', () => ({
-  config: {
-    apiKey: 'test-key',
-    model: 'claude-3-7-sonnet-latest',
-    maxTokens: 1000
-  }
-}));
-
-// Clean up after all tests
 afterAll(async () => {
-  await mongoose.connection.close();
+  await mongoose.disconnect();
+  await mongod.stop();
 });
+
+beforeEach(() => {
+  jest.setTimeout(15000);
+});
+
+
+
