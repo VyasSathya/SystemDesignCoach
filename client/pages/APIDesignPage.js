@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Trash2, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 import debounce from 'lodash/debounce';
+import { useWorkbook } from '../context/WorkbookContext';
 
 const API_SAVE_DEBOUNCE_MS = 500;
 
@@ -14,9 +15,15 @@ const DEFAULT_API_DATA = {
 
 // Accept contextValue prop instead of using hook
 const APIDesignPage = ({ contextValue }) => {
-  // Use props for context data
-  const { state, dispatch, workbookService } = contextValue; 
-  // const { state, dispatch, workbookService } = useWorkbook(); // REMOVE hook call
+  const workbookContext = contextValue || useWorkbook(); // Prefer passed context
+
+  // <<< ADD CHECK HERE >>>
+  if (!workbookContext) {
+    return <div>Loading API Design...</div>;
+  }
+  const { state, dispatch, workbookService } = workbookContext;
+  // <<< END CHECK >>>
+
   const { currentProblem, problems } = state;
 
   // Define HTTP methods

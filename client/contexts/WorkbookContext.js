@@ -220,8 +220,30 @@ export const WorkbookProvider = ({ children }) => {
     dispatch({ type: 'INITIALIZE_CONTEXT' });
   }, []); 
 
-  // Provide the ACTUAL workbook service
-  const workbookService = useMemo(() => actualWorkbookService, []); 
+  // Effect to load data when currentProblemId changes and data is not already loaded
+  useEffect(() => {
+    const problemId = state.currentProblem; 
+    // Only run if initialized, have a problemId, and data isn't already loaded for it
+    if (state.isInitialized && problemId && !state.problems?.[problemId]) {
+      console.log(`>>> WorkbookProvider: Triggering data load for problemId: ${problemId}`);
+      const fetchData = async () => {
+        try {
+          // Use the imported service object and its method
+          const data = await actualWorkbookService.loadProblemData(problemId); // Use object.method
+          
+          // Dispatch action to load the fetched data into state
+          dispatch({ type: 'LOAD_PROBLEM_DATA', problemId, data });
+
+        } catch (error) {
+          console.error(`>>> WorkbookProvider: Failed to load data for problem ${problemId}:`, error);
+        }
+      };
+      fetchData();
+    }
+  }, [state.isInitialized, state.currentProblem, state.problems, dispatch]);
+
+  // Provide the ACTUAL workbook service object
+  const workbookService = useMemo(() => actualWorkbookService, []); // Pass the imported object
 
   // Placeholder functions
   const updatePageContent = (pageId, content) => { console.warn('updatePageContent not implemented'); };

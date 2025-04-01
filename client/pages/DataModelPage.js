@@ -3,8 +3,16 @@ import { Trash2 } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
-const DataModelPage = () => {
-  const { state, dispatch, workbookService } = useWorkbook();  // Get workbookService from context
+const DataModelPage = ({ contextValue }) => {
+  console.log(">>> DataModelPage received contextValue prop:", contextValue ? 'Exists' : 'NULL/UNDEFINED');
+  const workbookContext = contextValue || useWorkbook(); // Prefer passed context
+
+  if (!workbookContext) {
+    // Context not ready yet, show loading or return null
+    return <div>Loading Data Model...</div>; // Or a better loading indicator
+  }
+
+  const { state, dispatch, workbookService } = workbookContext;
   const { currentProblem, problems } = state;
   const [previewMode, setPreviewMode] = useState(false);
   

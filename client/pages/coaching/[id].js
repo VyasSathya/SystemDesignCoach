@@ -774,23 +774,21 @@ function CoachingSessionPageComponent() {
   };
 
   const getActiveWorkbookComponent = () => {
-    console.log(`>>> getActiveWorkbookComponent called. Active Tab: ${activeWorkbookTab}, Problem ID: ${currentProblemId}`); // Add log
-    // Add a check here to ensure data is ready for the *specific* component
+    console.log(`>>> getActiveWorkbookComponent called. Active Tab: ${activeWorkbookTab}, Problem ID: ${currentProblemId}`);
     if (!currentProblemData) {
-       console.log(`>>> Waiting for data for problem ${currentProblemId} before rendering ${activeWorkbookTab}`); // Add log
-       // Optionally dispatch a LOAD_PROBLEM_DATA action here if needed
-       // Example: dispatch({ type: 'LOAD_PROBLEM_DATA', problemId: currentProblemId });
-       return <div>Loading {activeWorkbookTab} data...</div>; // Show loading specific to the tab
+       console.log(`>>> Waiting for data for problem ${currentProblemId} before rendering ${activeWorkbookTab}`);
+       return <div>Loading {activeWorkbookTab} data...</div>;
     }
     
     // Pass the whole context value down as a prop
+    console.log(`>>> [id].js: Passing contextValue to ${activeWorkbookTab} component:`, workbookContextValue ? 'Exists' : 'NULL/UNDEFINED');
     switch (activeWorkbookTab) {
-      case 'requirements': return <RequirementsPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
-      case 'api': return <APIDesignPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
-      case 'data': return <DataModelPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
-      case 'architecture': return <SystemArchitecturePage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
-      case 'scaling': return <ScalingStrategyPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
-      case 'reliability': return <ReliabilitySecurityPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      case 'requirements': return <RequirementsPage contextValue={workbookContextValue} />;
+      case 'api': return <APIDesignPage contextValue={workbookContextValue} />;
+      case 'data': return <DataModelPage contextValue={workbookContextValue} />; // Passing contextValue
+      case 'architecture': return <SystemArchitecturePage contextValue={workbookContextValue} />;
+      case 'scaling': return <ScalingStrategyPage contextValue={workbookContextValue} />;
+      case 'reliability': return <ReliabilitySecurityPage contextValue={workbookContextValue} />;
       default: return <div>Select a workbook section</div>;
     }
   };

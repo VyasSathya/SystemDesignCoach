@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Trash2, Plus } from 'lucide-react';
 import { withWorkbook } from '../components/withWorkbook';
 import debounce from 'lodash/debounce';
+import { useWorkbook } from '../context/WorkbookContext';
+import { CheckCircle, XCircle } from 'lucide-react';
+import ProgressBar from '../components/ProgressBar';
 
 const REQUIREMENTS_SAVE_DEBOUNCE_MS = 500;
 
@@ -15,8 +18,12 @@ const DEFAULT_REQUIREMENTS_DATA = {
 
 // Accept contextValue prop instead of using hook
 const RequirementsPageContent = ({ contextValue }) => {
-  // Use props for context data
-  const { state, dispatch, workbookService } = contextValue;
+  const workbookContext = contextValue || useWorkbook(); // Prefer passed context
+
+  if (!workbookContext) {
+    return <div>Loading Requirements...</div>;
+  }
+  const { state, dispatch, workbookService } = workbookContext;
   const { currentProblem, problems } = state;
   
   // Get data from context - Use stable default object

@@ -3,8 +3,13 @@ import { Trash2, Plus } from 'lucide-react';
 import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
 
-const ReliabilitySecurityPage = () => {
-  const { state, dispatch, workbookService } = useWorkbook();
+const ReliabilitySecurityPage = ({ contextValue }) => {
+  const workbookContext = contextValue || useWorkbook();
+
+  if (!workbookContext) {
+    return <div>Loading Reliability & Security...</div>;
+  }
+  const { state, dispatch, workbookService } = workbookContext;
   const { currentProblem, problems } = state;
 
   // Get data from context with default values

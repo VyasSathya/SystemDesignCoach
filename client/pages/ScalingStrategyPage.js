@@ -3,8 +3,13 @@ import { Trash2 } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 import { useWorkbook } from '../context/WorkbookContext';
 
-const ScalingStrategyPage = () => {
-  const { state, dispatch, workbookService } = useWorkbook();
+const ScalingStrategyPage = ({ contextValue }) => {
+  const workbookContext = contextValue || useWorkbook();
+
+  if (!workbookContext) {
+    return <div>Loading Scaling Strategy...</div>;
+  }
+  const { state, dispatch, workbookService } = workbookContext;
   const { currentProblem, problems } = state;
 
   // Initialize data from context

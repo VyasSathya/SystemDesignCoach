@@ -24,6 +24,8 @@ app.get('/', (req, res) => {
 // Register your API routes here
 app.use('/api/coaching', require('./routes/coaching'));
 app.use('/api/auth', require('./routes/auth'));
+// Add workbook routes
+app.use('/api/workbook', require('./routes/workbook'));
 
 const PORT = process.env.PORT || 5000;
 
