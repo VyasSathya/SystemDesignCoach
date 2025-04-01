@@ -2,6 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const logger = require('./utils/logger');
+const connectDB = require('./config/db'); // Import connectDB
+
+// Connect to Database
+connectDB();
 
 const app = express();
 

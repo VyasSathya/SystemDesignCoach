@@ -5,7 +5,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 const api = axios.create({
   // Remove the /api prefix from baseURL since we'll include it in the routes
-  baseURL: isDevelopment ? 'http://localhost:3000' : process.env.NEXT_PUBLIC_API_URL,
+  baseURL: isDevelopment ? 'http://localhost:2000' : process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -68,7 +68,7 @@ export const loginUser = async (email, password) => {
 };
 
 // API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:2000/api';
 
 // Coaching related API calls
 export const getCoachingSession = async (id) => {

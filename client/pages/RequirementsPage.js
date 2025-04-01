@@ -1,21 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Trash2, Plus } from 'lucide-react';
-import { useWorkbook } from '../context/WorkbookContext';
-import ProgressBar from '../components/ProgressBar';
-import { WorkbookProvider } from '../context/WorkbookContext';
 import { withWorkbook } from '../components/withWorkbook';
+import debounce from 'lodash/debounce';
 
-const RequirementsPageContent = () => {
-  const { state, dispatch, workbookService } = useWorkbook();
+const REQUIREMENTS_SAVE_DEBOUNCE_MS = 500;
+
+// Define stable default object outside the component
+const DEFAULT_REQUIREMENTS_DATA = {
+  functional: [],
+  nonFunctional: [],
+  constraints: [],
+  previewMode: false
+};
+
+// Accept contextValue prop instead of using hook
+const RequirementsPageContent = ({ contextValue }) => {
+  // Use props for context data
+  const { state, dispatch, workbookService } = contextValue;
   const { currentProblem, problems } = state;
   
-  // Get data from context
-  const requirementsData = problems[currentProblem]?.sections?.requirements || {
-    functional: [],
-    nonFunctional: [],
-    constraints: [],
-    previewMode: false
-  };
+  // Get data from context - Use stable default object
+  const requirementsData = useMemo(() => {
+    return problems[currentProblem]?.sections?.requirements || DEFAULT_REQUIREMENTS_DATA;
+  }, [problems, currentProblem]);
 
   // Initialize state
   const [functional, setFunctional] = useState(requirementsData.functional);
@@ -29,7 +36,7 @@ const RequirementsPageContent = () => {
   };
 
   // Add centralized save function
-  const saveData = async (updatedData) => {
+  const saveData = useCallback(async (updatedData) => {
     dispatch({
       type: 'UPDATE_SECTION_DATA',
       problemId: currentProblem,
@@ -52,7 +59,13 @@ const RequirementsPageContent = () => {
         console.error('Failed to save requirements data:', error);
       }
     }
-  };
+  }, [dispatch, currentProblem, workbookService]);
+
+  // Debounced version of saveData
+  const debouncedSaveData = useMemo(
+    () => debounce(saveData, REQUIREMENTS_SAVE_DEBOUNCE_MS),
+    [saveData]
+  );
 
   // Update effect
   useEffect(() => {
@@ -92,7 +105,7 @@ const RequirementsPageContent = () => {
         req.id === id ? { ...req, [field]: value } : req
       )
     };
-    saveData(updatedData);
+    debouncedSaveData(updatedData);
   };
 
   const updateFunctionalRequirementAcceptance = (id, value) => {
@@ -105,7 +118,7 @@ const RequirementsPageContent = () => {
       )
     };
 
-    saveData(updatedData);
+    debouncedSaveData(updatedData);
   };
 
   const deleteFunctionalRequirement = (id) => {
@@ -169,7 +182,7 @@ const RequirementsPageContent = () => {
         req.id === id ? { ...req, [field]: value } : req
       )
     };
-    saveData(updatedData);
+    debouncedSaveData(updatedData);
   };
 
   const updateNonFunctionalRequirementCriteria = (id, value) => {
@@ -182,7 +195,7 @@ const RequirementsPageContent = () => {
       )
     };
 
-    saveData(updatedData);
+    debouncedSaveData(updatedData);
   };
 
   const deleteNonFunctionalRequirement = (id) => {
@@ -236,7 +249,7 @@ const RequirementsPageContent = () => {
         constraint.id === id ? { ...constraint, [field]: value } : constraint
       )
     };
-    saveData(updatedData);
+    debouncedSaveData(updatedData);
   };
 
   const deleteConstraint = (id) => {
@@ -304,6 +317,7 @@ const RequirementsPageContent = () => {
   };
 
   useEffect(() => {
+    // Restore progress calculation and dispatch
     const progress = calculateProgress();
     
     dispatch({
@@ -312,7 +326,7 @@ const RequirementsPageContent = () => {
       section: 'requirements',
       progress
     });
-  }, [requirementsData]);
+  }, [requirementsData.functional, requirementsData.nonFunctional, requirementsData.constraints, dispatch, currentProblem]);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -710,13 +724,11 @@ const RequirementsPageContent = () => {
   );
 };
 
-const RequirementsPage = () => {
-  const { state, dispatch, workbookService } = useWorkbook();
-  return (
-    <WorkbookProvider>
-      <RequirementsPageContent />
-    </WorkbookProvider>
-  );
+// Export RequirementsPage, which renders RequirementsPageContent
+// We removed withWorkbook HOC earlier, so this is correct.
+const RequirementsPage = ({ contextValue }) => { // Accept prop here too
+  // Pass the context prop down to the content component
+  return <RequirementsPageContent contextValue={contextValue} />;
 };
 
-export default withWorkbook(RequirementsPage);
+export default RequirementsPage;

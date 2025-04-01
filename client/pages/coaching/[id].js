@@ -63,13 +63,23 @@ const CoachingSessionWithNoSSR = dynamic(() => Promise.resolve(CoachingSessionCo
 });
 
 // Main content component
-function CoachingSessionContent({ id }) {
-  // 1. Context hooks first
+function CoachingSessionPageComponent() {
+  console.log("--- CoachingSessionPageComponent Rendering ---"); // Add log
+  // 1. ALL Hooks must be called unconditionally at the top
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { workbookState, setWorkbookState } = useWorkbook();
+  const workbookContextValue = useWorkbook(); // Might be null initially
+  console.log(">>> CoachingSessionPageComponent: workbookContextValue:", workbookContextValue); // Add log
+  
+  // Ensure context is loaded before destructuring
+  const state = workbookContextValue?.state;
+  const dispatch = workbookContextValue?.dispatch;
+  const isWorkbookInitialized = state?.isInitialized;
+  console.log(">>> CoachingSessionPageComponent: isWorkbookInitialized:", isWorkbookInitialized); // Add log
 
-  // 2. State hooks
+  const id = router.query.id;
+  
+  // State hooks
   const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -85,77 +95,6 @@ function CoachingSessionContent({ id }) {
   const [diagramCode, setDiagramCode] = useState('');
   const [diagramSuggestions, setDiagramSuggestions] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  // 3. Memoized values
-  const currentWorkbookState = useMemo(() => 
-    workbookState || {
-      requirements: { content: null, isDirty: false },
-      api: { content: null, isDirty: false },
-      data: { content: null, isDirty: false },
-      architecture: { content: null, isDirty: false },
-      scaling: { content: null, isDirty: false },
-      reliability: { content: null, isDirty: false }
-    }, 
-    [workbookState]
-  );
-
-  // 4. Effects
-  useEffect(() => {
-    const authToken = Cookies.get('auth_token');
-    if (!authLoading && !user && !authToken) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    if (!id) return;
-    
-    async function fetchSession() {
-      try {
-        setIsLoading(true);
-        const data = await getCoachingSession(id);
-        setSession(data);
-        setError(null);
-      } catch (err) {
-        console.error(`Error fetching session:`, err);
-        setError("Failed to load session");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchSession();
-  }, [id]);
-
-  // 5. Callbacks
-  const handleWorkbookUpdate = useCallback((section, data) => {
-    setWorkbookState(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        ...data,
-        isDirty: true
-      }
-    }));
-  }, [setWorkbookState]);
-
-  // Loading states
-  if (authLoading) {
-    return <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-    </div>;
-  }
-
-  // Don't render while redirecting
-  if (!user && !Cookies.get('auth_token')) {
-    return null;
-  }
-
-  // 2. Ref hooks
-  const workbookDropdownRef = useRef(null);
-  const messagesEndRef = useRef(null);
-
-  // 3. State hooks
   const [mounted, setMounted] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [includeDiagram, setIncludeDiagram] = useState(false);
@@ -173,11 +112,125 @@ function CoachingSessionContent({ id }) {
   const [currentTopic, setCurrentTopic] = useState('REQUIREMENTS');
   const [activeMaterial, setActiveMaterial] = useState(null);
   const [workbookProgress, setWorkbookProgress] = useState(0);
+  
+  // Ref hooks
+  const workbookDropdownRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  
+  // Extract current problem ID and data for stable dependency
+  const currentProblemId = state?.currentProblem;
+  console.log(">>> CoachingSessionPageComponent: currentProblemId from state:", currentProblemId); // Add log
+  const currentProblemData = state?.problems?.[currentProblemId];
+  console.log(">>> CoachingSessionPageComponent: currentProblemData exists:", !!currentProblemData); // Add log
 
-  // Get sessionId from either the id prop or session state
-  const sessionId = id || session?._id;
+  // Create a stable dependency based on the *content* of the relevant data
+  const relevantDataString = useMemo(() => {
+    if (!currentProblemData) return null;
+    // Stringify only the parts passed down via currentWorkbookState
+    return JSON.stringify({
+      sections: currentProblemData.sections,
+      diagrams: currentProblemData.diagrams,
+      progress: currentProblemData.progress
+    });
+  }, [currentProblemData]); // Depends on the problem data object reference
 
-  // 4. Callback hooks
+  // Memoized values - Depend on the stable stringified data + problem ID
+  const currentWorkbookState = useMemo(() => {
+    console.log('Recalculating currentWorkbookState based on string for problem:', currentProblemId);
+    // Parse the data from the string only when the string changes
+    const problemData = relevantDataString ? JSON.parse(relevantDataString) : null;
+    return {
+      requirements: problemData?.sections?.requirements || { content: null, isDirty: false },
+      api: problemData?.sections?.api || { content: null, isDirty: false },
+      data: problemData?.sections?.data || { content: null, isDirty: false },
+      architecture: problemData?.sections?.architecture || { content: null, isDirty: false },
+      scaling: problemData?.sections?.scaling || { content: null, isDirty: false },
+      reliability: problemData?.sections?.reliability || { content: null, isDirty: false },
+      diagrams: problemData?.diagrams || {},
+      progress: problemData?.progress || {}
+    };
+  }, 
+  [currentProblemId, relevantDataString] // Depend on ID and the stable *string* representation
+  );
+  
+  // Effect hooks
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+  
+  useEffect(() => {
+    const authToken = Cookies.get('auth_token');
+    if (!mounted) return; // Wait for mount
+    if (!authLoading && !user && !authToken) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router, mounted]);
+  
+  useEffect(() => {
+    console.log('CoachingSessionPage: Session loading effect running for id:', id);
+    // Wait for mount AND workbook initialization
+    if (!id || !mounted || !isWorkbookInitialized) { 
+      console.log(`CoachingSessionPage: Skipping session load (mounted: ${mounted}, isWorkbookInitialized: ${isWorkbookInitialized})`);
+      return; 
+    }
+    
+    async function fetchSession() {
+      try {
+        setIsLoading(true);
+        const data = await getCoachingSession(id);
+        setSession(data);
+        if (data?.conversation) {
+           setMessages(data.conversation.map((msg, index) => ({ ...msg, id: index })));
+        }
+        setError(null);
+        
+        // Set the current problem in the workbook context based on the URL ID
+        console.log(`CoachingSessionPage: Dispatching SET_CURRENT_PROBLEM for id: ${id}`);
+        dispatch({ type: 'SET_CURRENT_PROBLEM', problemId: id });
+        
+        // --- NOTE: We are NOT loading problem *data* here yet. --- 
+        // --- That should happen separately, perhaps triggered by SET_CURRENT_PROBLEM --- 
+
+      } catch (err) {
+        console.error(`Error fetching session:`, err);
+        setError("Failed to load session");
+      } finally {
+        setIsLoading(false); // Set loading false after session info (like messages) is fetched
+      }
+    }
+    fetchSession();
+  }, [id, mounted, dispatch, isWorkbookInitialized]);
+  
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (workbookDropdownRef.current && !workbookDropdownRef.current.contains(event.target)) {
+        setShowWorkbookDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+  
+  // Callback hooks
+  const handleWorkbookUpdate = useCallback((section, data) => {
+    if (!currentProblemId) return;
+    console.log(`Dispatching UPDATE_SECTION_DATA for section: ${section}`);
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblemId,
+      section: section,
+      data: data
+    });
+  }, [dispatch, currentProblemId]);
+  
   const onNodesChange = useCallback((changes) => {
     setNodes(nds => {
       const updatedNodes = applyNodeChanges(changes, nds);
@@ -194,7 +247,7 @@ function CoachingSessionContent({ id }) {
       return updatedNodes;
     });
   }, [edges]);
-
+  
   const onEdgesChange = useCallback((changes) => {
     setEdges(eds => {
       const updatedEdges = applyEdgeChanges(changes, eds);
@@ -211,81 +264,35 @@ function CoachingSessionContent({ id }) {
       return updatedEdges;
     });
   }, [nodes]);
+  
+  // --- Early returns can only happen AFTER all hooks ---
+  
+  // Add a loading state based on workbook initialization & auth
+  if (!isWorkbookInitialized || authLoading) {
+      console.log(`--- CoachingSessionPageComponent showing initial loading state (isWorkbookInitialized: ${isWorkbookInitialized}, authLoading: ${authLoading}) ---`);
+      return <div className="flex justify-center items-center h-screen">Initializing Workbook...</div>;
+  }
+  
+  // Add a loading state while fetching the basic session info (like messages)
+  if (isLoading) { 
+      console.log(`--- CoachingSessionPageComponent showing session loading state (isLoading: ${isLoading}) ---`);
+      return <div className="flex justify-center items-center h-screen">Loading Session Info...</div>;
+  }
+  
+  // Add a check AFTER initialization and session load, but BEFORE rendering main content that needs the ID
+  if (!currentProblemId) {
+      console.log(`--- CoachingSessionPageComponent showing waiting state (currentProblemId: ${currentProblemId}) ---`);
+      // This might happen if the SET_CURRENT_PROBLEM action hasn't completed yet
+      // or if the id from the route is missing/invalid
+      return <div className="flex justify-center items-center h-screen">Waiting for Problem ID...</div>;
+  }
 
-  // 5. Effect hooks
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  // Handle diagram mode changes
-  useEffect(() => {
-    if (rightPanelMode === 'diagram' && diagramState.previous) {
-      // Restore previous state when switching to diagram mode
-      setNodes(diagramState.previous.nodes);
-      setEdges(diagramState.previous.edges);
-      setDiagramCode(diagramState.previous.mermaidCode);
-    } else if (rightPanelMode !== 'diagram') {
-      // Store current state when switching away from diagram mode
-      setDiagramState(prev => ({
-        ...prev,
-        previous: {
-          nodes,
-          edges,
-          mermaidCode: diagramCode
-        }
-      }));
-    }
-  }, [rightPanelMode, diagramState.previous, nodes, edges, diagramCode]);
-
-  // Session loading effect
-  useEffect(() => {
-    if (!router.query.id) return;
-    
-    async function fetchSession() {
-      try {
-        setIsLoading(true);
-        const data = await getCoachingSession(router.query.id);
-        setSession(data);
-        setError(null);
-      } catch (err) {
-        console.error(`Error fetching session:`, err);
-        setError("Failed to load session");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchSession();
-  }, [router.query.id]); // Add dependency array
-
-  // Click outside handler
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (workbookDropdownRef.current && !workbookDropdownRef.current.contains(event.target)) {
-        setShowWorkbookDropdown(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Auto-scroll effect
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  // Loading state
-  if (!mounted || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-        <div className="ml-3">Loading session...</div>
-      </div>
-    );
+  console.log("--- CoachingSessionPageComponent Rendering MAIN CONTENT --- Key data:", { currentProblemId, activeWorkbookTab }); // Add log
+  
+  // Auth redirect check (can stay)
+  if (!user && !Cookies.get('auth_token')) {
+    // This might happen briefly before redirect effect runs
+    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" /><span className="ml-3">Redirecting...</span></div>; // Show redirecting state
   }
 
   // Error state
@@ -302,23 +309,26 @@ function CoachingSessionContent({ id }) {
       </div>
     );
   }
-
-  // Update function for diagrams
+  
+  // --- Component Render Logic --- 
+  const sessionId = id || session?._id;
+  
+  // Update function for diagrams - use specific UPDATE_DIAGRAM action if exists, else UPDATE_SECTION_DATA
   const updateDiagramState = (diagramType, diagramData) => {
-    setWorkbookState(prev => ({
-      ...prev,
-      diagrams: {
-        ...prev.diagrams,
-        [diagramType]: {
-          ...diagramData,
-          metadata: {
-            lastUpdated: new Date(),
-            version: 1,
-            type: diagramType
-          }
-        }
+    if (!currentProblemId) return;
+    console.log(`Dispatching update for diagram: ${diagramType}`);
+    // Assuming UPDATE_SECTION_DATA can handle diagram updates under problems[problemId].diagrams[diagramType]
+    // If not, a dedicated UPDATE_DIAGRAM action might be better.
+    dispatch({
+      type: 'UPDATE_SECTION_DATA', // Or 'UPDATE_DIAGRAM' if exists
+      problemId: currentProblemId,
+      section: 'diagrams', // Target the diagrams object
+      subSection: diagramType, // Specify which diagram
+      data: { // Send the full diagram data structure
+         ...diagramData, 
+         metadata: { ...(diagramData.metadata || {}), lastUpdated: new Date() } 
       }
-    }));
+    });
   };
 
   // Helper function for tab styles
@@ -379,10 +389,12 @@ function CoachingSessionContent({ id }) {
   ];
 
   const updateFormData = (section, data) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: data
-    }));
+    dispatch({
+      type: 'UPDATE_SECTION_DATA',
+      problemId: currentProblemId,
+      section: section,
+      data: data
+    });
   };
 
   const detectCurrentTopic = (conversation) => {
@@ -494,7 +506,7 @@ function CoachingSessionContent({ id }) {
       setMessages(prev => [...prev, newMessage]);
       setIsTyping(true);
       const contextInfo = {
-        diagramContext: currentDiagramState,
+        diagramContext: diagramState.current,
         requestDiagramFeedback: true
       };
       const response = await sendCoachingMessage(sessionId, message, contextInfo);
@@ -582,16 +594,13 @@ function CoachingSessionContent({ id }) {
       mermaidCode: diagramSuggestions.mermaidCode
     };
     
-    setCurrentDiagramState(newDiagramState);
-    
-    // Update workbook state with the new diagram
-    setWorkbookState(prev => ({
+    setDiagramState(prev => ({
       ...prev,
-      diagrams: {
-        ...prev.diagrams,
-        [currentDiagramType]: newDiagramState
-      }
+      current: newDiagramState
     }));
+
+    // Update workbook state with the new diagram
+    updateDiagramState('system', newDiagramState);
 
     // Clear suggestions
     setDiagramSuggestions(null);
@@ -663,22 +672,16 @@ function CoachingSessionContent({ id }) {
   const handleDiagramUpdate = (diagramData) => {
     const { type, nodes, edges, mermaidCode } = diagramData;
     
-    setWorkbookState(prev => ({
-      ...prev,
-      diagrams: {
-        ...prev.diagrams,
-        [type]: {
-          nodes,
-          edges,
-          mermaidCode,
-          metadata: {
-            lastUpdated: new Date(),
-            version: 1,
-            type
-          }
-        }
+    updateDiagramState(type, {
+      nodes,
+      edges,
+      mermaidCode,
+      metadata: {
+        lastUpdated: new Date(),
+        version: 1,
+        type
       }
-    }));
+    });
 
     // Optionally auto-save after each update
     if (autoSave) {
@@ -689,7 +692,7 @@ function CoachingSessionContent({ id }) {
   const handleDiagramSave = async (diagramType) => {
     if (!sessionId) return;
     
-    const currentDiagram = workbookState.diagrams?.[diagramType];
+    const currentDiagram = state.diagrams?.[diagramType];
     
     try {
       setIsSaving(true);
@@ -706,7 +709,7 @@ function CoachingSessionContent({ id }) {
       return (
         <div className="relative h-full">
           <SystemSequenceDiagram 
-            initialData={currentDiagramState}
+            initialData={diagramState.current}
             onDiagramUpdate={handleDiagramUpdate}
             sessionId={sessionId}
           />
@@ -718,7 +721,7 @@ function CoachingSessionContent({ id }) {
       <div className="relative h-full">
         <SystemArchitectureDiagram
           initialNodes={nodes}
-          initialEdges={currentEdges}
+          initialEdges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -765,45 +768,30 @@ function CoachingSessionContent({ id }) {
   };
 
   const calculateProgress = () => {
-    const sections = Object.values(workbookState.sections);
+    const sections = Object.values(state.sections);
     const completedSections = sections.filter(s => s.completed).length;
     return sections.length ? Math.round((completedSections / sections.length) * 100) : 0;
   };
 
   const getActiveWorkbookComponent = () => {
+    console.log(`>>> getActiveWorkbookComponent called. Active Tab: ${activeWorkbookTab}, Problem ID: ${currentProblemId}`); // Add log
+    // Add a check here to ensure data is ready for the *specific* component
+    if (!currentProblemData) {
+       console.log(`>>> Waiting for data for problem ${currentProblemId} before rendering ${activeWorkbookTab}`); // Add log
+       // Optionally dispatch a LOAD_PROBLEM_DATA action here if needed
+       // Example: dispatch({ type: 'LOAD_PROBLEM_DATA', problemId: currentProblemId });
+       return <div>Loading {activeWorkbookTab} data...</div>; // Show loading specific to the tab
+    }
+    
+    // Pass the whole context value down as a prop
     switch (activeWorkbookTab) {
-      case 'requirements':
-        return <RequirementsPage 
-          workbookState={currentWorkbookState} 
-          onUpdate={handleDiagramUpdate}
-        />;
-      case 'api':
-        return <APIDesignPage 
-          workbookState={currentWorkbookState} 
-          onUpdate={handleDiagramUpdate}
-        />;
-      case 'data':
-        return <DataModelPage 
-          workbookState={currentWorkbookState} 
-          onUpdate={handleDiagramUpdate}
-        />;
-      case 'architecture':
-        return <SystemArchitecturePage 
-          workbookState={currentWorkbookState} 
-          onUpdate={handleDiagramUpdate}
-        />;
-      case 'scaling':
-        return <ScalingStrategyPage 
-          workbookState={currentWorkbookState} 
-          onUpdate={handleDiagramUpdate}
-        />;
-      case 'reliability':
-        return <ReliabilitySecurityPage 
-          workbookState={currentWorkbookState} 
-          onUpdate={handleDiagramUpdate}
-        />;
-      default:
-        return <div>Select a workbook section</div>;
+      case 'requirements': return <RequirementsPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      case 'api': return <APIDesignPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      case 'data': return <DataModelPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      case 'architecture': return <SystemArchitecturePage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      case 'scaling': return <ScalingStrategyPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      case 'reliability': return <ReliabilitySecurityPage contextValue={workbookContextValue} onUpdate={handleDiagramUpdate} />; // Pass contextValue
+      default: return <div>Select a workbook section</div>;
     }
   };
 
@@ -840,10 +828,9 @@ function CoachingSessionContent({ id }) {
               {messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`chat-message ${message.role === 'user' ? 'user-message ml-auto' : 'assistant-message'}`}
+                  className={`chat-message ${message.role === 'user' ? 'user-message ml-auto' : 'assistant-message'} prose prose-sm max-w-none`}
                 >
                   <ReactMarkdown
-                    className="prose prose-sm max-w-none"
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
                   >
@@ -912,29 +899,8 @@ function CoachingSessionContent({ id }) {
   );
 }
 
-// Static props (will only be used when SSR is enabled)
-export async function getStaticProps({ params }) {
-  return {
-    props: {
-      id: params?.id || null
-    }
-  };
-}
-
-// Generate static paths (will only be used when SSR is enabled)
-export async function getStaticPaths() {
-  return {
-    paths: [],
-    fallback: 'blocking'
-  };
-}
-
-export default function CoachingSessionPage({ id }) {
-  return (
-    <ErrorBoundary>
-      <WorkbookProvider>
-        <CoachingSessionContent id={id} />
-      </WorkbookProvider>
-    </ErrorBoundary>
-  );
-}
+// Export the main component function directly
+// export default function CoachingSessionPage() { 
+//   // ... (previous empty function)
+// }
+export default CoachingSessionPageComponent; // Export the actual component

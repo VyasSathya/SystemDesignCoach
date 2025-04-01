@@ -1,15 +1,17 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  // Log when AuthProvider renders
+  console.log('--- AuthProvider rendering ---');
   const [user, setUser] = useState(null);
+  // Restore initial loading state
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
+    console.log('>>> AuthProvider checkAuth effect running');
     const checkAuth = async () => {
       try {
         // Check local storage or cookies for token
@@ -35,20 +37,36 @@ export function AuthProvider({ children }) {
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
+        console.log('>>> AuthProvider checkAuth finished. Setting loading=false');
         setLoading(false);
       }
     };
 
+    // Restore the actual auth check
     checkAuth();
+    // console.log('>>> AuthProvider: checkAuth() call skipped for testing.');
+
+    return () => {
+      console.log('>>> AuthProvider checkAuth effect CLEANUP running');
+    };
   }, []);
 
-  const value = {
+  // Add effect to log user/loading changes
+  useEffect(() => {
+    console.log('--- AuthProvider state changed: loading:', loading, 'user:', user?.id);
+  }, [user, loading]);
+
+  // Memoize the context value
+  const value = useMemo(() => ({
     user,
     setUser,
     loading,
     setLoading,
     isAuthenticated: !!user
-  };
+  }), [user, loading]); // Dependencies: user and loading
+
+  // Log before returning children
+  console.log('--- AuthProvider rendering children ---');
 
   return (
     <AuthContext.Provider value={value}>
@@ -59,7 +77,9 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  // Handle both null (initial value) and undefined (missing provider)
+  if (context == null) { 
+    console.error("useAuth hook: context is null or undefined.", context); // Add log
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

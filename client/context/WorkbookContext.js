@@ -1,9 +1,12 @@
-import { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
+import { createContext, useContext, useReducer, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from '../contexts/AuthContext';  // Updated path
-import workbookService from '../services/workbookService';
+import { useAuth } from '../contexts/AuthContext';
+import { workbookService as actualWorkbookService } from '../services/workbookService';
 
-// Add save queue utility
+console.log('--- WorkbookContext.js: Module execution start ---'); // Add log
+
+// TEMPORARILY COMMENT OUT SaveQueue
+/*
 class SaveQueue {
   constructor() {
     this.queue = [];
@@ -54,30 +57,33 @@ class SaveQueue {
     }
   }
 }
+*/
+// const saveQueue = new SaveQueue(); // Temporarily comment out instance
+const saveQueue = null; // Provide null placeholder
 
-const saveQueue = new SaveQueue();
-
+console.log('--- WorkbookContext.js: Creating context ---'); // Add log
 const WorkbookContext = createContext();
 
-const initialState = {
-  currentProblem: null,
-  activePage: 'requirements',
-  pages: {
-    requirements: { content: null, isDirty: false },
-    api: { content: null, isDirty: false },
-    data: { content: null, isDirty: false },
-    architecture: { content: null, isDirty: false },
-    scaling: { content: null, isDirty: false },
-    reliability: { content: null, isDirty: false }
-  },
-  diagrams: {},
-  lastSaved: null,
-  problems: {},
-  saveStatus: 'idle'
-};
+// Temporarily use minimal initial state
+const initialState = { isInitialized: false }; 
+// const initialState = { // Original commented out
+//   currentProblem: null,
+//   activePage: 'requirements',
+//   pages: { ... },
+//   diagrams: {},
+//   lastSaved: null,
+//   problems: {},
+//   saveStatus: 'idle',
+//   isInitialized: false 
+// };
 
+console.log('--- WorkbookContext.js: Defining workbookReducer ---'); // Add log
 const workbookReducer = (state, action) => {
+  console.log('REDUCER Action:', action.type, 'Payload:', action);
   switch (action.type) {
+    case 'INITIALIZE_CONTEXT':
+      console.log('<<< Reducer handling INITIALIZE_CONTEXT');
+      return { ...state, isInitialized: true };
     case 'SET_ACTIVE_PAGE':
       return {
         ...state,
@@ -132,77 +138,102 @@ const workbookReducer = (state, action) => {
         saveStatus: 'saving'
       };
 
-    case 'UPDATE_SECTION_DATA':
+    case 'UPDATE_SECTION_DATA': {
+      const currentProblemState = state.problems?.[action.problemId];
+      const currentSectionData = currentProblemState?.sections?.[action.section];
+
+      // If section data hasn't changed (deep check via JSON stringify), return original state
+      // NOTE: This is a simple deep comparison. For complex objects, a library might be better,
+      // but this handles cases where new object references with same content are passed.
+      if (JSON.stringify(currentSectionData) === JSON.stringify(action.data)) {
+        return state;
+      }
+
+      // Otherwise, proceed with the update
       return {
         ...state,
         problems: {
           ...state.problems,
           [action.problemId]: {
-            ...state.problems[action.problemId],
-            sections: {
-              ...state.problems[action.problemId]?.sections,
-              [action.section]: action.data
-            },
+            ...currentProblemState,
+            // Handle nested update for diagrams based on subSection
+            sections: action.section === 'diagrams' && action.subSection ? 
+              currentProblemState?.sections : // Keep other sections if updating diagram
+              { 
+                ...currentProblemState?.sections,
+                [action.section]: action.data
+              },
+            diagrams: action.section === 'diagrams' && action.subSection ?
+              {
+                ...currentProblemState?.diagrams,
+                [action.subSection]: action.data // Update specific diagram type
+              } : 
+              currentProblemState?.diagrams, // Keep diagrams if updating other section
             lastSaved: new Date().toISOString()
           }
         }
       };
+    }
 
-    case 'UPDATE_PROGRESS':
+    case 'UPDATE_PROGRESS': {
+      const currentProblemState = state.problems?.[action.problemId];
+      const currentProgress = currentProblemState?.progress?.[action.section];
+      
+      // If progress hasn't changed, return the original state to prevent loops
+      if (currentProgress === action.progress) {
+        return state;
+      }
+
+      // Otherwise, proceed with the update, creating new objects as needed
       return {
         ...state,
         problems: {
           ...state.problems,
           [action.problemId]: {
-            ...state.problems[action.problemId],
+            ...currentProblemState,
             progress: {
-              ...state.problems[action.problemId]?.progress,
+              ...currentProblemState?.progress,
               [action.section]: action.progress
             }
           }
         }
       };
+    }
 
     default:
       return state;
   }
 };
+console.log('--- WorkbookContext.js: Finished defining workbookReducer ---'); // Add log
 
+console.log('--- WorkbookContext.js: Defining WorkbookProvider ---'); // Add log
 export const WorkbookProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(workbookReducer, {
-    currentProblem: null,
-    user: null,
-    ...initialState
-  });
-  const router = useRouter();
+  console.log('--- WorkbookProvider function executing ---'); 
+  const [state, dispatch] = useReducer(workbookReducer, initialState);
+  const router = null; // Placeholder
   const { user } = useAuth();
+  
+  const lastSavedDataRef = useRef(null);
+  
+  // Dispatch initialization action on mount
+  useEffect(() => {
+    console.log('>>> WorkbookProvider mounted, dispatching INITIALIZE_CONTEXT');
+    dispatch({ type: 'INITIALIZE_CONTEXT' });
+  }, []); 
 
-  // Initialize workbook service
-  const workbookService = useMemo(() => ({
-    // ... your workbook service methods
-  }), []);
+  // Provide the ACTUAL workbook service
+  const workbookService = useMemo(() => actualWorkbookService, []); 
 
-  const updatePageContent = (pageId, content) => {
-    dispatch({
-      type: 'UPDATE_PAGE_CONTENT',
-      pageId,
-      content,
-      isDirty: true
-    });
-  };
+  // Placeholder functions
+  const updatePageContent = (pageId, content) => { console.warn('updatePageContent not implemented'); };
+  const markPageAsSaved = (pageId) => { console.warn('markPageAsSaved not implemented'); };
 
-  const markPageAsSaved = (pageId) => {
-    dispatch({
-      type: 'MARK_PAGE_SAVED',
-      pageId
-    });
-  };
-
-  // Enhanced route change handler
+  // RESTORE Route Change Handler Effect (Ensure router guards are present)
   useEffect(() => {
     const handleRouteChange = async (url) => {
+      if (!router) return; // Keep guard
       const page = url.split('/').pop();
-      if (page && page !== state.activePage && user?.id && state.currentProblem) {
+      if (page && state.activePage && page !== state.activePage && user?.id && state.currentProblem) {
         const problemData = state.problems[state.currentProblem] || {
           sections: {},
           diagrams: {},
@@ -210,162 +241,114 @@ export const WorkbookProvider = ({ children }) => {
           progress: {}
         };
 
-        dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
-
-        try {
-          await saveQueue.add(async () => {
-            return await workbookService.saveAllData(
-              state.currentProblem,
-              state.activePage,
-              problemData
-            );
-          });
-          
-          dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
-          dispatch({ type: 'SET_ACTIVE_PAGE', page });
-        } catch (error) {
-          console.error('Error saving workbook data:', error);
-          dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
-          // Still update page to not block navigation
-          dispatch({ type: 'SET_ACTIVE_PAGE', page });
+        // Check if workbookService exists before calling
+        if (workbookService && typeof workbookService.saveAllData === 'function') { 
+          dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
+          try {
+            // Temporarily remove saveQueue usage
+            // await saveQueue.add(async () => { ... }); 
+            console.warn('SaveQueue temporarily disabled in route change.')
+            // Manually call save for testing (REMOVE LATER)
+            await workbookService.saveAllData(state.currentProblem, state.activePage, problemData);
+            
+            dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
+            dispatch({ type: 'SET_ACTIVE_PAGE', page });
+          } catch (error) {
+            console.error('Error saving workbook data on route change:', error);
+            dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
+            dispatch({ type: 'SET_ACTIVE_PAGE', page });
+          }
+        } else {
+           console.warn('Route change: workbookService.saveAllData not available, skipping save.');
+           dispatch({ type: 'SET_ACTIVE_PAGE', page }); // Still navigate
         }
+      } else if (page && page !== state.activePage) {
+         // If other conditions aren't met but page changed, still update active page
+         dispatch({ type: 'SET_ACTIVE_PAGE', page });
       }
     };
+    if (router?.events) { // Keep guard
+      console.log('>>> WorkbookProvider attaching routeChangeStart listener');
+      router.events.on('routeChangeStart', handleRouteChange);
+      return () => {
+        console.log('>>> WorkbookProvider detaching routeChangeStart listener');
+        router.events.off('routeChangeStart', handleRouteChange);
+      };
+    }
+  }, [router, state.activePage, state.currentProblem, user?.id, dispatch, workbookService]);
 
-    router.events.on('routeChangeStart', handleRouteChange);
-    return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
-    };
-  }, [router, state, user]);
-
-  // Load initial data
+  // RESTORE Load Initial Data Effect
   useEffect(() => {
-    if (!user?.id) return;
-
+    if (!user?.id) {
+       console.log('>>> Load Initial Data: No user ID, skipping.');
+       return;
+    }
+    console.log('>>> Load Initial Data: Starting for user:', user.id);
     const loadInitialData = async () => {
       try {
-        // First try to load from localStorage
+        console.log('>>> Load Initial Data: Trying localStorage...');
         const storedData = localStorage.getItem(`workbook_${user.id}`);
         if (storedData) {
+          console.log('>>> Load Initial Data: Found localStorage data.');
           const parsedData = JSON.parse(storedData);
           Object.keys(parsedData.problems || {}).forEach(problemId => {
+            console.log(`>>> Load Initial Data: Dispatching LOAD_PROBLEM_DATA for ${problemId} from localStorage.`);
             dispatch({
               type: 'LOAD_PROBLEM_DATA',
               problemId,
               data: parsedData.problems[problemId]
             });
           });
+        } else {
+           console.log('>>> Load Initial Data: No localStorage data found.');
         }
-
-        // Then try to fetch from server
-        try {
-          const response = await fetch(`/api/workbook/all?userId=${user.id}`, {
-            credentials: 'include', // Important for auth cookies
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (!response.ok) {
-            console.warn(`Server returned ${response.status}: ${response.statusText}`);
-            return; // Use local data if server fetch fails
-          }
-
-          const serverData = await response.json();
-          
-          Object.keys(serverData.problems || {}).forEach(problemId => {
-            dispatch({
-              type: 'LOAD_PROBLEM_DATA',
-              problemId,
-              data: serverData.problems[problemId]
-            });
-          });
-        } catch (serverError) {
-          console.warn('Failed to fetch from server:', serverError);
-          // Continue with local data
-        }
+        // TODO: Add server fetch logic back if needed (Ensure it doesn't set currentProblem)
       } catch (error) {
-        console.error('Error in loadInitialData:', error);
-        // At least try to initialize with empty state
-        dispatch({
-          type: 'LOAD_PROBLEM_DATA',
-          problemId: state.currentProblem,
-          data: {}
-        });
+        console.error('>>> Load Initial Data: Outer error:', error);
       }
     };
-
     loadInitialData();
-  }, [user?.id]);
+  }, [user?.id, dispatch]);
 
-  // Auto-save effect
+  // RESTORE Auto-save effect
   useEffect(() => {
-    if (state.saveStatus !== 'saving' || !user?.id || !state.currentProblem) return;
-
-    const saveData = async () => {
-      try {
-        localStorage.setItem(`workbook_${user.id}`, JSON.stringify(state));
-
-        await fetch('/api/workbook/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            state
-          })
-        });
-
-        dispatch({ type: 'SET_SAVE_STATUS', status: 'idle' });
-      } catch (error) {
-        console.error('Error saving workbook:', error);
-        dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
+    const autoSave = () => {
+      if (!user?.id || !state.currentProblem || !state.isInitialized) return;
+      const problemData = state.problems[state.currentProblem];
+      if (!problemData) return;
+      const dataToSave = JSON.stringify({ sections: problemData.sections, diagrams: problemData.diagrams, progress: problemData.progress });
+      if (dataToSave !== lastSavedDataRef.current) {
+        console.log('Auto-save triggered: Data changed.');
+        lastSavedDataRef.current = dataToSave;
+        if (workbookService && typeof workbookService.saveAllData === 'function') {
+            dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
+            // Temporarily remove saveQueue usage
+            // saveQueue.add(async () => { ... })
+            console.warn('SaveQueue temporarily disabled in auto-save.');
+            // Manually trigger save for testing (REMOVE LATER)
+            workbookService.saveAllData(state.currentProblem, state.activePage, { sections: problemData.sections, diagrams: problemData.diagrams, progress: problemData.progress })
+            .then(() => { dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' }); })
+            .catch(error => { console.error('Error auto-saving:', error); dispatch({ type: 'SET_SAVE_STATUS', status: 'error' }); lastSavedDataRef.current = null; });
+        } else {
+            console.warn('Auto-save: workbookService.saveAllData not available.')
+        }
       }
     };
-
-    const timeoutId = setTimeout(saveData, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [state, user?.id]);
-
-  // Add auto-save effect
-  useEffect(() => {
-    if (!user?.id || !state.currentProblem) return;
-
-    const saveTimeout = setTimeout(() => {
-      const problemData = state.problems[state.currentProblem];
-      if (problemData) {
-        dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
-        
-        saveQueue.add(async () => {
-          return await workbookService.saveAllData(
-            state.currentProblem,
-            state.activePage,
-            {
-              sections: problemData.sections,
-              diagrams: problemData.diagrams,
-              progress: problemData.progress
-            }
-          );
-        })
-        .then(() => {
-          dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
-        })
-        .catch(error => {
-          console.error('Error auto-saving workbook data:', error);
-          dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
-        });
-      }
-    }, 2000); // 2 second debounce
-
+    const saveTimeout = setTimeout(autoSave, 2000);
     return () => clearTimeout(saveTimeout);
-  }, [state.problems, state.currentProblem, state.activePage, user?.id]);
+  }, [state.currentProblem, state.activePage, state.problems, state.isInitialized, user?.id, dispatch, workbookService]);
 
-  const contextValue = {
+  // Memoize the context value
+  const contextValue = useMemo(() => ({
     state,
     dispatch,
     updatePageContent,
     markPageAsSaved,
-    userId: user?.id
-  };
+    userId: user?.id, // Will be null now
+    workbookService
+  }), [state, user?.id, workbookService]);
+
+  console.log('--- WorkbookContext.js: Finished defining WorkbookProvider ---'); // Add log
 
   return (
     <WorkbookContext.Provider value={contextValue}>
@@ -375,11 +358,18 @@ export const WorkbookProvider = ({ children }) => {
 }
 
 // Custom hooks
+console.log('--- WorkbookContext.js: Defining custom hooks ---'); // Add log
 export function useWorkbook() {
   const context = useContext(WorkbookContext);
-  if (!context) {
-    throw new Error('useWorkbook must be used within a WorkbookProvider');
+  console.log("useWorkbook received context:", context);
+
+  // If context or state isn't ready, or not initialized, return null
+  if (!context || !context.state || !context.state.isInitialized) {
+    console.log("useWorkbook: Context not ready or not initialized yet.");
+    return null; // Return null instead of throwing
   }
+  
+  // Only return the context if it's fully initialized
   return context;
 }
 
@@ -406,4 +396,6 @@ export function useSection(sectionName) {
 
   return [sectionData, updateSection];
 }
+
+console.log('--- WorkbookContext.js: Module execution end ---'); // Add log
 

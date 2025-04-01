@@ -1,10 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Trash2, Plus, ChevronUp, ChevronDown } from 'lucide-react';
-import { useWorkbook } from '../context/WorkbookContext';
 import ProgressBar from '../components/ProgressBar';
+import debounce from 'lodash/debounce';
 
-const APIDesignPage = () => {
-  const { state, dispatch, workbookService } = useWorkbook();
+const API_SAVE_DEBOUNCE_MS = 500;
+
+// Define stable default object outside the component
+const DEFAULT_API_DATA = {
+  apiType: '',
+  endpoints: [],
+  previewMode: false
+};
+
+// Accept contextValue prop instead of using hook
+const APIDesignPage = ({ contextValue }) => {
+  // Use props for context data
+  const { state, dispatch, workbookService } = contextValue; 
+  // const { state, dispatch, workbookService } = useWorkbook(); // REMOVE hook call
   const { currentProblem, problems } = state;
 
   // Define HTTP methods
@@ -13,12 +25,10 @@ const APIDesignPage = () => {
   // Define parameter types (will be needed later based on the code)
   const paramTypes = ['string', 'number', 'boolean', 'object', 'array'];
 
-  // Get data from context
-  const apiData = problems[currentProblem]?.sections?.api || {
-    apiType: '',
-    endpoints: [],
-    previewMode: false
-  };
+  // Get data from context - Use stable default object
+  const apiData = useMemo(() => {
+    return problems[currentProblem]?.sections?.api || DEFAULT_API_DATA;
+  }, [problems, currentProblem]);
 
   // Helper function for HTTP method colors
   const getMethodColor = (method) => {
@@ -68,8 +78,8 @@ const APIDesignPage = () => {
 
   const getTotalSections = () => 4; // API Overview, Endpoints, Authentication Methods, Error Handling
 
-  // Save data function
-  const saveData = async (updatedData) => {
+  // Save data function - wrapped in useCallback
+  const saveData = useCallback(async (updatedData) => {
     dispatch({
       type: 'UPDATE_SECTION_DATA',
       problemId: currentProblem,
@@ -92,7 +102,13 @@ const APIDesignPage = () => {
         console.error('Failed to save API data:', error);
       }
     }
-  };
+  }, [dispatch, currentProblem, workbookService]); // Include dependencies
+
+  // Debounced version of saveData
+  const debouncedSaveData = useMemo(
+    () => debounce(saveData, API_SAVE_DEBOUNCE_MS),
+    [saveData] // Recreate debounce only if saveData changes
+  );
 
   // Toggle preview mode
   const togglePreview = () => {
@@ -125,6 +141,7 @@ const APIDesignPage = () => {
     saveData(updatedData);
   };
 
+  // Update endpoint - uses debounced save
   const updateEndpoint = (id, field, value) => {
     const updatedData = {
       ...apiData,
@@ -132,10 +149,11 @@ const APIDesignPage = () => {
         endpoint.id === id ? { ...endpoint, [field]: value } : endpoint
       )
     };
-    setEndpoints(updatedData.endpoints);
-    saveData(updatedData);
+    setEndpoints(updatedData.endpoints); // Update local state immediately for UI responsiveness
+    debouncedSaveData(updatedData);
   };
 
+  // Delete endpoint
   const deleteEndpoint = (id) => {
     const updatedData = {
       ...apiData,
@@ -156,13 +174,14 @@ const APIDesignPage = () => {
     saveData(updatedData);
   };
 
+  // Update API Type - uses debounced save
   const handleApiTypeChange = (type) => {
     const updatedData = {
       ...apiData,
       apiType: type
     };
-    setApiType(type);
-    saveData(updatedData);
+    setApiType(type); // Update local state immediately
+    debouncedSaveData(updatedData);
   };
 
   // Request parameter management functions
@@ -192,6 +211,7 @@ const APIDesignPage = () => {
     saveData(updatedData);
   };
 
+  // Update Request Param - uses debounced save
   const updateRequestParam = (endpointId, paramId, field, value) => {
     const updatedData = {
       ...apiData,
@@ -207,10 +227,11 @@ const APIDesignPage = () => {
         return endpoint;
       })
     };
-    setEndpoints(updatedData.endpoints);
-    saveData(updatedData);
+    setEndpoints(updatedData.endpoints); // Update local state immediately
+    debouncedSaveData(updatedData);
   };
 
+  // Delete Request Param
   const deleteRequestParam = (endpointId, paramId) => {
     const updatedData = {
       ...apiData,
@@ -228,12 +249,16 @@ const APIDesignPage = () => {
     saveData(updatedData);
   };
 
-  // Update effect
+  // Update effect - Sync state and dispatch progress
   useEffect(() => {
-    setApiType(apiData.apiType);
-    setEndpoints(apiData.endpoints);
-    setPreviewMode(apiData.previewMode);
-  }, [currentProblem, problems]);
+    const progress = calculateProgress();
+    dispatch({
+      type: 'UPDATE_PROGRESS',
+      problemId: currentProblem,
+      section: 'api',
+      progress
+    });
+  }, [endpoints, apiType, dispatch, currentProblem]); // Restore original dependencies
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">

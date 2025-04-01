@@ -1,0 +1,1858 @@
+import React, { useState } from 'react';
+import { Plus, Trash2, MessageSquare, Save } from 'lucide-react';
+
+const RequirementsPage = () => {
+  const [functionalReqs, setFunctionalReqs] = useState([
+    { id: 1, text: '', completed: false }
+  ]);
+  const [nonFunctionalReqs, setNonFunctionalReqs] = useState([
+    { id: 1, category: 'Performance', text: '' },
+    { id: 2, category: 'Scalability', text: '' },
+    { id: 3, category: 'Reliability', text: '' },
+    { id: 4, category: 'Security', text: '' }
+  ]);
+  const [constraints, setConstraints] = useState('');
+  const [assumptions, setAssumptions] = useState('');
+  
+  const addFunctionalReq = () => {
+    const newId = functionalReqs.length > 0 ? Math.max(...functionalReqs.map(r => r.id)) + 1 : 1;
+    setFunctionalReqs([...functionalReqs, { id: newId, text: '', completed: false }]);
+  };
+  
+  const removeFunctionalReq = (id) => {
+    setFunctionalReqs(functionalReqs.filter(req => req.id !== id));
+  };
+  
+  const updateFunctionalReq = (id, text) => {
+    setFunctionalReqs(functionalReqs.map(req => 
+      req.id === id ? { ...req, text } : req
+    ));
+  };
+  
+  const toggleFunctionalReq = (id) => {
+    setFunctionalReqs(functionalReqs.map(req => 
+      req.id === id ? { ...req, completed: !req.completed } : req
+    ));
+  };
+  
+  const updateNonFunctionalReq = (id, text) => {
+    setNonFunctionalReqs(nonFunctionalReqs.map(req => 
+      req.id === id ? { ...req, text } : req
+    ));
+  };
+  
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="bg-indigo-700 p-4 text-white">
+        <h1 className="text-xl font-bold">Requirements Clarification</h1>
+        <p className="text-sm text-indigo-200">Define what the system needs to accomplish</p>
+      </div>
+      
+      <div className="flex-1 overflow-auto p-6 space-y-8">
+        {/* Functional Requirements */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">Functional Requirements</h2>
+          <p className="text-sm text-gray-600 mb-4">What specific features and capabilities must the system provide?</p>
+          
+          <div className="space-y-2">
+            {functionalReqs.map(req => (
+              <div key={req.id} className="flex items-start gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={req.completed}
+                  onChange={() => toggleFunctionalReq(req.id)}
+                  className="mt-1.5"
+                />
+                <input
+                  type="text"
+                  value={req.text}
+                  onChange={(e) => updateFunctionalReq(req.id, e.target.value)}
+                  placeholder="Enter requirement..."
+                  className="flex-1 p-2 border border-gray-300 rounded text-sm"
+                />
+                <button 
+                  onClick={() => removeFunctionalReq(req.id)}
+                  className="p-1 text-gray-500 hover:text-red-500"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <button 
+            onClick={addFunctionalReq}
+            className="mt-3 flex items-center text-sm text-indigo-600 hover:text-indigo-800"
+          >
+            <Plus size={16} className="mr-1" />
+            Add Requirement
+          </button>
+        </div>
+        
+        {/* Non-Functional Requirements */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">Non-Functional Requirements</h2>
+          <p className="text-sm text-gray-600 mb-4">Quality attributes that define how the system should perform</p>
+          
+          <div className="space-y-3">
+            {nonFunctionalReqs.map(req => (
+              <div key={req.id} className="flex flex-col">
+                <label className="font-medium text-sm text-gray-700">{req.category}</label>
+                <input
+                  type="text"
+                  value={req.text}
+                  onChange={(e) => updateNonFunctionalReq(req.id, e.target.value)}
+                  placeholder={`Enter ${req.category.toLowerCase()} requirements...`}
+                  className="p-2 border border-gray-300 rounded text-sm mt-1"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Constraints & Assumptions */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">Constraints</h2>
+            <p className="text-sm text-gray-600 mb-4">What limitations must be considered?</p>
+            <textarea
+              value={constraints}
+              onChange={(e) => setConstraints(e.target.value)}
+              placeholder="Enter system constraints..."
+              className="w-full h-32 p-2 border border-gray-300 rounded text-sm"
+            />
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">Assumptions</h2>
+            <p className="text-sm text-gray-600 mb-4">What are you assuming about the system?</p>
+            <textarea
+              value={assumptions}
+              onChange={(e) => setAssumptions(e.target.value)}
+              placeholder="Enter your assumptions..."
+              className="w-full h-32 p-2 border border-gray-300 rounded text-sm"
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer with actions */}
+      <div className="border-t border-gray-200 p-4 flex justify-between">
+        <button className="flex items-center px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">
+          <MessageSquare size={16} className="mr-2" />
+          Ask Coach
+        </button>
+        <button className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+          <Save size={16} className="mr-2" />
+          Save & Continue
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default RequirementsPage;
+
+==============================
+
+import React, { useState } from 'react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Copy, MessageSquare, Save } from 'lucide-react';
+
+const APIDesignPage = () => {
+  const [apis, setApis] = useState([
+    {
+      id: 1,
+      endpoint: '/api/resource',
+      method: 'GET',
+      description: 'Get all resources',
+      requestParams: [{ id: 1, name: 'limit', type: 'number', required: false, description: 'Maximum results to return' }],
+      responseFormat: '[\n  {\n    "id": "string",\n    "name": "string"\n  }\n]',
+      expanded: true
+    }
+  ]);
+  
+  const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+  
+  const addAPI = () => {
+    const newId = apis.length > 0 ? Math.max(...apis.map(api => api.id)) + 1 : 1;
+    setApis([...apis, {
+      id: newId,
+      endpoint: '',
+      method: 'GET',
+      description: '',
+      requestParams: [],
+      responseFormat: '{}',
+      expanded: true
+    }]);
+  };
+  
+  const removeAPI = (id) => {
+    setApis(apis.filter(api => api.id !== id));
+  };
+  
+  const updateAPI = (id, field, value) => {
+    setApis(apis.map(api => 
+      api.id === id ? { ...api, [field]: value } : api
+    ));
+  };
+  
+  const toggleExpand = (id) => {
+    setApis(apis.map(api => 
+      api.id === id ? { ...api, expanded: !api.expanded } : api
+    ));
+  };
+  
+  const addRequestParam = (apiId) => {
+    const api = apis.find(a => a.id === apiId);
+    if (!api) return;
+    
+    const newParamId = api.requestParams.length > 0 
+      ? Math.max(...api.requestParams.map(p => p.id)) + 1 
+      : 1;
+      
+    const newParams = [...api.requestParams, {
+      id: newParamId,
+      name: '',
+      type: 'string',
+      required: false,
+      description: ''
+    }];
+    
+    updateAPI(apiId, 'requestParams', newParams);
+  };
+  
+  const removeRequestParam = (apiId, paramId) => {
+    const api = apis.find(a => a.id === apiId);
+    if (!api) return;
+    
+    const newParams = api.requestParams.filter(p => p.id !== paramId);
+    updateAPI(apiId, 'requestParams', newParams);
+  };
+  
+  const updateRequestParam = (apiId, paramId, field, value) => {
+    const api = apis.find(a => a.id === apiId);
+    if (!api) return;
+    
+    const newParams = api.requestParams.map(p => 
+      p.id === paramId ? { ...p, [field]: value } : p
+    );
+    
+    updateAPI(apiId, 'requestParams', newParams);
+  };
+  
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="bg-green-700 p-4 text-white">
+        <h1 className="text-xl font-bold">API Design</h1>
+        <p className="text-sm text-green-200">Define system interfaces and endpoints</p>
+      </div>
+      
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        {/* API Type Selection */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">API Type</h2>
+          <div className="flex space-x-4">
+            <label className="flex items-center">
+              <input type="radio" name="apiType" defaultChecked className="mr-2" />
+              <span>REST</span>
+            </label>
+            <label className="flex items-center">
+              <input type="radio" name="apiType" className="mr-2" />
+              <span>GraphQL</span>
+            </label>
+            <label className="flex items-center">
+              <input type="radio" name="apiType" className="mr-2" />
+              <span>gRPC</span>
+            </label>
+          </div>
+        </div>
+        
+        {/* API Endpoints */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">API Endpoints</h2>
+          <p className="text-sm text-gray-600 mb-4">Define the endpoints your system exposes</p>
+          
+          <div className="space-y-4">
+            {apis.map(api => (
+              <div key={api.id} className="border border-gray-300 rounded-md overflow-hidden">
+                {/* API Header */}
+                <div className="flex items-center justify-between p-3 bg-gray-100 border-b border-gray-300">
+                  <div className="flex items-center space-x-3">
+                    <select
+                      value={api.method}
+                      onChange={(e) => updateAPI(api.id, 'method', e.target.value)}
+                      className="px-2 py-1 text-sm font-medium rounded border border-gray-300"
+                    >
+                      {methods.map(method => (
+                        <option key={method} value={method}>{method}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={api.endpoint}
+                      onChange={(e) => updateAPI(api.id, 'endpoint', e.target.value)}
+                      placeholder="Endpoint path (e.g., /api/users)"
+                      className="px-2 py-1 text-sm border border-gray-300 rounded w-64"
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      onClick={() => toggleExpand(api.id)}
+                      className="p-1 text-gray-500 hover:text-gray-700"
+                    >
+                      {api.expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </button>
+                    <button 
+                      onClick={() => removeAPI(api.id)}
+                      className="p-1 text-gray-500 hover:text-red-500 ml-2"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* API Details */}
+                {api.expanded && (
+                  <div className="p-4 space-y-4">
+                    {/* Description */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={api.description}
+                        onChange={(e) => updateAPI(api.id, 'description', e.target.value)}
+                        placeholder="What does this endpoint do?"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+                      />
+                    </div>
+                    
+                    {/* Request Parameters */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Request Parameters</label>
+                      <div className="border border-gray-300 rounded overflow-hidden">
+                        {/* Table Header */}
+                        <div className="grid grid-cols-12 gap-2 bg-gray-100 p-2 text-xs font-medium text-gray-700">
+                          <div className="col-span-3">Name</div>
+                          <div className="col-span-2">Type</div>
+                          <div className="col-span-2">Required</div>
+                          <div className="col-span-4">Description</div>
+                          <div className="col-span-1"></div>
+                        </div>
+                        
+                        {/* Parameters */}
+                        {api.requestParams.map(param => (
+                          <div key={param.id} className="grid grid-cols-12 gap-2 p-2 border-t border-gray-300">
+                            <div className="col-span-3">
+                              <input
+                                type="text"
+                                value={param.name}
+                                onChange={(e) => updateRequestParam(api.id, param.id, 'name', e.target.value)}
+                                placeholder="Parameter name"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <select
+                                value={param.type}
+                                onChange={(e) => updateRequestParam(api.id, param.id, 'type', e.target.value)}
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                              >
+                                <option value="string">string</option>
+                                <option value="number">number</option>
+                                <option value="boolean">boolean</option>
+                                <option value="object">object</option>
+                                <option value="array">array</option>
+                              </select>
+                            </div>
+                            <div className="col-span-2 flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={param.required}
+                                onChange={(e) => updateRequestParam(api.id, param.id, 'required', e.target.checked)}
+                                className="mr-2"
+                              />
+                              <span className="text-sm">Required</span>
+                            </div>
+                            <div className="col-span-4">
+                              <input
+                                type="text"
+                                value={param.description}
+                                onChange={(e) => updateRequestParam(api.id, param.id, 'description', e.target.value)}
+                                placeholder="Parameter description"
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                              />
+                            </div>
+                            <div className="col-span-1 flex justify-end">
+                              <button 
+                                onClick={() => removeRequestParam(api.id, param.id)}
+                                className="p-1 text-gray-500 hover:text-red-500"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Add Parameter Button */}
+                        <div className="p-2 border-t border-gray-300">
+                          <button
+                            onClick={() => addRequestParam(api.id)}
+                            className="flex items-center text-xs text-green-600 hover:text-green-800"
+                          >
+                            <Plus size={14} className="mr-1" />
+                            Add Parameter
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Response Format */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Response Format</label>
+                      <div className="flex">
+                        <textarea
+                          value={api.responseFormat}
+                          onChange={(e) => updateAPI(api.id, 'responseFormat', e.target.value)}
+                          placeholder="JSON response schema"
+                          className="flex-1 h-32 px-3 py-2 text-sm border border-gray-300 rounded font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <button 
+            onClick={addAPI}
+            className="mt-4 flex items-center text-sm text-green-600 hover:text-green-800"
+          >
+            <Plus size={16} className="mr-1" />
+            Add Endpoint
+          </button>
+        </div>
+      </div>
+      
+      {/* Footer with actions */}
+      <div className="border-t border-gray-200 p-4 flex justify-between">
+        <button className="flex items-center px-4 py-2 text-sm bg-green-50 text-green-700 rounded-md hover:bg-green-100">
+          <MessageSquare size={16} className="mr-2" />
+          Ask Coach
+        </button>
+        <button className="flex items-center px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+          <Save size={16} className="mr-2" />
+          Save & Continue
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default APIDesignPage;
+
+============================
+
+import React, { useState } from 'react';
+import { MessageSquare, Save, ChevronDown, ChevronUp, Check, Plus, Trash2 } from 'lucide-react';
+
+const ScalingStrategyPage = () => {
+  const [sections, setSections] = useState([
+    {
+      id: 'traffic',
+      title: 'Traffic Estimation',
+      description: 'Estimate the scale and volume of your system',
+      expanded: true,
+      fields: [
+        { id: 'dau', label: 'Daily Active Users (DAU)', value: '', unit: 'users' },
+        { id: 'requestsPerUser', label: 'Requests per user per day', value: '', unit: 'requests' },
+        { id: 'peakQPS', label: 'Peak QPS (Queries Per Second)', value: '', unit: 'QPS' }
+      ]
+    },
+    {
+      id: 'storage',
+      title: 'Storage Requirements',
+      description: 'Calculate how much data you need to store',
+      expanded: false,
+      fields: [
+        { id: 'objectSize', label: 'Average object size', value: '', unit: 'KB' },
+        { id: 'dailyNewData', label: 'New data per day', value: '', unit: 'GB' },
+        { id: 'retentionPeriod', label: 'Data retention period', value: '', unit: 'days' },
+        { id: 'totalStorage', label: 'Total storage needed', value: '', unit: 'TB' }
+      ]
+    },
+    {
+      id: 'bandwidth',
+      title: 'Bandwidth Estimation',
+      description: 'Estimate inbound and outbound network traffic',
+      expanded: false,
+      fields: [
+        { id: 'inboundTraffic', label: 'Inbound traffic per day', value: '', unit: 'GB' },
+        { id: 'outboundTraffic', label: 'Outbound traffic per day', value: '', unit: 'GB' },
+        { id: 'peakBandwidth', label: 'Peak bandwidth requirement', value: '', unit: 'Mbps' }
+      ]
+    },
+    {
+      id: 'memory',
+      title: 'Memory Requirements',
+      description: 'Estimate cache and working memory needs',
+      expanded: false,
+      fields: [
+        { id: 'cacheSize', label: 'Total cache size', value: '', unit: 'GB' },
+        { id: 'cacheHitRate', label: 'Target cache hit rate', value: '', unit: '%' }
+      ]
+    }
+  ]);
+
+  const [strategies, setStrategies] = useState([
+    {
+      id: 'horizontal',
+      title: 'Horizontal Scaling',
+      applied: false,
+      description: '',
+      components: []
+    },
+    {
+      id: 'vertical',
+      title: 'Vertical Scaling',
+      applied: false,
+      description: '',
+      components: []
+    },
+    {
+      id: 'caching',
+      title: 'Caching Strategy',
+      applied: false,
+      description: '',
+      layers: []
+    },
+    {
+      id: 'database',
+      title: 'Database Scaling',
+      applied: false,
+      description: '',
+      techniques: []
+    }
+  ]);
+
+  const [bottlenecks, setBottlenecks] = useState([
+    { id: 1, description: '', solution: '' }
+  ]);
+
+  // Toggle section expansion
+  const toggleSection = (sectionId) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, expanded: !section.expanded } 
+        : section
+    ));
+  };
+
+  // Update field value
+  const updateFieldValue = (sectionId, fieldId, value) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            fields: section.fields.map(field => 
+              field.id === fieldId ? { ...field, value } : field
+            )
+          } 
+        : section
+    ));
+  };
+
+  // Toggle a scaling strategy's applied status
+  const toggleStrategy = (strategyId) => {
+    setStrategies(strategies.map(strategy => 
+      strategy.id === strategyId 
+        ? { ...strategy, applied: !strategy.applied } 
+        : strategy
+    ));
+  };
+
+  // Update strategy description
+  const updateStrategyDescription = (strategyId, description) => {
+    setStrategies(strategies.map(strategy => 
+      strategy.id === strategyId 
+        ? { ...strategy, description } 
+        : strategy
+    ));
+  };
+
+  // Add a component to a strategy
+  const addStrategyComponent = (strategyId) => {
+    setStrategies(strategies.map(strategy => {
+      if (strategy.id === strategyId) {
+        return {
+          ...strategy,
+          components: [
+            ...strategy.components,
+            { id: Date.now(), name: '', details: '' }
+          ]
+        };
+      }
+      return strategy;
+    }));
+  };
+
+  // Update a component in a strategy
+  const updateStrategyComponent = (strategyId, componentId, field, value) => {
+    setStrategies(strategies.map(strategy => {
+      if (strategy.id === strategyId) {
+        return {
+          ...strategy,
+          components: strategy.components.map(component => 
+            component.id === componentId 
+              ? { ...component, [field]: value } 
+              : component
+          )
+        };
+      }
+      return strategy;
+    }));
+  };
+
+  // Remove a component from a strategy
+  const removeStrategyComponent = (strategyId, componentId) => {
+    setStrategies(strategies.map(strategy => {
+      if (strategy.id === strategyId) {
+        return {
+          ...strategy,
+          components: strategy.components.filter(component => component.id !== componentId)
+        };
+      }
+      return strategy;
+    }));
+  };
+
+  // Add a bottleneck
+  const addBottleneck = () => {
+    setBottlenecks([
+      ...bottlenecks,
+      { id: Date.now(), description: '', solution: '' }
+    ]);
+  };
+
+  // Update a bottleneck
+  const updateBottleneck = (bottleneckId, field, value) => {
+    setBottlenecks(bottlenecks.map(bottleneck => 
+      bottleneck.id === bottleneckId 
+        ? { ...bottleneck, [field]: value } 
+        : bottleneck
+    ));
+  };
+
+  // Remove a bottleneck
+  const removeBottleneck = (bottleneckId) => {
+    setBottlenecks(bottlenecks.filter(bottleneck => bottleneck.id !== bottleneckId));
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="bg-orange-700 p-4 text-white">
+        <h1 className="text-xl font-bold">Scaling Strategy</h1>
+        <p className="text-sm text-orange-200">Define how your system will handle growth and high load</p>
+      </div>
+      
+      <div className="flex-1 overflow-auto p-6 space-y-8">
+        {/* Estimations Sections */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Scale Estimations</h2>
+          
+          <div className="space-y-4">
+            {sections.map(section => (
+              <div key={section.id} className="border border-gray-300 rounded-md">
+                <div 
+                  className="flex justify-between items-center p-3 bg-gray-100 cursor-pointer"
+                  onClick={() => toggleSection(section.id)}
+                >
+                  <div>
+                    <h3 className="font-medium text-gray-800">{section.title}</h3>
+                    <p className="text-sm text-gray-600">{section.description}</p>
+                  </div>
+                  <div>
+                    {section.expanded ? (
+                      <ChevronUp size={20} className="text-gray-500" />
+                    ) : (
+                      <ChevronDown size={20} className="text-gray-500" />
+                    )}
+                  </div>
+                </div>
+                
+                {section.expanded && (
+                  <div className="p-3 border-t border-gray-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {section.fields.map(field => (
+                        <div key={field.id} className="flex flex-col">
+                          <label className="text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                          <div className="flex">
+                            <input
+                              type="text"
+                              value={field.value}
+                              onChange={(e) => updateFieldValue(section.id, field.id, e.target.value)}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                              placeholder="Enter value"
+                            />
+                            <span className="bg-gray-100 px-3 py-2 border border-l-0 border-gray-300 rounded-r-md text-gray-500">
+                              {field.unit}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Scaling Strategies */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Scaling Approaches</h2>
+          
+          <div className="space-y-4">
+            {strategies.map(strategy => (
+              <div key={strategy.id} className="border border-gray-300 rounded-md overflow-hidden">
+                <div className="p-3 bg-white">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start">
+                      <div className="mt-0.5 mr-3">
+                        <button 
+                          onClick={() => toggleStrategy(strategy.id)}
+                          className={`w-5 h-5 rounded flex items-center justify-center ${
+                            strategy.applied ? 'bg-orange-500 text-white' : 'border border-gray-300'
+                          }`}
+                        >
+                          {strategy.applied && <Check size={14} />}
+                        </button>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-800">{strategy.title}</h3>
+                        <textarea
+                          value={strategy.description}
+                          onChange={(e) => updateStrategyDescription(strategy.id, e.target.value)}
+                          placeholder={`Describe your ${strategy.title.toLowerCase()} approach...`}
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          rows="3"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {strategy.applied && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Components to Scale</h4>
+                      
+                      {strategy.components.map(component => (
+                        <div key={component.id} className="flex items-start mb-2">
+                          <input
+                            type="text"
+                            value={component.name}
+                            onChange={(e) => updateStrategyComponent(strategy.id, component.id, 'name', e.target.value)}
+                            placeholder="Component name"
+                            className="w-48 px-3 py-2 border border-gray-300 rounded-l-md text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={component.details}
+                            onChange={(e) => updateStrategyComponent(strategy.id, component.id, 'details', e.target.value)}
+                            placeholder="How to scale this component"
+                            className="flex-1 px-3 py-2 border-t border-b border-r border-gray-300 text-sm"
+                          />
+                          <button 
+                            onClick={() => removeStrategyComponent(strategy.id, component.id)}
+                            className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 hover:text-red-500"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      <button 
+                        onClick={() => addStrategyComponent(strategy.id)}
+                        className="flex items-center text-xs text-orange-600 hover:text-orange-800 mt-2"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        Add Component
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Bottlenecks and Solutions */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Potential Bottlenecks & Solutions</h2>
+          
+          <div className="space-y-4">
+            {bottlenecks.map(bottleneck => (
+              <div key={bottleneck.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-300 rounded-md p-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bottleneck</label>
+                  <textarea
+                    value={bottleneck.description}
+                    onChange={(e) => updateBottleneck(bottleneck.id, 'description', e.target.value)}
+                    placeholder="Describe a potential bottleneck"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    rows="3"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
+                  <textarea
+                    value={bottleneck.solution}
+                    onChange={(e) => updateBottleneck(bottleneck.id, 'solution', e.target.value)}
+                    placeholder="Describe your solution"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    rows="3"
+                  />
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <button 
+                    onClick={() => removeBottleneck(bottleneck.id)}
+                    className="text-red-500 hover:text-red-700 text-sm flex items-center"
+                  >
+                    <Trash2 size={14} className="mr-1" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+            
+            <button 
+              onClick={addBottleneck}
+              className="flex items-center text-sm text-orange-600 hover:text-orange-800 mt-2"
+            >
+              <Plus size={16} className="mr-1" />
+              Add Another Bottleneck
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer with actions */}
+      <div className="border-t border-gray-200 p-4 flex justify-between">
+        <button className="flex items-center px-4 py-2 text-sm bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100">
+          <MessageSquare size={16} className="mr-2" />
+          Ask Coach
+        </button>
+        <button className="flex items-center px-4 py-2 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700">
+          <Save size={16} className="mr-2" />
+          Save & Continue
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ScalingStrategyPage;
+
+
+=====
+
+import React, { useState } from 'react';
+import { MessageSquare, Save, ChevronDown, ChevronUp, Plus, Trash2, Shield, Activity } from 'lucide-react';
+
+const ReliabilitySecurityPage = () => {
+  // Reliability state
+  const [reliabilityTargets, setReliabilityTargets] = useState([
+    { id: 1, metric: 'Availability', target: '99.9', unit: '%', notes: 'Maximum 8.76 hours downtime per year' },
+    { id: 2, metric: 'Response Time', target: '200', unit: 'ms', notes: 'P95 latency' }
+  ]);
+  
+  const [failureScenarios, setFailureScenarios] = useState([
+    { id: 1, component: '', scenario: '', mitigation: '' }
+  ]);
+  
+  // Security state
+  const [authMethods, setAuthMethods] = useState({
+    jwt: false,
+    oauth: false,
+    apiKey: false,
+    sessionCookie: false,
+    custom: false,
+    customDetails: ''
+  });
+  
+  const [dataProtection, setDataProtection] = useState({
+    encryption: {
+      inTransit: false,
+      atRest: false,
+      endToEnd: false,
+      notes: ''
+    },
+    accessControl: {
+      rbac: false,
+      acl: false,
+      customPolicy: false,
+      notes: ''
+    }
+  });
+  
+  const [securityMeasures, setSecurityMeasures] = useState([
+    { id: 1, type: 'Input Validation', implemented: false, details: '' }
+  ]);
+  
+  const [complianceRequirements, setComplianceRequirements] = useState([
+    { id: 1, standard: '', requirements: '', implemented: false }
+  ]);
+  
+  // Reliability section handlers
+  const addReliabilityTarget = () => {
+    const newId = reliabilityTargets.length > 0 
+      ? Math.max(...reliabilityTargets.map(t => t.id)) + 1 
+      : 1;
+    
+    setReliabilityTargets([
+      ...reliabilityTargets,
+      { id: newId, metric: '', target: '', unit: '', notes: '' }
+    ]);
+  };
+  
+  const updateReliabilityTarget = (id, field, value) => {
+    setReliabilityTargets(reliabilityTargets.map(target => 
+      target.id === id ? { ...target, [field]: value } : target
+    ));
+  };
+  
+  const removeReliabilityTarget = (id) => {
+    setReliabilityTargets(reliabilityTargets.filter(target => target.id !== id));
+  };
+  
+  const addFailureScenario = () => {
+    const newId = failureScenarios.length > 0 
+      ? Math.max(...failureScenarios.map(s => s.id)) + 1 
+      : 1;
+    
+    setFailureScenarios([
+      ...failureScenarios,
+      { id: newId, component: '', scenario: '', mitigation: '' }
+    ]);
+  };
+  
+  const updateFailureScenario = (id, field, value) => {
+    setFailureScenarios(failureScenarios.map(scenario => 
+      scenario.id === id ? { ...scenario, [field]: value } : scenario
+    ));
+  };
+  
+  const removeFailureScenario = (id) => {
+    setFailureScenarios(failureScenarios.filter(scenario => scenario.id !== id));
+  };
+  
+  // Security section handlers
+  const updateAuthMethod = (method, value) => {
+    setAuthMethods({
+      ...authMethods,
+      [method]: value
+    });
+  };
+  
+  const updateDataProtection = (category, field, value) => {
+    setDataProtection({
+      ...dataProtection,
+      [category]: {
+        ...dataProtection[category],
+        [field]: value
+      }
+    });
+  };
+  
+  const addSecurityMeasure = () => {
+    const newId = securityMeasures.length > 0 
+      ? Math.max(...securityMeasures.map(m => m.id)) + 1 
+      : 1;
+    
+    setSecurityMeasures([
+      ...securityMeasures,
+      { id: newId, type: '', implemented: false, details: '' }
+    ]);
+  };
+  
+  const updateSecurityMeasure = (id, field, value) => {
+    setSecurityMeasures(securityMeasures.map(measure => 
+      measure.id === id ? { ...measure, [field]: value } : measure
+    ));
+  };
+  
+  const removeSecurityMeasure = (id) => {
+    setSecurityMeasures(securityMeasures.filter(measure => measure.id !== id));
+  };
+  
+  const addComplianceRequirement = () => {
+    const newId = complianceRequirements.length > 0 
+      ? Math.max(...complianceRequirements.map(r => r.id)) + 1 
+      : 1;
+    
+    setComplianceRequirements([
+      ...complianceRequirements,
+      { id: newId, standard: '', requirements: '', implemented: false }
+    ]);
+  };
+  
+  const updateComplianceRequirement = (id, field, value) => {
+    setComplianceRequirements(complianceRequirements.map(req => 
+      req.id === id ? { ...req, [field]: value } : req
+    ));
+  };
+  
+  const removeComplianceRequirement = (id) => {
+    setComplianceRequirements(complianceRequirements.filter(req => req.id !== id));
+  };
+  
+  // UI state
+  const [expandedSections, setExpandedSections] = useState({
+    reliabilityTargets: true,
+    failureScenarios: true,
+    authMethods: true,
+    dataProtection: true,
+    securityMeasures: true,
+    compliance: true
+  });
+  
+  const toggleSection = (section) => {
+    setExpandedSections({
+      ...expandedSections,
+      [section]: !expandedSections[section]
+    });
+  };
+  
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="bg-red-700 p-4 text-white">
+        <h1 className="text-xl font-bold">Reliability & Security</h1>
+        <p className="text-sm text-red-200">Define how your system stays available, resilient, and secure</p>
+      </div>
+      
+      <div className="flex-1 overflow-auto p-6 space-y-8">
+        {/* Reliability Section */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center mb-4">
+            <Activity className="h-5 w-5 text-red-500 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-800">Reliability & Availability</h2>
+          </div>
+          
+          {/* Reliability Targets */}
+          <div className="mb-6">
+            <div 
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleSection('reliabilityTargets')}
+            >
+              <h3 className="text-md font-medium text-gray-700">Reliability Targets</h3>
+              {expandedSections.reliabilityTargets ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
+            </div>
+            
+            {expandedSections.reliabilityTargets && (
+              <div className="mt-2 space-y-3">
+                {reliabilityTargets.map(target => (
+                  <div key={target.id} className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-3">
+                      <input
+                        type="text"
+                        value={target.metric}
+                        onChange={(e) => updateReliabilityTarget(target.id, 'metric', e.target.value)}
+                        placeholder="Metric"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <div className="flex">
+                        <input
+                          type="text"
+                          value={target.target}
+                          onChange={(e) => updateReliabilityTarget(target.id, 'target', e.target.value)}
+                          placeholder="Value"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-l text-sm"
+                        />
+                        <span className="bg-gray-100 px-3 py-2 border border-l-0 border-gray-300 rounded-r text-sm text-gray-500">
+                          <input
+                            type="text"
+                            value={target.unit}
+                            onChange={(e) => updateReliabilityTarget(target.id, 'unit', e.target.value)}
+                            placeholder="unit"
+                            className="w-10 bg-transparent border-none p-0 text-sm text-center"
+                          />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="col-span-6">
+                      <input
+                        type="text"
+                        value={target.notes}
+                        onChange={(e) => updateReliabilityTarget(target.id, 'notes', e.target.value)}
+                        placeholder="Notes"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                      />
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <button 
+                        onClick={() => removeReliabilityTarget(target.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                <button 
+                  onClick={addReliabilityTarget}
+                  className="flex items-center text-sm text-red-600 hover:text-red-800"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add Reliability Metric
+                </button>
+                
+                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
+                  <p className="font-medium mb-1">Common reliability targets:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Availability (uptime): 99.9% to 99.999%</li>
+                    <li>Latency: P95, P99 response times</li>
+                    <li>Error Rate: % of failed requests</li>
+                    <li>Recovery Time (RTO/RPO): Minutes/hours/data loss limits</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Failure Scenarios */}
+          <div>
+            <div 
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleSection('failureScenarios')}
+            >
+              <h3 className="text-md font-medium text-gray-700">Failure Scenarios & Mitigations</h3>
+              {expandedSections.failureScenarios ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
+            </div>
+            
+            {expandedSections.failureScenarios && (
+              <div className="mt-2 space-y-3">
+                {failureScenarios.map(scenario => (
+                  <div key={scenario.id} className="border border-gray-300 rounded-md p-3">
+                    <div className="grid grid-cols-12 gap-3">
+                      <div className="col-span-4">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Component/Service</label>
+                        <input
+                          type="text"
+                          value={scenario.component}
+                          onChange={(e) => updateFailureScenario(scenario.id, 'component', e.target.value)}
+                          placeholder="Which component can fail?"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                      <div className="col-span-8">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Failure Scenario</label>
+                        <input
+                          type="text"
+                          value={scenario.scenario}
+                          onChange={(e) => updateFailureScenario(scenario.id, 'scenario', e.target.value)}
+                          placeholder="What could go wrong?"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                      <div className="col-span-12">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Mitigation Strategy</label>
+                        <textarea
+                          value={scenario.mitigation}
+                          onChange={(e) => updateFailureScenario(scenario.id, 'mitigation', e.target.value)}
+                          placeholder="How will you handle this failure?"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                          rows="2"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end mt-2">
+                      <button 
+                        onClick={() => removeFailureScenario(scenario.id)}
+                        className="text-red-500 hover:text-red-700 text-sm flex items-center"
+                      >
+                        <Trash2 size={14} className="mr-1" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                <button 
+                  onClick={addFailureScenario}
+                  className="flex items-center text-sm text-red-600 hover:text-red-800"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add Failure Scenario
+                </button>
+                
+                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
+                  <p className="font-medium mb-1">Common failure scenarios to consider:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Service instance failure</li>
+                    <li>Network partitions</li>
+                    <li>Database unavailability</li>
+                    <li>Region/zone outages</li>
+                    <li>Dependency failures</li>
+                    <li>Traffic spikes/DDoS</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Security Section */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center mb-4">
+            <Shield className="h-5 w-5 text-red-500 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-800">Security & Privacy</h2>
+          </div>
+          
+          {/* Authentication Methods */}
+          <div className="mb-6">
+            <div 
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleSection('authMethods')}
+            >
+              <h3 className="text-md font-medium text-gray-700">Authentication & Authorization</h3>
+              {expandedSections.authMethods ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
+            </div>
+            
+            {expandedSections.authMethods && (
+              <div className="mt-2 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-1">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Authentication Methods</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={authMethods.jwt}
+                          onChange={(e) => updateAuthMethod('jwt', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">JWT Tokens</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={authMethods.oauth}
+                          onChange={(e) => updateAuthMethod('oauth', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">OAuth 2.0</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={authMethods.apiKey}
+                          onChange={(e) => updateAuthMethod('apiKey', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">API Keys</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={authMethods.sessionCookie}
+                          onChange={(e) => updateAuthMethod('sessionCookie', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Session Cookies</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={authMethods.custom}
+                          onChange={(e) => updateAuthMethod('custom', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Custom Solution</span>
+                      </label>
+                      
+                      {authMethods.custom && (
+                        <textarea
+                          value={authMethods.customDetails}
+                          onChange={(e) => updateAuthMethod('customDetails', e.target.value)}
+                          placeholder="Describe your custom authentication method"
+                          className="w-full mt-2 px-3 py-2 border border-gray-300 rounded text-sm"
+                          rows="2"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-1">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Authorization Strategy</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={dataProtection.accessControl.rbac}
+                          onChange={(e) => updateDataProtection('accessControl', 'rbac', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Role-Based Access Control (RBAC)</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={dataProtection.accessControl.acl}
+                          onChange={(e) => updateDataProtection('accessControl', 'acl', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Access Control Lists (ACL)</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={dataProtection.accessControl.customPolicy}
+                          onChange={(e) => updateDataProtection('accessControl', 'customPolicy', e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">Custom Policy Engine</span>
+                      </label>
+                      
+                      <textarea
+                        value={dataProtection.accessControl.notes}
+                        onChange={(e) => updateDataProtection('accessControl', 'notes', e.target.value)}
+                        placeholder="Additional notes about authorization"
+                        className="w-full mt-2 px-3 py-2 border border-gray-300 rounded text-sm"
+                        rows="2"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Data Protection */}
+          <div className="mb-6">
+            <div 
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleSection('dataProtection')}
+            >
+              <h3 className="text-md font-medium text-gray-700">Data Protection</h3>
+              {expandedSections.dataProtection ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
+            </div>
+            
+            {expandedSections.dataProtection && (
+              <div className="mt-2 space-y-3">
+                <h4 className="text-sm font-medium text-gray-700">Encryption Strategies</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={dataProtection.encryption.inTransit}
+                      onChange={(e) => updateDataProtection('encryption', 'inTransit', e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Encryption in Transit (TLS/SSL)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={dataProtection.encryption.atRest}
+                      onChange={(e) => updateDataProtection('encryption', 'atRest', e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Encryption at Rest</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={dataProtection.encryption.endToEnd}
+                      onChange={(e) => updateDataProtection('encryption', 'endToEnd', e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">End-to-End Encryption</span>
+                  </label>
+                  
+                  <textarea
+                    value={dataProtection.encryption.notes}
+                    onChange={(e) => updateDataProtection('encryption', 'notes', e.target.value)}
+                    placeholder="Additional notes about encryption"
+                    className="w-full mt-2 px-3 py-2 border border-gray-300 rounded text-sm"
+                    rows="2"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Security Measures */}
+          <div className="mb-6">
+            <div 
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleSection('securityMeasures')}
+            >
+              <h3 className="text-md font-medium text-gray-700">Security Measures</h3>
+              {expandedSections.securityMeasures ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
+            </div>
+            
+            {expandedSections.securityMeasures && (
+              <div className="mt-2 space-y-3">
+                {securityMeasures.map(measure => (
+                  <div key={measure.id} className="flex items-start space-x-2 border-b border-gray-200 pb-2">
+                    <input
+                      type="checkbox"
+                      checked={measure.implemented}
+                      onChange={(e) => updateSecurityMeasure(measure.id, 'implemented', e.target.checked)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1 grid grid-cols-3 gap-2">
+                      <div className="col-span-1">
+                        <input
+                          type="text"
+                          value={measure.type}
+                          onChange={(e) => updateSecurityMeasure(measure.id, 'type', e.target.value)}
+                          placeholder="Security Measure"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="text"
+                          value={measure.details}
+                          onChange={(e) => updateSecurityMeasure(measure.id, 'details', e.target.value)}
+                          placeholder="Implementation details"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => removeSecurityMeasure(measure.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                
+                <button 
+                  onClick={addSecurityMeasure}
+                  className="flex items-center text-sm text-red-600 hover:text-red-800"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add Security Measure
+                </button>
+                
+                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
+                  <p className="font-medium mb-1">Common security measures to consider:</p>
+                  <ul className="grid grid-cols-2 gap-1 list-disc list-inside">
+                    <li>Input validation</li>
+                    <li>Rate limiting</li>
+                    <li>WAF (Web App Firewall)</li>
+                    <li>DDoS protection</li>
+                    <li>Audit logging</li>
+                    <li>Secure dependencies</li>
+                    <li>CSRF protection</li>
+                    <li>XSS prevention</li>
+                    <li>SQL injection prevention</li>
+                    <li>Secret management</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Compliance */}
+          <div>
+            <div 
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleSection('compliance')}
+            >
+              <h3 className="text-md font-medium text-gray-700">Compliance Requirements</h3>
+              {expandedSections.compliance ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
+            </div>
+            
+            {expandedSections.compliance && (
+              <div className="mt-2 space-y-3">
+                {complianceRequirements.map(req => (
+                  <div key={req.id} className="flex items-start space-x-2 border-b border-gray-200 pb-2">
+                    <input
+                      type="checkbox"
+                      checked={req.implemented}
+                      onChange={(e) => updateComplianceRequirement(req.id, 'implemented', e.target.checked)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1 grid grid-cols-3 gap-2">
+                      <div className="col-span-1">
+                        <input
+                          type="text"
+                          value={req.standard}
+                          onChange={(e) => updateComplianceRequirement(req.id, 'standard', e.target.value)}
+                          placeholder="Standard/Regulation"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="text"
+                          value={req.requirements}
+                          onChange={(e) => updateComplianceRequirement(req.id, 'requirements', e.target.value)}
+                          placeholder="Specific requirements"
+                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => removeComplianceRequirement(req.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                
+                <button 
+                  onClick={addComplianceRequirement}
+                  className="flex items-center text-sm text-red-600 hover:text-red-800"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add Compliance Requirement
+                </button>
+                
+                <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mt-2">
+                  <p className="font-medium mb-1">Common compliance standards:</p>
+                  <ul className="grid grid-cols-2 gap-1 list-disc list-inside">
+                    <li>GDPR (EU data privacy)</li>
+                    <li>CCPA/CPRA (California)</li>
+                    <li>HIPAA (Healthcare)</li>
+                    <li>PCI DSS (Payment)</li>
+                    <li>SOC 2 (Security)</li>
+                    <li>ISO 27001 (Security)</li>
+                    <li>NIST (Federal)</li>
+                    <li>FedRAMP (Federal Cloud)</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer with actions */}
+      <div className="border-t border-gray-200 p-4 flex justify-between">
+        <button className="flex items-center px-4 py-2 text-sm bg-red-50 text-red-700 rounded-md hover:bg-red-100">
+          <MessageSquare size={16} className="mr-2" />
+          Ask Coach
+        </button>
+        <button className="flex items-center px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">
+          <Save size={16} className="mr-2" />
+          Save & Continue
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ReliabilitySecurityPage;
+
+
+===
+
+import React, { useState } from 'react';
+import { 
+  ClipboardList, 
+  Database, 
+  Code, 
+  Layout, 
+  BarChart, 
+  Shield, 
+  MessageSquare,
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
+
+// Mocked components since we don't have direct imports
+// In a real implementation, these would be properly imported from files
+const RequirementsPage = () => (
+  <div className="text-center p-4 text-gray-500">
+    Requirements Page Component
+  </div>
+);
+
+const APIDesignPage = () => (
+  <div className="text-center p-4 text-gray-500">
+    API Design Page Component
+  </div>
+);
+
+const DataModelPage = () => (
+  <div className="text-center p-4 text-gray-500">
+    Data Model Page Component
+  </div>
+);
+
+const SystemArchitecturePage = () => (
+  <div className="text-center p-4 text-gray-500">
+    System Architecture Page Component
+  </div>
+);
+
+const ScalingStrategyPage = () => (
+  <div className="text-center p-4 text-gray-500">
+    Scaling Strategy Page Component
+  </div>
+);
+
+const ReliabilitySecurityPage = () => (
+  <div className="text-center p-4 text-gray-500">
+    Reliability & Security Page Component
+  </div>
+);
+
+// Coach Agent interface mock
+const CoachAgentInterface = ({ isOpen, onClose, currentPage, currentData }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-4 max-w-lg w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">System Design Coach</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="bg-gray-100 p-4 rounded mb-4">
+          <p>I'm your design coach helping with <strong>{currentPage}</strong>.</p>
+          <p className="text-sm text-gray-600 mt-2">
+            Ask me questions about system design best practices, requirements gathering, 
+            architecture decisions, or anything else you need help with.
+          </p>
+        </div>
+        <div className="flex">
+          <input
+            type="text"
+            className="flex-1 border border-gray-300 rounded-l px-4 py-2"
+            placeholder="Ask a question..."
+          />
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded-r">
+            <MessageSquare size={18} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WorkbookLayout = () => {
+  const [activeTab, setActiveTab] = useState('requirements');
+  const [showCoach, setShowCoach] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    requirements: {},
+    api: {},
+    data: {},
+    architecture: {},
+    scaling: {},
+    reliability: {}
+  });
+  
+  // Mock function for updating form data
+  const updateFormData = (section, data) => {
+    setFormData({
+      ...formData,
+      [section]: data
+    });
+  };
+  
+  // Define tabs for navigation
+  const tabs = [
+    { id: 'requirements', label: 'Requirements', icon: <ClipboardList size={18} /> },
+    { id: 'api', label: 'API Design', icon: <Code size={18} /> },
+    { id: 'data', label: 'Data Model', icon: <Database size={18} /> },
+    { id: 'architecture', label: 'Architecture', icon: <Layout size={18} /> },
+    { id: 'scaling', label: 'Scaling Strategy', icon: <BarChart size={18} /> },
+    { id: 'reliability', label: 'Reliability & Security', icon: <Shield size={18} /> }
+  ];
+  
+  const getActivePageComponent = () => {
+    switch (activeTab) {
+      case 'requirements':
+        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+      case 'api':
+        return <APIDesignPage data={formData.api} updateData={(data) => updateFormData('api', data)} />;
+      case 'data':
+        return <DataModelPage data={formData.data} updateData={(data) => updateFormData('data', data)} />;
+      case 'architecture':
+        return <SystemArchitecturePage data={formData.architecture} updateData={(data) => updateFormData('architecture', data)} />;
+      case 'scaling':
+        return <ScalingStrategyPage data={formData.scaling} updateData={(data) => updateFormData('scaling', data)} />;
+      case 'reliability':
+        return <ReliabilitySecurityPage data={formData.reliability} updateData={(data) => updateFormData('reliability', data)} />;
+      default:
+        return <RequirementsPage data={formData.requirements} updateData={(data) => updateFormData('requirements', data)} />;
+    }
+  };
+  
+  // Handler for "Ask Coach" button clicks from any page
+  const handleAskCoach = () => {
+    setShowCoach(true);
+  };
+  
+  return (
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Top Navigation Bar */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Layout className="h-8 w-8 text-indigo-600" />
+                <span className="font-bold text-lg text-gray-900 ml-2">System Design Coach</span>
+              </div>
+            </div>
+            
+            <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
+              <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                Dashboard
+              </button>
+              <button className="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
+                Workbook
+              </button>
+              <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                History
+              </button>
+            </div>
+            
+            <div className="flex items-center">
+              <button 
+                onClick={() => setShowCoach(true)}
+                className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                <MessageSquare size={18} className="mr-2" />
+                <span className="hidden md:inline">Ask Coach</span>
+              </button>
+              
+              <div className="ml-4 relative">
+                <div className="ml-3 relative">
+                  <div>
+                    <button className="flex items-center text-gray-500 hover:text-gray-700">
+                      <span className="sr-only">Open user menu</span>
+                      <LogOut size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="-mr-2 flex items-center md:hidden">
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500"
+                >
+                  <span className="sr-only">Open main menu</span>
+                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      {/* Tabs Navigation */}
+      <div className="hidden md:block bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center py-4 px-4 text-sm font-medium ${
+                  activeTab === tab.id
+                    ? 'border-b-2 border-indigo-500 text-indigo-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+                }`}
+              >
+                {tab.icon}
+                <span className="ml-2">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile menu, show/hide based on menu state */}
+      {mobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="pt-2 pb-3 space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center w-full px-3 py-2 text-base font-medium ${
+                  activeTab === tab.id
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                {tab.icon}
+                <span className="ml-3">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Main content area */}
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {getActivePageComponent()}
+        </div>
+      </main>
+      
+      {/* Coach agent dialog */}
+      {showCoach && (
+        <CoachAgentInterface
+          isOpen={showCoach}
+          onClose={() => setShowCoach(false)}
+          currentPage={activeTab}
+          currentData={formData[activeTab]}
+        />
+      )}
+    </div>
+  );
+};
+
+export default WorkbookLayout;
+
+=====
+
